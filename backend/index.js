@@ -9,7 +9,8 @@ const app = express();
 
 // 3. Configurar Middlewares (intermediarios)
 app.use(cors({
-  origin: ['http://localhost:5175', 'http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:5173', 'https://inversiones-rubi-web.onrender.com'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 app.use(express.json());
