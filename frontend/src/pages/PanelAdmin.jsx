@@ -1,470 +1,311 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
 
 function PanelAdmin() {
-  const navigate = useNavigate()
-  const [nombre, setNombre] = useState('')
-  const [temaVisual, setTemaVisual] = useState('general')
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
-  const [mensaje, setMensaje] = useState('')
-  const [error, setError] = useState('')
-  const [categoriaEnEdicion, setCategoriaEnEdicion] = useState(null)
-  const [productoEnEdicion, setProductoEnEdicion] = useState(null)
-  const [loading, setLoading] = useState(true)
-
+  
+  // Estados para nueva categoría
+  const [nombreCategoria, setNombreCategoria] = useState('')
+  const [temaVisual, setTemaVisual] = useState('general')
+  
+  // Estados para nuevo producto
   const [nombreProducto, setNombreProducto] = useState('')
   const [descripcionProducto, setDescripcionProducto] = useState('')
   const [precioProducto, setPrecioProducto] = useState('')
-  const [imagenUrlProducto, setImagenUrlProducto] = useState('')
-  const [categoriaIdProducto, setCategoriaIdProducto] = useState('')
+  const [imagenUrl, setImagenUrl] = useState('')
+  const [categoriaId, setCategoriaId] = useState('')
 
-  const obtenerCategorias = async () => {
+  const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
+
+  const cargarDatos = async () => {
     try {
-      setLoading(true)
-      const response = await api.get('/categorias')
-      setCategorias(response.data || [])
-      if ((response.data || []).length > 0 && !categoriaIdProducto) {
-        setCategoriaIdProducto(response.data[0].id.toString())
-      }
-      setError('')
-    } catch (err) {
-      console.error("Error cargando categorías:", err)
-      if (err.message === 'Network Error' || err.code === 'ECONNABORTED') {
-        setError('❌ No puedo conectar al backend. ¿Está ejecutándose en puerto 3000?')
-      } else {
-        setError('No se pudieron cargar las categorías.')
-      }
-      setCategorias([])
-    } finally {
-      setLoading(false)
+      const [catRes, prodRes] = await Promise.all([
+        api.get('/categorias'),
+        api.get('/productos')
+      ])
+      setCategorias(catRes.data)
+      setProductos(prodRes.data)
+    } catch (error) {
+      mostrarMensaje('Error al cargar los datos del servidor.', 'error')
     }
-  }
-
-  const obtenerProductos = async () => {
-    try {
-      const response = await api.get('/productos')
-      setProductos(response.data || [])
-      setError('')
-    } catch (err) {
-      console.error("Error cargando productos:", err)
-      if (err.message === 'Network Error' || err.code === 'ECONNABORTED') {
-        setError('❌ No puedo conectar al backend. ¿Está ejecutándose en puerto 3000?')
-      } else {
-        setError('No se pudieron cargar los productos.')
-      }
-      setProductos([])
-    }
-  }
-
-  const testConnection = async () => {
-    try {
-      console.log('🔍 Probando conexión al backend...')
-      const response = await api.get('/test')
-      console.log('✅ Conexión exitosa:', response.data)
-      alert('Conexión al backend funciona: ' + JSON.stringify(response.data))
-    } catch (err) {
-      console.error('❌ Error de conexión:', err)
-      alert('Error de conexión: ' + err.message)
-    }
-  }
-
-  const cerrarSesion = () => {
-    localStorage.removeItem('auth')
-    navigate('/login')
   }
 
   useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        await obtenerCategorias()
-        await obtenerProductos()
-      } catch (err) {
-        console.error('Error en useEffect:', err)
-      }
-    }
     cargarDatos()
   }, [])
 
-  const handleSubmit = async (e) => {
+  const mostrarMensaje = (texto, tipo) => {
+    setMensaje({ texto, tipo })
+    setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000)
+  }
+
+  const handleCrearCategoria = async (e) => {
     e.preventDefault()
     try {
-      console.log('🔍 Intentando guardar categoría:', { nombre, temaVisual })
-
-      const data = {
-        nombre,
-        tema_visual: temaVisual,
-      }
-
-      console.log('📤 Enviando datos:', data)
-
-      if (categoriaEnEdicion) {
-        await api.put(`/categorias/${categoriaEnEdicion}`, data)
-        setMensaje('Categoría actualizada')
-      } else {
-        await api.post('/categorias', data)
-        setMensaje('Categoría guardada')
-      }
-
-      setError('')
-      setNombre('')
-      setTemaVisual('general')
-      setCategoriaEnEdicion(null)
-      obtenerCategorias()
-      setTimeout(() => setMensaje(''), 3000)
-    } catch (err) {
-      console.error('❌ Error completo:', err)
-      console.error('Response data:', err.response?.data)
-      console.error('Response status:', err.response?.status)
-      setError('Error al guardar la categoría.')
-      setMensaje('')
+      await api.post('/categorias', {
+        nombre: nombreCategoria,
+        tema_visual: temaVisual
+      })
+      mostrarMensaje('¡Categoría creada con éxito!', 'exito')
+      setNombreCategoria('')
+      cargarDatos()
+    } catch (error) {
+      mostrarMensaje('Error al crear la categoría.', 'error')
     }
   }
 
-  const handleSubmitProducto = async (e) => {
+  const handleCrearProducto = async (e) => {
     e.preventDefault()
     try {
-      if (!categoriaIdProducto) {
-        setError('Selecciona una categoría para el producto.')
-        return
-      }
-
-      const data = {
+      await api.post('/productos', {
         nombre: nombreProducto,
         descripcion: descripcionProducto,
         precio: parseFloat(precioProducto),
-        imagen_url: imagenUrlProducto,
-        categoria_id: parseInt(categoriaIdProducto, 10),
-      }
-
-      if (productoEnEdicion) {
-        await api.put(`/productos/${productoEnEdicion}`, data)
-        setMensaje('Producto actualizado')
-      } else {
-        await api.post('/productos', data)
-        setMensaje('Producto guardado')
-      }
-
-      setError('')
+        imagen_url: imagenUrl,
+        categoria_id: parseInt(categoriaId)
+      })
+      mostrarMensaje('¡Producto creado con éxito!', 'exito')
       setNombreProducto('')
       setDescripcionProducto('')
       setPrecioProducto('')
-      setImagenUrlProducto('')
-      setCategoriaIdProducto(categorias.length > 0 ? categorias[0].id.toString() : '')
-      setProductoEnEdicion(null)
-      obtenerProductos()
-      setTimeout(() => setMensaje(''), 3000)
-    } catch (err) {
-      console.error(err)
-      setError('Error al guardar el producto.')
-      setMensaje('')
+      setImagenUrl('')
+      setCategoriaId('')
+      cargarDatos()
+    } catch (error) {
+      mostrarMensaje('Error al crear el producto.', 'error')
     }
   }
 
-  const eliminarCategoria = async (id) => {
-    if (!window.confirm('¿Estás seguro de borrar esta categoría?')) {
-      return
-    }
-    try {
-      await api.delete(`/categorias/${id}`)
-      setMensaje('Categoría eliminada')
-      setError('')
-      obtenerCategorias()
-      obtenerProductos()
-      setTimeout(() => setMensaje(''), 3000)
-    } catch (err) {
-      console.error(err)
-      setError('Error al eliminar la categoría.')
-      setMensaje('')
+  const handleEliminarProducto = async (id) => {
+    if (window.confirm('¿Estás seguro de eliminar este producto?')) {
+      try {
+        await api.delete(`/productos/${id}`)
+        mostrarMensaje('Producto eliminado.', 'exito')
+        cargarDatos()
+      } catch (error) {
+        mostrarMensaje('Error al eliminar el producto.', 'error')
+      }
     }
   }
 
-  const iniciarEdicionCategoria = (cat) => {
-    setCategoriaEnEdicion(cat.id)
-    setNombre(cat.nombre)
-    setTemaVisual(cat.tema_visual || 'general')
-    setMensaje('')
-    setError('')
+  const handleEliminarCategoria = async (id) => {
+    if (window.confirm('¿Eliminar categoría? Los productos asociados también se borrarán.')) {
+      try {
+        await api.delete(`/categorias/${id}`)
+        mostrarMensaje('Categoría eliminada.', 'exito')
+        cargarDatos()
+      } catch (error) {
+        mostrarMensaje('Error al eliminar la categoría.', 'error')
+      }
+    }
   }
 
-  const iniciarEdicionProducto = (prod) => {
-    setProductoEnEdicion(prod.id)
-    setNombreProducto(prod.nombre)
-    setDescripcionProducto(prod.descripcion)
-    setPrecioProducto(prod.precio?.toString() || '')
-    setImagenUrlProducto(prod.imagen_url || '')
-    setCategoriaIdProducto(prod.categoria_id?.toString() || '')
-    setMensaje('')
-    setError('')
-  }
-
-  const eliminarProducto = async (id) => {
-    if (!window.confirm('¿Estás seguro de borrar este producto?')) {
-      return
-    }
-    try {
-      await api.delete(`/productos/${id}`)
-      setMensaje('Producto eliminado')
-      setError('')
-      obtenerProductos()
-      setTimeout(() => setMensaje(''), 3000)
-    } catch (err) {
-      console.error(err)
-      setError('Error al eliminar el producto.')
-      setMensaje('')
-    }
+  const handleLogout = () => {
+    localStorage.removeItem('auth')
+    window.location.href = '/login'
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-bold text-gray-800">Panel de Administración</h1>
-        <div className="flex gap-2">
-          <button
-            onClick={testConnection}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition"
+    <div className="min-h-screen bg-glassblack-theme text-white py-10 px-4">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* CABECERA DEL PANEL */}
+        <div className="glass-panel p-8 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6 border-l-4 border-l-red-600">
+          <div>
+            <h1 className="text-3xl font-black uppercase font-montserrat tracking-tight">
+              Panel de <span className="text-red-600">Control</span>
+            </h1>
+            <p className="text-gray-400 font-bold tracking-widest text-sm mt-1">INVERSIONES RUBI - SISTEMA DE GESTIÓN</p>
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="px-6 py-3 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/50 rounded-xl font-bold transition-all uppercase tracking-wider text-sm shadow-[0_0_15px_rgba(220,38,38,0.2)] hover:shadow-[0_0_20px_rgba(220,38,38,0.6)]"
           >
-            Test Backend
-          </button>
-          <button
-            onClick={cerrarSesion}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition"
-          >
-            Cerrar Sesión
+            Cerrar Sesión ✕
           </button>
         </div>
-      </div>
 
-      {loading && (
-        <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
-          ⏳ Cargando datos del servidor...
-        </div>
-      )}
+        {/* ALERTAS */}
+        {mensaje.texto && (
+          <div className={`p-4 rounded-xl font-bold uppercase tracking-wider text-sm animate-enter border ${
+            mensaje.tipo === 'error' 
+              ? 'bg-red-900/50 border-red-500 text-red-200' 
+              : 'bg-green-900/50 border-green-500 text-green-200'
+          }`}>
+            {mensaje.tipo === 'error' ? '⚠️ ' : '✅ '} {mensaje.texto}
+          </div>
+        )}
 
-      {mensaje && (
-        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded border border-green-300">
-          ✅ {mensaje}
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-800 rounded border-2 border-red-300">
-          <p className="font-bold mb-2">{error}</p>
-          <details className="text-sm">
-            <summary className="cursor-pointer text-red-700 underline">Ver instrucciones</summary>
-            <div className="mt-2 bg-white p-2 rounded text-gray-700">
-              <p>Para solucionar este error:</p>
-              <ol className="list-decimal ml-5 mt-1">
-                <li>Abre una terminal</li>
-                <li>Ve a la carpeta backend: <code className="bg-gray-200 px-1">cd backend</code></li>
-                <li>Inicia el servidor: <code className="bg-gray-200 px-1">node index.js</code></li>
-                <li>Luego, haz clic en "Test Backend" para verificar</li>
-              </ol>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* COLUMNA IZQUIERDA - FORMULARIOS */}
+          <div className="lg:col-span-1 space-y-8">
+            
+            {/* FORMULARIO DE CATEGORÍAS */}
+            <div className="glass-panel p-6 rounded-2xl border-t border-white/10">
+              <h2 className="text-xl font-black uppercase font-montserrat mb-6 flex items-center gap-2">
+                <span className="text-red-600">📁</span> Nueva Categoría
+              </h2>
+              <form onSubmit={handleCrearCategoria} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nombre de categoría</label>
+                  <input
+                    type="text"
+                    required
+                    value={nombreCategoria}
+                    onChange={(e) => setNombreCategoria(e.target.value)}
+                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm"
+                    placeholder="Ej. Herramientas..."
+                  />
+                </div>
+                <button type="submit" className="w-full py-3 bg-white text-black hover:bg-gray-200 rounded-lg font-black uppercase tracking-wider transition-all text-sm">
+                  Guardar Categoría
+                </button>
+              </form>
             </div>
-          </details>
-        </div>
-      )}
 
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Crear nueva categoría</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-            <input
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+            {/* FORMULARIO DE PRODUCTOS */}
+            <div className="glass-panel p-6 rounded-2xl border-t border-white/10">
+              <h2 className="text-xl font-black uppercase font-montserrat mb-6 flex items-center gap-2">
+                <span className="text-red-600">📦</span> Nuevo Producto
+              </h2>
+              <form onSubmit={handleCrearProducto} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Categoría</label>
+                  <select
+                    required
+                    value={categoriaId}
+                    onChange={(e) => setCategoriaId(e.target.value)}
+                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm appearance-none"
+                  >
+                    <option value="">-- Seleccionar --</option>
+                    {categorias.map(cat => (
+                      <option key={cat.id} value={cat.id} className="bg-zinc-900">{cat.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nombre</label>
+                  <input
+                    type="text"
+                    required
+                    value={nombreProducto}
+                    onChange={(e) => setNombreProducto(e.target.value)}
+                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Precio (L)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={precioProducto}
+                    onChange={(e) => setPrecioProducto(e.target.value)}
+                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">URL de Imagen</label>
+                  <input
+                    type="url"
+                    value={imagenUrl}
+                    onChange={(e) => setImagenUrl(e.target.value)}
+                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Descripción</label>
+                  <textarea
+                    rows="3"
+                    value={descripcionProducto}
+                    onChange={(e) => setDescripcionProducto(e.target.value)}
+                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm resize-none"
+                  ></textarea>
+                </div>
+                <button type="submit" className="btn-whatsapp w-full py-3 rounded-lg font-black text-white uppercase tracking-wider transition-all text-sm border-none">
+                  Guardar Producto
+                </button>
+              </form>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tema Visual</label>
-            <select
-              value={temaVisual}
-              onChange={(e) => setTemaVisual(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="general">General</option>
-              <option value="ferreteria">Ferretería</option>
-            </select>
+          {/* COLUMNA DERECHA - TABLAS DE DATOS */}
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* TABLA CATEGORÍAS */}
+            <div className="glass-panel p-6 rounded-2xl">
+              <h2 className="text-xl font-black uppercase font-montserrat mb-6">Categorías Registradas</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="text-xs text-gray-400 uppercase bg-black/40">
+                    <tr>
+                      <th className="px-4 py-3 rounded-l-lg">Nombre</th>
+                      <th className="px-4 py-3 text-right rounded-r-lg">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {categorias.map(cat => (
+                      <tr key={cat.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                        <td className="px-4 py-4 font-bold">{cat.nombre}</td>
+                        <td className="px-4 py-4 text-right">
+                          <button onClick={() => handleEliminarCategoria(cat.id)} className="text-red-500 hover:text-red-400 font-bold uppercase text-xs tracking-wider">
+                            Eliminar ✕
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* TABLA PRODUCTOS */}
+            <div className="glass-panel p-6 rounded-2xl">
+              <h2 className="text-xl font-black uppercase font-montserrat mb-6">Inventario de Productos</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="text-xs text-gray-400 uppercase bg-black/40">
+                    <tr>
+                      <th className="px-4 py-3 rounded-l-lg">Producto</th>
+                      <th className="px-4 py-3">Precio</th>
+                      <th className="px-4 py-3">Categoría</th>
+                      <th className="px-4 py-3 text-right rounded-r-lg">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {productos.map(prod => {
+                      const cat = categorias.find(c => c.id === prod.categoria_id)
+                      return (
+                        <tr key={prod.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-3">
+                              {prod.imagen_url ? (
+                                <img src={prod.imagen_url} alt="" className="w-10 h-10 rounded object-cover border border-white/10" />
+                              ) : (
+                                <div className="w-10 h-10 rounded bg-white/10 flex items-center justify-center text-xs">📷</div>
+                              )}
+                              <span className="font-bold line-clamp-1">{prod.nombre}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 font-black text-red-500 font-montserrat">L {Number(prod.precio).toFixed(2)}</td>
+                          <td className="px-4 py-4 text-gray-400">{cat ? cat.nombre : 'N/A'}</td>
+                          <td className="px-4 py-4 text-right">
+                            <button onClick={() => handleEliminarProducto(prod.id)} className="text-red-500 hover:text-red-400 font-bold uppercase text-xs tracking-wider">
+                              Borrar ✕
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
-
-          <button
-            type="submit"
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-          >
-            {categoriaEnEdicion ? 'Actualizar Categoría' : 'Guardar Categoría'}
-          </button>
-        </form>
-      </div>
-
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Listado de categorías</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-4 py-2 font-medium text-gray-700">ID</th>
-                <th className="px-4 py-2 font-medium text-gray-700">Nombre</th>
-                <th className="px-4 py-2 font-medium text-gray-700">Tema Visual</th>
-                <th className="px-4 py-2 font-medium text-gray-700">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td className="px-4 py-2" colSpan="4">Cargando categorías...</td>
-                </tr>
-              ) : !categorias || categorias.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-2" colSpan="4">No hay categorías aún.</td>
-                </tr>
-              ) : (
-                categorias.map((cat) => (
-                  <tr key={cat.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-2">{cat.id}</td>
-                    <td className="px-4 py-2 font-semibold">{cat.nombre}</td>
-                    <td className="px-4 py-2">{cat.tema_visual || 'general'}</td>
-                    <td className="px-4 py-2 space-x-2">
-                      <button
-                        onClick={() => iniciarEdicionCategoria(cat)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => eliminarCategoria(cat.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition"
-                      >
-                        Borrar
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="bg-white shadow rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">Añadir Nuevo Producto</h2>
-
-        <form onSubmit={handleSubmitProducto} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-            <input
-              type="text"
-              value={nombreProducto}
-              onChange={(e) => setNombreProducto(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-            <textarea
-              value={descripcionProducto}
-              onChange={(e) => setDescripcionProducto(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={4}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
-            <input
-              type="number"
-              step="0.01"
-              value={precioProducto}
-              onChange={(e) => setPrecioProducto(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Imagen URL</label>
-            <input
-              type="text"
-              value={imagenUrlProducto}
-              onChange={(e) => setImagenUrlProducto(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-            <select
-              value={categoriaIdProducto}
-              onChange={(e) => setCategoriaIdProducto(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="" disabled>Selecciona una categoría</option>
-              {(categorias || []).map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          >
-            {productoEnEdicion ? 'Actualizar Producto' : 'Guardar Producto'}
-          </button>
-        </form>
-      </div>
-
-      <div className="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Listado de productos</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-4 py-2 font-medium text-gray-700">Nombre</th>
-                <th className="px-4 py-2 font-medium text-gray-700">Precio</th>
-                <th className="px-4 py-2 font-medium text-gray-700">Categoría</th>
-                <th className="px-4 py-2 font-medium text-gray-700">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {productos.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-2" colSpan="4">No hay productos aún.</td>
-                </tr>
-              ) : (
-                productos?.map((prod) => (
-                  <tr key={prod.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-4 py-2 font-semibold">{prod.nombre}</td>
-                    <td className="px-4 py-2">$ {Number(prod.precio).toFixed(2)}</td>
-                    <td className="px-4 py-2">{prod.categoria_nombre || 'Sin categoría'}</td>
-                    <td className="px-4 py-2 space-x-2">
-                      <button
-                        onClick={() => iniciarEdicionProducto(prod)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => eliminarProducto(prod.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition"
-                      >
-                        Borrar
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>

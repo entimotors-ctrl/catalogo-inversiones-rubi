@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 import Navbar from './components/Navbar'
 import CatalogoPublico from './pages/CatalogoPublico'
-import CatalogoDemo from './pages/CatalogoDemo'
 import PanelAdmin from './pages/PanelAdmin'
 import Login from './pages/Login'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -22,7 +21,6 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<CatalogoPublico />} />
-          <Route path="/demo" element={<CatalogoDemo />} />
           <Route
             path="/admin"
             element={

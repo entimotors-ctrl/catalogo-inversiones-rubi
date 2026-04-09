@@ -1,452 +1,188 @@
 /* ============================================
    IMPORTAR TIPOGRAFÍAS MODERNAS
    ============================================ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,500;0,700;0,900;1,900&family=Roboto:wght@400;700;900&display=swap');
 
 /* ============================================
    VARIABLE GLOBALES
    ============================================ */
 :root {
-  --color-primary: #002855;
-  --color-primary-light: #004080;
+  --color-primary: #e60000;
+  --color-primary-dark: #990000;
+  --color-dark: #121212;
   --color-success: #25D366;
-  --color-text: #1a1a1a;
-  --color-text-light: #666666;
-  --color-border: #e5e5e5;
-  --color-bg: #f8f9fa;
-  --shadow-sm: 0 2px 4px rgba(0, 40, 85, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 40, 85, 0.12);
-  --shadow-lg: 0 12px 24px rgba(0, 40, 85, 0.16);
-  --shadow-hover: 0 20px 40px rgba(0, 40, 85, 0.2);
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* ============================================
-   ESTILOS GLOBALES
-   ============================================ */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
-  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
 body {
-  font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: var(--color-text);
-  background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
+  font-family: 'Roboto', sans-serif;
   min-height: 100vh;
 }
 
+h1, h2, h3, .font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
 /* ============================================
-   HEADER STICKY - ESTILO PRICESMART
+   EFECTO GLASSBLACK (CRISTAL OSCURO)
+   ============================================ */
+.bg-glassblack-theme {
+  background-color: #050505;
+  /* Fondo con luces de neón sutiles para que el cristal haga efecto */
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(230, 0, 0, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(230, 0, 0, 0.05) 0%, transparent 40%);
+  background-attachment: fixed;
+}
+
+.glass-panel {
+  background: rgba(18, 18, 20, 0.55); /* Transparencia oscura */
+  backdrop-filter: blur(16px); /* El efecto cristal */
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06); /* Borde brillante del cristal */
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   HEADER STICKY
    ============================================ */
 .sticky-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(15px);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
-  animation: slideDown 0.3s ease-out;
-  box-shadow: 0 10px 30px rgba(0, 40, 85, 0.2);
+  border-bottom: 2px solid rgba(230, 0, 0, 0.5); /* Borde inferior rojo brillante */
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.sticky-header h1 {
-  letter-spacing: -1px;
-  font-weight: 900;
-  text-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-  font-size: 2.25rem;
-}
-
-/* Input de búsqueda - MÁS PROMINENTE */
-.sticky-header input {
-  font-family: 'Inter', 'Roboto', sans-serif;
-  font-size: 1rem;
-  letter-spacing: -0.3px;
+.search-input {
   transition: var(--transition);
-  background-color: white;
-  color: var(--color-text);
   font-weight: 500;
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
 }
 
-.sticky-header input::placeholder {
-  color: #999;
-  font-weight: 500;
-}
-
-.sticky-header input:focus {
-  box-shadow: 0 0 0 5px rgba(0, 40, 85, 0.1), 0 0 0 2px white, 0 0 0 4px rgba(0, 215, 215, 0.3);
+.search-input:focus {
+  box-shadow: 0 0 15px rgba(230, 0, 0, 0.3);
+  border-color: var(--color-primary) !important;
+  background: rgba(0, 0, 0, 0.8) !important;
 }
 
 /* ============================================
-   TARJETAS DE PRODUCTO - ESTILO PRICESMART
+   TARJETAS DE PRODUCTO GLASSBLACK
    ============================================ */
 .product-card {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
   transition: var(--transition);
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 16px;
-  overflow: hidden;
+  border-radius: 12px;
   position: relative;
+  overflow: hidden;
+}
+
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+  z-index: 10;
 }
 
 .product-card:hover {
-  box-shadow: 0 25px 50px rgba(0, 40, 85, 0.25);
-  border-color: var(--color-primary);
-  transform: translateY(-12px);
+  transform: translateY(-8px);
+  background: rgba(25, 25, 28, 0.7);
+  border-color: rgba(230, 0, 0, 0.3);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(230, 0, 0, 0.1);
 }
 
-/* Imagen del producto */
-.product-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, #e8e8e8 0%, #f0f0f0 100%);
+.product-card:hover::before {
+  transform: scaleX(1);
 }
 
-.product-card:hover img {
-  transform: scale(1.15);
-}
-
-/* Contenido de la tarjeta */
-.product-card > div:last-child {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  padding: 1.5rem;
-  gap: 0.5rem;
-}
-
-/* Nombre del producto */
-.product-card h3 {
-  font-weight: 700;
-  line-height: 1.3;
-  margin-bottom: 0.75rem;
-  letter-spacing: -0.3px;
-  font-size: 1.05rem;
-}
-
-/* Descripción */
-.product-card p {
-  font-size: 0.9rem;
-  color: var(--color-text-light);
-  line-height: 1.5;
-}
-
-/* Precio - MÁS GRANDE Y PROMINENTE */
-.product-card .text-4xl {
-  font-weight: 900;
-  letter-spacing: -1.5px;
-  color: var(--color-primary);
-  font-size: 2.5rem;
-  line-height: 1;
-}
-
-.product-card .text-3xl {
-  font-weight: 900;
-  letter-spacing: -1px;
-  color: var(--color-primary);
-  font-size: 2.25rem;
-}
-
-/* Botón WhatsApp - MÁS DESTACADO */
-.product-card a {
-  background: linear-gradient(135deg, var(--color-success) 0%, #20a856 100%);
-  color: white;
-  text-decoration: none;
-  font-weight: 800;
-  font-size: 1rem;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  margin-top: auto;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 8px 16px rgba(37, 211, 102, 0.3);
-  letter-spacing: 0.5px;
-}
-
-.product-card a:hover {
-  background: linear-gradient(135deg, #20a856 0%, #1a8c4a 100%);
-  box-shadow: 0 12px 24px rgba(37, 211, 102, 0.4);
-  transform: translateY(-3px) scale(1.05);
-}
-
-.product-card a:active {
-  transform: translateY(-1px) scale(1.02);
-}
-
-/* ============================================
-   SIDEBAR DE CATEGORÍAS
-   ============================================ */
-.sidebar-categories {
-  position: sticky;
-  top: 100px;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-}
-
-.sidebar-categories nav button {
-  font-family: 'Inter', 'Roboto', sans-serif;
-  font-weight: 500;
-  letter-spacing: -0.3px;
-  transition: var(--transition);
-  border: none;
-  cursor: pointer;
+.img-container {
+  overflow: hidden;
   position: relative;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.sidebar-categories nav button:active {
-  background-color: var(--color-primary);
-  color: white;
-  box-shadow: var(--shadow-md);
+.img-container img {
+  transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-.sidebar-categories nav button:hover:not(.active) {
-  background-color: #f0f0f0;
-  padding-left: 1.25rem;
-}
-
-/* ============================================
-   GRID RESPONSIVO
-   ============================================ */
-@media (max-width: 1024px) {
-  .max-w-7xl {
-    padding: 0 1rem;
-  }
-
-  .product-card {
-    border-radius: 10px;
-  }
-}
-
-@media (max-width: 768px) {
-  .sticky-header {
-    padding: 1rem 0.75rem;
-  }
-
-  .sticky-header h1 {
-    font-size: 1.5rem;
-  }
-
-  .sticky-header input {
-    font-size: 0.95rem;
-    padding: 0.85rem 1.25rem;
-  }
-
-  main {
-    grid-column: 1 / -1;
-  }
-
-  .product-card {
-    border-radius: 14px;
-  }
-
-  .product-card a {
-    font-size: 0.95rem;
-    padding: 0.85rem 1.1rem;
-  }
-
-  .product-card .text-4xl {
-    font-size: 2rem;
-  }
-
-  .product-card .text-3xl {
-    font-size: 1.75rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .sticky-header {
-    padding: 0.75rem 0.5rem;
-  }
-
-  .sticky-header h1 {
-    font-size: 1.35rem;
-  }
-
-  .sticky-header input {
-    max-width: 95vw;
-    font-size: 0.9rem;
-    padding: 0.75rem 1.1rem;
-  }
-
-  .product-card {
-    border-radius: 12px;
-  }
-
-  .product-card h3 {
-    font-size: 1rem;
-  }
-
-  .product-card .text-4xl {
-    font-size: 1.85rem;
-  }
-
-  .product-card .text-3xl {
-    font-size: 1.65rem;
-  }
-
-  .product-card > div:last-child {
-    padding: 1.25rem;
-  }
-
-  .product-card a {
-    font-size: 0.9rem;
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
-  }
+.product-card:hover .img-container img {
+  transform: scale(1.1) rotate(-1deg);
 }
 
 /* ============================================
-   ANIMACIONES MEJORADAS
+   BOTÓN WHATSAPP
    ============================================ */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(37, 211, 102, 0);
-  }
-}
-
-.product-card {
-  animation: fadeIn 0.5s ease-out;
-}
-
-.product-card a {
-  animation: fadeIn 0.6s ease-out;
-}
-
-/* ============================================
-   BADGES Y DISTINTIVOS
-   ============================================ */
-.badge-disponible {
-  display: inline-block;
-  background: linear-gradient(135deg, #ff4757 0%, #ff6348 100%);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 0.75rem;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+.btn-whatsapp {
+  background: linear-gradient(135deg, rgba(37, 211, 102, 0.9) 0%, rgba(29, 168, 81, 0.9) 100%);
+  backdrop-filter: blur(5px);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
   text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.stock-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #27ae60;
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.3px;
+.btn-whatsapp::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 20%;
+  height: 200%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(30deg);
+  transition: transform 0.6s ease;
+}
+
+.btn-whatsapp:hover::after {
+  transform: translateX(300%) rotate(30deg);
+}
+
+.btn-whatsapp:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
 }
 
 /* ============================================
-   SCROLLBAR PERSONALIZADO
+   SCROLLBAR DEPORTIVO
    ============================================ */
 ::-webkit-scrollbar {
   width: 8px;
-  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #0a0a0a;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 4px;
+  background: rgba(230, 0, 0, 0.5);
+  border-radius: 10px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary-light);
+  background: var(--color-primary);
 }
 
 /* ============================================
-   UTILIDADES
+   ANIMACIONES
    ============================================ */
-.truncate-lines {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.line-clamp-2 {
-  -webkit-line-clamp: 2;
-}
-
-.line-clamp-3 {
-  -webkit-line-clamp: 3;
-}
-
-/* ============================================
-   ACCESIBILIDAD
-   ============================================ */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Contraste mejorado para texto */
-@media (prefers-contrast: more) {
-  :root {
-    --color-primary: #001a33;
-    --color-text: #000000;
-  }
-}
-
-/* Soporte para modo oscuro */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #0f0f0f;
-    color: #e8e8e8;
-  }
-
-  .product-card {
-    background: linear-gradient(135deg, #1a1a1a 0%, #262626 100%);
-    border-color: #333333;
-  }
-
-  .sticky-header {
-    border-bottom-color: rgba(255, 255, 255, 0.05);
-  }
+.animate-enter {
+  animation: slideUpFade 0.6s ease-out forwards;
 }

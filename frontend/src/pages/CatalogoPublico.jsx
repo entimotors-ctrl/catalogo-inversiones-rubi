@@ -6,7 +6,7 @@ function CatalogoPublico() {
   const [productos, setProductos] = useState([])
   const [categoriaActiva, setCategoriaActiva] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [darkMode, setDarkMode] = useState(false)
+  const [darkMode, setDarkMode] = useState(true) // Forzamos el modo oscuro para el Glassblack
   const numeroWhatsApp = "50499999999"
 
   useEffect(() => {
@@ -40,51 +40,50 @@ function CatalogoPublico() {
   })
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      {/* Header Profesional Tipo PriceSmart */}
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-[#002855] to-[#004080] shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          {/* Fila Superior: Logo + Botón Dark */}
+    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-glassblack-theme text-white' : 'bg-gray-100 text-black'}`}>
+      
+      {/* HEADER GLASSBLACK */}
+      <header className={`sticky-header py-6 px-4 ${darkMode ? 'glass-panel' : 'bg-white shadow-md'}`}>
+        <div className="max-w-7xl mx-auto">
+          {/* Top Header */}
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="text-4xl font-bold text-white">📦</div>
+            <div className="flex items-center gap-4">
+              <div className="text-4xl text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.6)]">💎</div>
               <div>
-                <h1 className="text-2xl font-black text-white leading-tight" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-1px' }}>
-                  CLUB DE COMPRAS
+                <h1 className="text-3xl font-black text-white italic tracking-tighter uppercase font-montserrat">
+                  INVERSIONES <span className="text-red-600">RUBI</span>
                 </h1>
-                <p className="text-xs text-blue-100 font-medium">Tu tienda digital de confianza</p>
+                <p className="text-xs text-gray-400 font-bold tracking-widest uppercase">Catálogo Premium</p>
               </div>
             </div>
             
-            {/* Botón Dark Mode */}
+            {/* Dark Mode Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className={`p-3 rounded-full transition-all duration-300 shadow-md ${
+              className={`p-2 px-4 rounded-lg font-bold text-xs transition-all border ${
                 darkMode
-                  ? 'bg-yellow-400 text-gray-900 hover:bg-yellow-300 hover:shadow-lg'
-                  : 'bg-white text-[#002855] hover:bg-blue-50 hover:shadow-lg'
+                  ? 'bg-black/50 border-white/10 text-gray-300 hover:border-red-600 hover:text-white'
+                  : 'bg-white border-gray-300 text-black hover:border-red-600'
               }`}
-              title={darkMode ? 'Modo Claro' : 'Modo Oscuro'}
             >
-              {darkMode ? '☀️' : '🌙'}
+              {darkMode ? 'MODO CRISTAL 💎' : 'MODO CLARO ☀️'}
             </button>
           </div>
           
-          {/* Buscador Grande y Prominente */}
+          {/* Buscador Prominente */}
           <div className="flex justify-center">
-            <div className="relative w-full max-w-2xl">
+            <div className="relative w-full max-w-3xl">
               <input
                 type="text"
-                placeholder="🔍 Buscar productos por nombre..."
+                placeholder="🔍 Buscar en Inversiones Rubi..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-6 py-4 rounded-full border-2 border-white bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-white transition-all shadow-md font-medium"
-                style={{ fontFamily: 'Inter, Roboto, sans-serif', fontSize: '16px' }}
+                className="search-input w-full px-6 py-4 rounded-xl outline-none text-base"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600 hover:text-red-400 font-black text-xl"
                 >
                   ✕
                 </button>
@@ -94,56 +93,49 @@ function CatalogoPublico() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className={`max-w-7xl mx-auto px-4 py-12 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="flex flex-col lg:flex-row gap-10">
+      {/* CONTENIDO PRINCIPAL */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* Sidebar de Categorías - Estilo PriceSmart */}
-          <aside className="lg:w-56 flex-shrink-0">
-            <div className={`sticky top-32 rounded-2xl border-2 shadow-md p-8 transition-all duration-300 ${
-              darkMode
-                ? 'bg-gray-800 border-gray-700'
-                : 'bg-white border-gray-100'
+          {/* SIDEBAR GLASSBLACK */}
+          <aside className="lg:w-64 flex-shrink-0">
+            <div className={`sticky top-40 p-6 rounded-xl shadow-2xl border-l-4 border-l-red-600 ${
+              darkMode ? 'glass-panel' : 'bg-white border-gray-200'
             }`}>
-              <h2 className={`text-xl font-black mb-6 transition-colors duration-300 pb-4 border-b-2 ${
-                darkMode ? 'text-purple-300 border-purple-600' : 'text-[#002855] border-blue-200'
-              }`} style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.5px' }}>
-                CATEGORÍAS
+              <h2 className="text-xl font-black mb-6 uppercase tracking-wider border-b border-white/10 pb-3 font-montserrat">
+                Categorías
               </h2>
-              <nav className="space-y-3">
+              <nav className="space-y-2">
                 <button
                   onClick={() => setCategoriaActiva(null)}
-                  className={`w-full text-left px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 ${
+                  className={`w-full text-left px-4 py-3 rounded-lg uppercase font-bold text-sm transition-all flex items-center justify-between border border-transparent ${
                     categoriaActiva === null
-                      ? 'bg-[#002855] text-white shadow-lg scale-105'
+                      ? 'bg-red-600 text-white shadow-[0_4px_15px_rgba(220,38,38,0.4)] translate-x-2'
                       : darkMode
-                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                      : 'text-gray-700 hover:bg-blue-50'
+                      ? 'text-gray-400 hover:bg-white/5 hover:border-white/10 hover:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-black'
                   }`}
-                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.3px' }}
                 >
-                  <span className="text-lg">📦</span>
-                  <span>{categoriaActiva === null ? '✓ Todos' : 'Todos'}</span>
+                  <span>🏁 Todas</span>
+                  {categoriaActiva === null && <span>»</span>}
                 </button>
-                {categorias?.map((categoria, idx) => {
+                
+                {categorias?.map((categoria) => {
                   const isActive = categoriaActiva && Number(categoriaActiva.id) === Number(categoria.id)
-                  const icons = ['🔨', '🏠', '🚗', '⚙️', '🛠️']
-                  const icon = icons[idx % icons.length]
                   return (
                     <button
                       key={categoria.id}
                       onClick={() => setCategoriaActiva(categoria)}
-                      className={`w-full text-left px-5 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 transform ${
+                      className={`w-full text-left px-4 py-3 rounded-lg uppercase font-bold text-sm transition-all flex items-center justify-between border border-transparent ${
                         isActive
-                          ? 'bg-gradient-to-r from-[#002855] to-[#004080] text-white shadow-lg scale-105'
+                          ? 'bg-red-600 text-white shadow-[0_4px_15px_rgba(220,38,38,0.4)] translate-x-2'
                           : darkMode
-                          ? 'text-gray-300 hover:bg-gray-700 hover:text-white hover:translate-x-1'
-                          : 'text-gray-700 hover:bg-blue-50 hover:translate-x-1'
+                          ? 'text-gray-400 hover:bg-white/5 hover:border-white/10 hover:text-white'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-black'
                       }`}
-                      style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.3px' }}
                     >
-                      <span className="text-lg">{icon}</span>
-                      <span>{isActive ? '✓ ' : ''}{categoria.nombre}</span>
+                      <span>{categoria.nombre}</span>
+                      {isActive && <span>»</span>}
                     </button>
                   )
                 })}
@@ -151,120 +143,90 @@ function CatalogoPublico() {
             </div>
           </aside>
 
-          {/* Grid de Productos - Estilo PriceSmart */}
+          {/* GRID DE PRODUCTOS */}
           <main className="flex-1">
-            {/* Header de Productos */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className={`text-2xl font-black transition-colors duration-300 ${
-                    darkMode ? 'text-white' : 'text-[#002855]'
-                  }`} style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-1px' }}>
-                    {categoriaActiva ? `${categoriaActiva.nombre.toUpperCase()}` : 'TODOS LOS PRODUCTOS'}
-                  </h2>
-                  <p className={`text-sm mt-2 transition-colors duration-300 ${
-                    darkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
-                    Mostrando <span className="font-bold text-[#002855] text-lg">{productosFiltrados.length}</span> producto{productosFiltrados.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                <div className={`text-2xl font-black transition-colors duration-300 ${
-                  darkMode ? 'text-purple-400' : 'text-blue-200'
-                }`}>
-                  {productosFiltrados.length > 0 ? '✓' : '○'}
-                </div>
+            {/* Título de Resultados */}
+            <div className="mb-8 flex items-end justify-between border-b border-white/10 pb-4">
+              <div>
+                <h2 className="text-3xl font-black uppercase italic font-montserrat">
+                  {categoriaActiva ? categoriaActiva.nombre : 'CATÁLOGO COMPLETO'}
+                </h2>
+                <p className="text-sm mt-1 font-bold text-red-500">
+                  {productosFiltrados.length} RESULTADOS ENCONTRADOS
+                </p>
               </div>
             </div>
 
-            {/* Grid de Tarjetas - Espaciado Generoso */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-7">
-              {productosFiltrados?.map((producto) => (
+            {/* Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+              {productosFiltrados?.map((producto, index) => (
                 <div
                   key={producto.id}
-                  className={`group relative rounded-2xl overflow-hidden border-3 shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-3 cursor-pointer ${
-                    darkMode
-                      ? 'bg-gray-800 border-gray-700 hover:border-purple-500'
-                      : 'bg-white border-white hover:border-blue-300'
+                  className={`product-card animate-enter flex flex-col h-full ${
+                    darkMode ? 'glass-panel' : 'bg-white border-gray-200'
                   }`}
-                  style={{ fontFamily: 'Inter, Roboto, sans-serif' }}
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  {/* Badge NEW */}
-                  <div className="absolute top-4 right-4 z-10 bg-red-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg">
-                    📌 DISPONIBLE
+                  {/* Badge de Disponibilidad */}
+                  <div className="absolute top-4 right-4 z-10 bg-red-600 text-white px-3 py-1 text-xs font-black uppercase tracking-wider shadow-lg rounded-full border border-white/20">
+                    <div>DISPONIBLE</div>
                   </div>
 
-                  {/* Imagen con Overlay */}
-                  <div className="relative overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 aspect-square">
+                  {/* Imagen */}
+                  <div className="img-container aspect-square flex items-center justify-center">
                     {producto.imagen_url ? (
                       <img 
                         src={producto.imagen_url}
                         alt={producto.nombre}
-                        className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-500"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-5xl bg-gradient-to-br from-gray-100 to-gray-200">
-                        📷
-                      </div>
+                      <span className="text-6xl opacity-20">📷</span>
                     )}
-                    {/* Overlay oscuro en hover */}
-                    <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
                   </div>
 
-                  {/* Contenido - Más Espaciado */}
-                  <div className="p-6 flex flex-col h-full">
-                    {/* Nombre - Más Grande */}
-                    <h3 className={`font-black text-lg mb-3 line-clamp-2 transition-colors duration-300 ${
-                      darkMode ? 'text-white' : 'text-gray-900'
-                    }`} style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.5px' }}>
+                  {/* Detalles */}
+                  <div className="p-6 flex flex-col flex-grow">
+                    <h3 className="font-black text-xl mb-2 uppercase line-clamp-2 font-montserrat">
                       {producto.nombre}
                     </h3>
-
-                    {/* Descripción */}
-                    <p className={`text-sm mb-4 line-clamp-2 flex-grow transition-colors duration-300 ${
-                      darkMode ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
+                    
+                    <p className={`text-sm mb-6 line-clamp-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       {producto.descripcion}
                     </p>
 
-                    {/* Separador */}
-                    <div className={`my-4 border-t-2 transition-colors duration-300 ${
-                      darkMode ? 'border-gray-700' : 'border-gray-200'
-                    }`}></div>
+                    <div className="mt-auto">
+                      <div className={`mb-5 p-3 rounded-lg border-l-4 border-red-600 ${darkMode ? 'bg-black/40' : 'bg-gray-50'}`}>
+                        <span className="text-xs text-gray-500 font-bold uppercase tracking-wider block mb-1">PRECIO NETO</span>
+                        <span className="text-3xl font-black text-red-600 font-montserrat drop-shadow-[0_0_8px_rgba(230,0,0,0.3)]">
+                          L {Number(producto.precio).toFixed(2)}
+                        </span>
+                      </div>
 
-                    {/* Precio Destacado - GRANDE Y PROMINENTE */}
-                    <div className="mb-6">
-                      <p className="text-xs text-gray-500 mb-1 font-bold">PRECIO ESPECIAL</p>
-                      <p className="text-4xl font-black text-[#002855] leading-tight" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-1px' }}>
-                        L {Number(producto.precio).toFixed(2)}
-                      </p>
+                      {/* Botón WhatsApp modificado para Inversiones Rubi */}
+                      <a
+                        href={`https://wa.me/${numeroWhatsApp}?text=Hola Inversiones Rubi, me interesa el producto: *${producto.nombre}* - Precio: L${producto.precio}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-whatsapp w-full text-white font-black py-4 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        <span className="text-xl">💬</span>
+                        LO QUIERO
+                      </a>
                     </div>
-
-                    {/* Botón WhatsApp - DESTACADO */}
-                    <a
-                      href={`https://wa.me/${numeroWhatsApp}?text=Hola, me interesa el producto: *${producto.nombre}* - L${producto.precio}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full bg-gradient-to-r from-[#25D366] to-[#20a856] hover:from-[#20a856] hover:to-[#1a8c4a] text-white font-black py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 text-base shadow-lg hover:shadow-2xl transform hover:scale-105"
-                    >
-                      <span className="text-2xl">💬</span>
-                      <span>CONSULTAR</span>
-                    </a>
-
-                    {/* Stock Indicator */}
-                    <p className="text-xs text-green-600 mt-3 text-center font-bold">
-                      ✓ En Stock
-                    </p>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Mensaje si no hay productos */}
+            {/* Vacío */}
             {productosFiltrados.length === 0 && (
-              <div className="text-center py-12">
-                <p className={`text-xl transition-colors duration-300 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} style={{ fontFamily: 'Inter, Roboto, sans-serif' }}>
-                  No encontramos productos que coincidan con tu búsqueda.
-                </p>
+              <div className={`text-center py-20 border border-dashed rounded-xl ${
+                darkMode ? 'glass-panel border-white/20' : 'bg-white border-gray-300'
+              }`}>
+                <div className="text-6xl mb-4">💎</div>
+                <h3 className="text-2xl font-black uppercase font-montserrat">SIN RESULTADOS</h3>
+                <p className="text-gray-400 mt-2 font-bold">Intenta buscar otro producto o categoría.</p>
               </div>
             )}
           </main>
