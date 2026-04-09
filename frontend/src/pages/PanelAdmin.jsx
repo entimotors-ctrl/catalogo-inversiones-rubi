@@ -13,7 +13,7 @@ function PanelAdmin() {
   const [nombreProducto, setNombreProducto] = useState('')
   const [descripcionProducto, setDescripcionProducto] = useState('')
   const [precioProducto, setPrecioProducto] = useState('')
-  const [imagenUrl, setImagenUrl] = useState('')
+  const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
@@ -56,24 +56,32 @@ function PanelAdmin() {
   }
 
   const handleCrearProducto = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      await api.post('/productos', {
-        nombre: nombreProducto,
-        descripcion: descripcionProducto,
-        precio: parseFloat(precioProducto),
-        imagen_url: imagenUrl,
-        categoria_id: parseInt(categoriaId)
-      })
-      mostrarMensaje('¡Producto creado con éxito!', 'exito')
-      setNombreProducto('')
-      setDescripcionProducto('')
-      setPrecioProducto('')
-      setImagenUrl('')
-      setCategoriaId('')
-      cargarDatos()
+      // Usamos FormData para enviar texto + archivos
+      const formData = new FormData();
+      formData.append('nombre', nombreProducto);
+      formData.append('descripcion', descripcionProducto);
+      formData.append('precio', parseFloat(precioProducto));
+      formData.append('categoria_id', parseInt(categoriaId));
+      if (imagenArchivo) {
+        formData.append('imagen', imagenArchivo);
+      }
+
+      // IMPORTANTE: Tu backend debe tener configurado multer para recibir esto
+      await api.post('/productos', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      mostrarMensaje('¡Producto creado con éxito!', 'exito');
+      setNombreProducto('');
+      setDescripcionProducto('');
+      setPrecioProducto('');
+      setImagenArchivo(null); // Limpiamos el archivo
+      setCategoriaId('');
+      cargarDatos();
     } catch (error) {
-      mostrarMensaje('Error al crear el producto.', 'error')
+      mostrarMensaje('Error al crear el producto.', 'error');
     }
   }
 
@@ -206,16 +214,27 @@ function PanelAdmin() {
                     className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm"
                   />
                 </div>
+                
+                {/* AQUI ESTÁ EL NUEVO BOTÓN DE SUBIR FOTO */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">URL de Imagen</label>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Subir Foto del Producto</label>
                   <input
-                    type="url"
-                    value={imagenUrl}
-                    onChange={(e) => setImagenUrl(e.target.value)}
-                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm"
-                    placeholder="https://..."
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImagenArchivo(e.target.files[0])}
+                    className="w-full text-sm text-gray-400
+                      file:mr-4 file:py-3 file:px-4
+                      file:rounded-lg file:border-0
+                      file:text-sm file:font-black file:uppercase file:tracking-wider
+                      file:bg-red-600 file:text-white
+                      hover:file:bg-red-700
+                      cursor-pointer transition-all"
                   />
+                  {imagenArchivo && (
+                    <p className="mt-2 text-xs text-green-400 font-bold">✓ Archivo seleccionado: {imagenArchivo.name}</p>
+                  )}
                 </div>
+
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Descripción</label>
                   <textarea
