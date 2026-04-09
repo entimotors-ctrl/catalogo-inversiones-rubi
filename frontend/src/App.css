@@ -1,16 +1,18 @@
 /* ============================================
    IMPORTAR TIPOGRAFÍAS MODERNAS
    ============================================ */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,500;0,700;0,900;1,900&family=Roboto:wght@400;700;900&display=swap');
+/* Añadimos 'Dancing Script' para el estilo de firma/carta del Logo */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:ital,wght@0,300;0,500;0,700;0,900;1,900&family=Roboto:wght@400;700;900&display=swap');
 
 /* ============================================
-   VARIABLE GLOBALES
+   VARIABLES GLOBALES (PALETA RUBI/ZAFIRO/DORADO)
    ============================================ */
 :root {
-  --color-primary: #e60000;
-  --color-primary-dark: #990000;
+  --color-primary: #e11d48; /* rose-600 - Un rojo Rubí elegante */
+  --color-primary-dark: #be123c; /* rose-700 */
+  --color-accent: #f59e0b; /* amber-500 - Dorado para contraste */
   --color-dark: #121212;
-  --color-success: #25D366;
+  --color-success: #25D366; /* WhatsApp */
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -23,6 +25,7 @@
 body {
   font-family: 'Roboto', sans-serif;
   min-height: 100vh;
+  overflow-x: hidden; /* Evita scroll horizontal en celulares */
 }
 
 h1, h2, h3, .font-montserrat {
@@ -30,67 +33,72 @@ h1, h2, h3, .font-montserrat {
 }
 
 /* ============================================
-   EFECTO GLASSBLACK (CRISTAL OSCURO)
+   EFECTO GLASSBLACK (CRISTAL OSCURO ELEGANTE)
    ============================================ */
 .bg-glassblack-theme {
   background-color: #050505;
-  /* Fondo con luces de neón sutiles para que el cristal haga efecto */
+  /* Fondo con luces Rubí sutiles para el efecto cristal */
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(230, 0, 0, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(230, 0, 0, 0.05) 0%, transparent 40%);
+    radial-gradient(circle at 15% 25%, rgba(225, 29, 72, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.03) 0%, transparent 40%);
   background-attachment: fixed;
 }
 
 .glass-panel {
-  background: rgba(18, 18, 20, 0.55); /* Transparencia oscura */
-  backdrop-filter: blur(16px); /* El efecto cristal */
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.06); /* Borde brillante del cristal */
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  background: rgba(18, 18, 20, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* ============================================
-   HEADER STICKY
+   HEADER ELEGANTE
    ============================================ */
 .sticky-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 2px solid rgba(230, 0, 0, 0.5); /* Borde inferior rojo brillante */
+  /* Borde inferior sutil dorado/rubí */
+  border-bottom: 1px solid rgba(225, 29, 72, 0.3);
 }
 
 .search-input {
   transition: var(--transition);
   font-weight: 500;
-  background: rgba(0, 0, 0, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Modo oscuro para buscador */
+.bg-glassblack-theme .search-input {
+  background: rgba(0, 0, 0, 0.5) !important;
   color: white !important;
 }
 
-.search-input:focus {
-  box-shadow: 0 0 15px rgba(230, 0, 0, 0.3);
+.bg-glassblack-theme .search-input:focus {
+  box-shadow: 0 0 15px rgba(225, 29, 72, 0.2);
   border-color: var(--color-primary) !important;
   background: rgba(0, 0, 0, 0.8) !important;
 }
 
 /* ============================================
-   TARJETAS DE PRODUCTO GLASSBLACK
+   TARJETAS DE PRODUCTO (MODERNAS)
    ============================================ */
 .product-card {
   transition: var(--transition);
-  border-radius: 12px;
+  border-radius: 16px;
   position: relative;
   overflow: hidden;
 }
 
+/* Línea superior dorada/rubí animada */
 .product-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 3px;
-  background: var(--color-primary);
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.4s ease;
@@ -98,10 +106,13 @@ h1, h2, h3, .font-montserrat {
 }
 
 .product-card:hover {
-  transform: translateY(-8px);
-  background: rgba(25, 25, 28, 0.7);
-  border-color: rgba(230, 0, 0, 0.3);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(230, 0, 0, 0.1);
+  transform: translateY(-5px);
+}
+
+.bg-glassblack-theme .product-card:hover {
+  background: rgba(25, 25, 28, 0.8);
+  border-color: rgba(225, 29, 72, 0.4);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(225, 29, 72, 0.15);
 }
 
 .product-card:hover::before {
@@ -111,7 +122,10 @@ h1, h2, h3, .font-montserrat {
 .img-container {
   overflow: hidden;
   position: relative;
-  background: rgba(0, 0, 0, 0.3);
+}
+
+.bg-glassblack-theme .img-container {
+  background: rgba(0, 0, 0, 0.4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -120,14 +134,14 @@ h1, h2, h3, .font-montserrat {
 }
 
 .product-card:hover .img-container img {
-  transform: scale(1.1) rotate(-1deg);
+  transform: scale(1.08); /* Zoom más sutil y elegante, sin rotación */
 }
 
 /* ============================================
    BOTÓN WHATSAPP
    ============================================ */
 .btn-whatsapp {
-  background: linear-gradient(135deg, rgba(37, 211, 102, 0.9) 0%, rgba(29, 168, 81, 0.9) 100%);
+  background: linear-gradient(135deg, rgba(37, 211, 102, 0.95) 0%, rgba(18, 140, 65, 0.95) 100%);
   backdrop-filter: blur(5px);
   transition: var(--transition);
   position: relative;
@@ -154,35 +168,46 @@ h1, h2, h3, .font-montserrat {
 }
 
 .btn-whatsapp:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
 }
 
 /* ============================================
-   SCROLLBAR DEPORTIVO
+   UTILIDADES Y ANIMACIONES
    ============================================ */
-::-webkit-scrollbar {
-  width: 8px;
+
+/* Ocultar barra de scroll en carruseles para estilo App */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
-::-webkit-scrollbar-track {
-  background: #0a0a0a;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(230, 0, 0, 0.5);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
-/* ============================================
-   ANIMACIONES
-   ============================================ */
+/* Animación de entrada suave */
 @keyframes slideUpFade {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-enter {
-  animation: slideUpFade 0.6s ease-out forwards;
+  animation: slideUpFade 0.5s ease-out forwards;
+}
+
+/* ============================================
+   SCROLLBAR GENERAL DEL NAVEGADOR
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(225, 29, 72, 0.4);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }
