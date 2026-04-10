@@ -147,6 +147,47 @@ body {
 }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 
+.carousel-auto {
+  scroll-behavior: smooth;
+}
+
+.watermark-background {
+  position: relative;
+  overflow: hidden;
+}
+
+.watermark-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--watermark-image);
+  background-repeat: repeat;
+  background-position: center;
+  background-size: 18rem;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.watermark-background > * {
+  position: relative;
+  z-index: 1;
+}
+
+.loader-ring {
+  width: 4rem;
+  height: 4rem;
+  border: 6px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .destacados-watermark {
   position: relative;
   background-size: contain;
