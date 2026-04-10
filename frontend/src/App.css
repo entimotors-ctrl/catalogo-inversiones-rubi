@@ -1,18 +1,16 @@
 /* ============================================
    IMPORTAR TIPOGRAFÍAS MODERNAS
    ============================================ */
-/* Añadimos 'Dancing Script' para el estilo de firma/carta del Logo */
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:ital,wght@0,300;0,500;0,700;0,900;1,900&family=Roboto:wght@400;700;900&display=swap');
 
 /* ============================================
-   VARIABLES GLOBALES (PALETA RUBI/ZAFIRO/DORADO)
+   VARIABLES GLOBALES (PALETA RUBI/DORADO)
    ============================================ */
 :root {
-  --color-primary: #e11d48; /* rose-600 - Un rojo Rubí elegante */
+  --color-primary: #e11d48; /* rose-600 - Rubí Intenso */
   --color-primary-dark: #be123c; /* rose-700 */
-  --color-accent: #f59e0b; /* amber-500 - Dorado para contraste */
-  --color-dark: #121212;
-  --color-success: #25D366; /* WhatsApp */
+  --color-accent: #f59e0b; /* amber-500 - Dorado */
+  --color-dark: #050505;
   --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -25,189 +23,172 @@
 body {
   font-family: 'Roboto', sans-serif;
   min-height: 100vh;
-  overflow-x: hidden; /* Evita scroll horizontal en celulares */
+  overflow-x: hidden;
 }
 
-h1, h2, h3, .font-montserrat {
-  font-family: 'Montserrat', sans-serif;
+.font-montserrat { font-family: 'Montserrat', sans-serif; }
+.font-dancing { font-family: 'Dancing Script', cursive; }
+
+/* ============================================
+   ESTILOS DEL LOGO (APILADO)
+   ============================================ */
+.ruby-title {
+  letter-spacing: 1px;
+  line-height: 0.8;
+}
+
+/* Brillo del texto en modo oscuro */
+.bg-glassblack-theme .ruby-title {
+  background: linear-gradient(to right, #ffffff, #fde68a);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(225, 29, 72, 0.6);
+}
+
+/* Brillo del texto en modo claro */
+.bg-light-theme .ruby-title {
+  background: linear-gradient(to right, #be123c, #e11d48);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ============================================
-   EFECTO GLASSBLACK (CRISTAL OSCURO ELEGANTE)
+   TEMAS (OSCURO Y CLARO)
    ============================================ */
+
+/* MODO OSCURO (Glassblack) */
 .bg-glassblack-theme {
   background-color: #050505;
-  /* Fondo con luces Rubí sutiles para el efecto cristal */
   background-image: 
-    radial-gradient(circle at 15% 25%, rgba(225, 29, 72, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.03) 0%, transparent 40%);
+    radial-gradient(circle at 15% 25%, rgba(225, 29, 72, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.04) 0%, transparent 40%);
   background-attachment: fixed;
+  color: white;
 }
 
+/* MODO CLARO (Luxury Rose) - ¡Aquí está la mejora! */
+.bg-light-theme {
+  background-color: #fff1f2; /* Tono crema/rosa muy suave */
+  background-image: 
+    radial-gradient(circle at 15% 25%, rgba(225, 29, 72, 0.04) 0%, transparent 50%);
+  background-attachment: fixed;
+  color: #1e293b;
+}
+
+/* Paneles */
 .glass-panel {
-  background: rgba(18, 18, 20, 0.65);
+  background: rgba(18, 18, 20, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+}
+
+.light-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(225, 29, 72, 0.15);
+  box-shadow: 0 8px 32px rgba(225, 29, 72, 0.05);
 }
 
 /* ============================================
-   HEADER ELEGANTE
+   HEADER Y BUSCADOR
    ============================================ */
 .sticky-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  /* Borde inferior sutil dorado/rubí */
-  border-bottom: 1px solid rgba(225, 29, 72, 0.3);
 }
+
+.bg-glassblack-theme .sticky-header { border-bottom: 1px solid rgba(225, 29, 72, 0.3); }
+.bg-light-theme .sticky-header { border-bottom: 1px solid rgba(225, 29, 72, 0.1); }
 
 .search-input {
   transition: var(--transition);
-  font-weight: 500;
 }
 
-/* Modo oscuro para buscador */
 .bg-glassblack-theme .search-input {
   background: rgba(0, 0, 0, 0.5) !important;
   color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.bg-glassblack-theme .search-input:focus {
-  box-shadow: 0 0 15px rgba(225, 29, 72, 0.2);
-  border-color: var(--color-primary) !important;
-  background: rgba(0, 0, 0, 0.8) !important;
+.bg-light-theme .search-input {
+  background: white !important;
+  color: #1e293b !important;
+  border: 1px solid rgba(225, 29, 72, 0.2);
 }
 
 /* ============================================
-   TARJETAS DE PRODUCTO (MODERNAS)
+   TARJETAS Y CARRUSELES
    ============================================ */
 .product-card {
   transition: var(--transition);
-  border-radius: 16px;
-  position: relative;
+  border-radius: 20px;
   overflow: hidden;
 }
 
-/* Línea superior dorada/rubí animada */
-.product-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.4s ease;
-  z-index: 10;
-}
-
-.product-card:hover {
-  transform: translateY(-5px);
-}
-
-.bg-glassblack-theme .product-card:hover {
-  background: rgba(25, 25, 28, 0.8);
-  border-color: rgba(225, 29, 72, 0.4);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(225, 29, 72, 0.15);
-}
-
-.product-card:hover::before {
-  transform: scaleX(1);
-}
+.product-card:hover { transform: translateY(-8px); }
 
 .img-container {
   overflow: hidden;
+  background: white;
+}
+
+.img-container img { transition: transform 0.6s ease; }
+.product-card:hover .img-container img { transform: scale(1.1); }
+
+/* Scrollbar oculto para carruseles */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+.destacados-watermark {
   position: relative;
+  background-size: contain;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
-.bg-glassblack-theme .img-container {
-  background: rgba(0, 0, 0, 0.4);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+.destacados-watermark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.15), transparent 35%);
+  opacity: 0.55;
+  pointer-events: none;
 }
 
-.img-container img {
-  transition: transform 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.product-card:hover .img-container img {
-  transform: scale(1.08); /* Zoom más sutil y elegante, sin rotación */
+.destacados-watermark > .max-w-7xl {
+  position: relative;
+  z-index: 1;
 }
 
 /* ============================================
-   BOTÓN WHATSAPP
+   BOTÓN WHATSAPP PREMIUM
    ============================================ */
 .btn-whatsapp {
-  background: linear-gradient(135deg, rgba(37, 211, 102, 0.95) 0%, rgba(18, 140, 65, 0.95) 100%);
-  backdrop-filter: blur(5px);
+  background: linear-gradient(135deg, #25D366 0%, #128C41 100%);
   transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-whatsapp::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -60%;
-  width: 20%;
-  height: 200%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: rotate(30deg);
-  transition: transform 0.6s ease;
-}
-
-.btn-whatsapp:hover::after {
-  transform: translateX(300%) rotate(30deg);
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
 }
 
 .btn-whatsapp:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+  transform: scale(1.02);
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
 }
 
 /* ============================================
-   UTILIDADES Y ANIMACIONES
+   SCROLLBAR DEL NAVEGADOR
    ============================================ */
-
-/* Ocultar barra de scroll en carruseles para estilo App */
-.hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
-}
-.hide-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
-}
-
-/* Animación de entrada suave */
-@keyframes slideUpFade {
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-enter {
-  animation: slideUpFade 0.5s ease-out forwards;
-}
-
-/* ============================================
-   SCROLLBAR GENERAL DEL NAVEGADOR
-   ============================================ */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #050505;
-}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #050505; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(225, 29, 72, 0.4);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
+  border-radius: 10px;
 }

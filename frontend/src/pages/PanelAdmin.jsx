@@ -119,16 +119,19 @@ function PanelAdmin() {
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* CABECERA DEL PANEL */}
-        <div className="glass-panel p-8 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6 border-l-4 border-l-red-600">
-          <div>
-            <h1 className="text-3xl font-black uppercase font-montserrat tracking-tight">
-              Panel de <span className="text-red-600">Control</span>
-            </h1>
-            <p className="text-gray-400 font-bold tracking-widest text-sm mt-1">INVERSIONES RUBI - SISTEMA DE GESTIÓN</p>
+        <div className="glass-panel p-8 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6 border-l-4 border-l-rose-600">
+          <div className="flex items-center gap-4">
+            <div className="text-4xl text-rose-600 drop-shadow-[0_0_20px_rgba(225,29,72,0.8)]">🌹</div>
+            <div>
+              <h1 className="text-3xl font-black uppercase font-montserrat tracking-tight ruby-title">
+                Panel de <span className="text-rose-600">Control</span>
+              </h1>
+              <p className="text-gray-400 font-bold tracking-widest text-sm mt-1">INVERSIONES RUBI - SISTEMA DE GESTIÓN</p>
+            </div>
           </div>
           <button 
             onClick={handleLogout}
-            className="px-6 py-3 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white border border-red-600/50 rounded-xl font-bold transition-all uppercase tracking-wider text-sm shadow-[0_0_15px_rgba(220,38,38,0.2)] hover:shadow-[0_0_20px_rgba(220,38,38,0.6)]"
+            className="px-6 py-3 bg-rose-600/20 hover:bg-rose-600 text-rose-500 hover:text-white border border-rose-600/50 rounded-xl font-bold transition-all uppercase tracking-wider text-sm shadow-[0_0_15px_rgba(225,29,72,0.2)] hover:shadow-[0_0_20px_rgba(225,29,72,0.6)]"
           >
             Cerrar Sesión ✕
           </button>
@@ -138,7 +141,7 @@ function PanelAdmin() {
         {mensaje.texto && (
           <div className={`p-4 rounded-xl font-bold uppercase tracking-wider text-sm animate-enter border ${
             mensaje.tipo === 'error' 
-              ? 'bg-red-900/50 border-red-500 text-red-200' 
+              ? 'bg-rose-900/50 border-rose-500 text-rose-200' 
               : 'bg-green-900/50 border-green-500 text-green-200'
           }`}>
             {mensaje.tipo === 'error' ? '⚠️ ' : '✅ '} {mensaje.texto}
@@ -153,7 +156,7 @@ function PanelAdmin() {
             {/* FORMULARIO DE CATEGORÍAS */}
             <div className="glass-panel p-6 rounded-2xl border-t border-white/10">
               <h2 className="text-xl font-black uppercase font-montserrat mb-6 flex items-center gap-2">
-                <span className="text-red-600">📁</span> Nueva Categoría
+                <span className="text-rose-600">📁</span> Nueva Categoría
               </h2>
               <form onSubmit={handleCrearCategoria} className="space-y-4">
                 <div>
@@ -176,7 +179,7 @@ function PanelAdmin() {
             {/* FORMULARIO DE PRODUCTOS */}
             <div className="glass-panel p-6 rounded-2xl border-t border-white/10">
               <h2 className="text-xl font-black uppercase font-montserrat mb-6 flex items-center gap-2">
-                <span className="text-red-600">📦</span> Nuevo Producto
+                <span className="text-rose-600">📦</span> Nuevo Producto
               </h2>
               <form onSubmit={handleCrearProducto} className="space-y-4">
                 <div>
@@ -226,8 +229,8 @@ function PanelAdmin() {
                       file:mr-4 file:py-3 file:px-4
                       file:rounded-lg file:border-0
                       file:text-sm file:font-black file:uppercase file:tracking-wider
-                      file:bg-red-600 file:text-white
-                      hover:file:bg-red-700
+                      file:bg-rose-600 file:text-white
+                      hover:file:bg-rose-700
                       cursor-pointer transition-all"
                   />
                   {imagenArchivo && (
@@ -270,7 +273,7 @@ function PanelAdmin() {
                       <tr key={cat.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                         <td className="px-4 py-4 font-bold">{cat.nombre}</td>
                         <td className="px-4 py-4 text-right">
-                          <button onClick={() => handleEliminarCategoria(cat.id)} className="text-red-500 hover:text-red-400 font-bold uppercase text-xs tracking-wider">
+                          <button onClick={() => handleEliminarCategoria(cat.id)} className="text-rose-500 hover:text-rose-400 font-bold uppercase text-xs tracking-wider">
                             Eliminar ✕
                           </button>
                         </td>
@@ -309,10 +312,10 @@ function PanelAdmin() {
                               <span className="font-bold line-clamp-1">{prod.nombre}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-4 font-black text-red-500 font-montserrat">L {Number(prod.precio).toFixed(2)}</td>
+                          <td className="px-4 py-4 font-black text-rose-500 font-montserrat">L {Number(prod.precio).toFixed(2)}</td>
                           <td className="px-4 py-4 text-gray-400">{cat ? cat.nombre : 'N/A'}</td>
                           <td className="px-4 py-4 text-right">
-                            <button onClick={() => handleEliminarProducto(prod.id)} className="text-red-500 hover:text-red-400 font-bold uppercase text-xs tracking-wider">
+                            <button onClick={() => handleEliminarProducto(prod.id)} className="text-rose-500 hover:text-rose-400 font-bold uppercase text-xs tracking-wider">
                               Borrar ✕
                             </button>
                           </td>
