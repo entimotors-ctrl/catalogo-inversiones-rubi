@@ -235,21 +235,6 @@ function CatalogoPublico() {
                   </div>
                 ))}
               </div>
-
-              <div className="mt-8">
-                <h3 className={`text-sm font-black tracking-widest uppercase mb-4 font-montserrat flex items-center gap-2 ${darkMode ? 'text-amber-300' : 'text-rose-600'}`}>
-                  <span>🚀</span> Explora por categorías
-                </h3>
-                <div className="carousel-auto overflow-x-auto hide-scrollbar flex gap-4 pb-2">
-                  {productosPorCategoria.filter(cat => cat.productos.length > 0).map((categoria) => (
-                    <div key={`cat-${categoria.id}`} className={`flex-shrink-0 w-72 p-5 rounded-3xl border ${darkMode ? 'glass-panel border-white/10' : 'light-panel border-rose-200'}`}>
-                      <div className="mb-3 text-xs uppercase tracking-[0.3em] text-rose-500 font-black font-montserrat">{categoria.productos.length} productos</div>
-                      <h4 className={`text-xl font-black mb-2 ${darkMode ? 'text-white' : 'text-slate-900'}`}>{categoria.nombre}</h4>
-                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-slate-600'}`}>{categoria.productos.slice(0, 2).map(p => p.nombre).join(' · ') || 'Sin productos aún'}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </section>
         )}

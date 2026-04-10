@@ -16,7 +16,26 @@ const app = express();
 
 // 4. Configurar Middlewares (intermediarios)
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'https://inversiones-rubi-web.onrender.com'],
+  origin: function(origin, callback) {
+    // Permitir requests sin origin (móviles nativos) y localhost en desarrollo
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'http://localhost:5176',
+      'http://localhost:5177',
+      'https://inversiones-rubi-web.onrender.com'
+    ];
+    
+    // En desarrollo, permitir cualquier origen local (para celulares en la misma red)
+    if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1') || /192\.168\.|10\.|172\.1[6-9]\.|172\.2[0-9]\.|172\.3[0-1]\./.test(origin)) {
+      callback(null, true);
+    } else if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
