@@ -1,22 +1,11 @@
-import axios from 'axios'
-
-// Forzamos la URL de producción de Render para evitar errores en móviles
-const apiBaseURL = 'https://inversiones-rubi-web.onrender.com/api'
+import axios from 'axios';
 
 const api = axios.create({
-  baseURL: apiBaseURL,
+  // Reemplaza esto con tu URL real de Render que aparece en tu captura
+  baseURL: 'https://inversiones-rubi-web.onrender.com/api', 
   headers: {
-    'Content-Type': 'application/json',
-  },
-})
-
-// Interceptor para depuración (opcional, ayuda a ver errores en consola)
-api.interceptors.response.use(
-  response => response,
-  error => {
-    console.error('Error en la llamada API:', error.response?.status, error.message);
-    return Promise.reject(error);
+    'Content-Type': 'application/json'
   }
-);
+});
 
-export default api
+export default api;
