@@ -30,6 +30,34 @@ body {
 .font-dancing { font-family: 'Dancing Script', cursive; }
 
 /* ============================================
+   NUEVO: MARCA DE AGUA FLOTANTE (WATERMARK)
+   ============================================ */
+.watermark-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.watermark-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  max-width: 500px;
+  opacity: 0.04; /* Ajusta aquí la transparencia */
+  filter: grayscale(1) brightness(1.5);
+  animation: float-watermark 20s ease-in-out infinite;
+}
+
+@keyframes float-watermark {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -55%) scale(1.05); }
+}
+
+/* ============================================
    ESTILOS DEL LOGO (APILADO)
    ============================================ */
 .ruby-title {
@@ -37,7 +65,6 @@ body {
   line-height: 0.8;
 }
 
-/* Brillo del texto en modo oscuro */
 .bg-glassblack-theme .ruby-title {
   background: linear-gradient(to right, #ffffff, #fde68a);
   background-clip: text;
@@ -46,7 +73,6 @@ body {
   text-shadow: 0 0 15px rgba(225, 29, 72, 0.6);
 }
 
-/* Brillo del texto en modo claro */
 .bg-light-theme .ruby-title {
   background: linear-gradient(to right, #be123c, #e11d48);
   background-clip: text;
@@ -57,8 +83,6 @@ body {
 /* ============================================
    TEMAS (OSCURO Y CLARO)
    ============================================ */
-
-/* MODO OSCURO (Glassblack) */
 .bg-glassblack-theme {
   background-color: #050505;
   background-image: 
@@ -68,16 +92,14 @@ body {
   color: white;
 }
 
-/* MODO CLARO (Luxury Rose) - ¡Aquí está la mejora! */
 .bg-light-theme {
-  background-color: #fff1f2; /* Tono crema/rosa muy suave */
+  background-color: #fff1f2;
   background-image: 
     radial-gradient(circle at 15% 25%, rgba(225, 29, 72, 0.04) 0%, transparent 50%);
   background-attachment: fixed;
   color: #1e293b;
 }
 
-/* Paneles */
 .glass-panel {
   background: rgba(18, 18, 20, 0.7);
   backdrop-filter: blur(20px);
@@ -94,35 +116,25 @@ body {
 }
 
 /* ============================================
-   HEADER Y BUSCADOR
+   CARRUSEL AUTOMÁTICO (NUEVO)
    ============================================ */
-.sticky-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
+.carousel-track {
+  display: flex;
+  width: max-content;
+  animation: scroll-carousel 30s linear infinite;
 }
 
-.bg-glassblack-theme .sticky-header { border-bottom: 1px solid rgba(225, 29, 72, 0.3); }
-.bg-light-theme .sticky-header { border-bottom: 1px solid rgba(225, 29, 72, 0.1); }
-
-.search-input {
-  transition: var(--transition);
+.carousel-track:hover {
+  animation-play-state: paused;
 }
 
-.bg-glassblack-theme .search-input {
-  background: rgba(0, 0, 0, 0.5) !important;
-  color: white !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.bg-light-theme .search-input {
-  background: white !important;
-  color: #1e293b !important;
-  border: 1px solid rgba(225, 29, 72, 0.2);
+@keyframes scroll-carousel {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); } /* Requiere duplicar items en el JS */
 }
 
 /* ============================================
-   TARJETAS Y CARRUSELES
+   TARJETAS Y BUSCADOR
    ============================================ */
 .product-card {
   transition: var(--transition);
@@ -140,93 +152,38 @@ body {
 .img-container img { transition: transform 0.6s ease; }
 .product-card:hover .img-container img { transform: scale(1.1); }
 
-/* Scrollbar oculto para carruseles */
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 
-.carousel-auto {
-  scroll-behavior: smooth;
+/* ============================================
+   NUEVO: LOADER RUBÍ
+   ============================================ */
+.loader-rubi {
+  width: 50px;
+  height: 50px;
+  background-color: var(--color-primary);
+  transform: rotate(45deg);
+  animation: rubi-pulse 1.2s infinite ease-in-out;
+  box-shadow: 0 0 20px rgba(225, 29, 72, 0.5);
 }
 
-.watermark-background {
-  position: relative;
-  overflow: hidden;
-}
-
-.watermark-background::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: var(--watermark-image);
-  background-repeat: repeat;
-  background-position: center;
-  background-size: 18rem;
-  opacity: 0.06;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.watermark-background > * {
-  position: relative;
-  z-index: 1;
-}
-
-.loader-ring {
-  width: 4rem;
-  height: 4rem;
-  border: 6px solid rgba(255, 255, 255, 0.15);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.destacados-watermark {
-  position: relative;
-  background-size: contain;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-}
-
-.destacados-watermark::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.15), transparent 35%);
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.destacados-watermark > .max-w-7xl {
-  position: relative;
-  z-index: 1;
+@keyframes rubi-pulse {
+  0% { transform: rotate(45deg) scale(0.8); opacity: 0.7; }
+  50% { transform: rotate(45deg) scale(1.1); opacity: 1; }
+  100% { transform: rotate(45deg) scale(0.8); opacity: 0.7; }
 }
 
 /* ============================================
-   BOTÓN WHATSAPP PREMIUM
+   BOTÓN WHATSAPP Y SCROLLBAR
    ============================================ */
 .btn-whatsapp {
   background: linear-gradient(135deg, #25D366 0%, #128C41 100%);
   transition: var(--transition);
-  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
 }
 
-.btn-whatsapp:hover {
-  transform: scale(1.02);
-  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
-}
-
-/* ============================================
-   SCROLLBAR DEL NAVEGADOR
-   ============================================ */
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: #050505; }
 ::-webkit-scrollbar-thumb {

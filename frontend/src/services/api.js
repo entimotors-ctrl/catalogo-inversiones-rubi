@@ -1,25 +1,7 @@
 import axios from 'axios'
 
-// Determina dinámicamente la URL del API
-let apiBaseURL = import.meta.env.VITE_API_BASE_URL
-
-if (!apiBaseURL) {
-  const protocol = window.location.protocol
-  const hostname = window.location.hostname
-  
-  // Si estamos en Render (dominio .onrender.com), usa la misma URL
-  if (hostname.includes('onrender.com')) {
-    apiBaseURL = `${protocol}//${hostname}/api`
-  } 
-  // Si estamos en localhost, usa localhost:3000
-  else if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    apiBaseURL = `${protocol}//localhost:3000/api`
-  }
-  // Si es otra IP (como en la red local), usa esa IP con puerto 3000
-  else {
-    apiBaseURL = `${protocol}//${hostname}:3000/api`
-  }
-}
+// Forzamos la URL de producción de Render para evitar errores en móviles
+const apiBaseURL = 'https://inversiones-rubi-web.onrender.com/api'
 
 const api = axios.create({
   baseURL: apiBaseURL,
@@ -27,5 +9,14 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+// Interceptor para depuración (opcional, ayuda a ver errores en consola)
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('Error en la llamada API:', error.response?.status, error.message);
+    return Promise.reject(error);
+  }
+);
 
 export default api
