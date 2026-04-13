@@ -1,26 +1,38 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Configuración explícita en lugar de connectionString para mejor manejo de caracteres especiales
 const pool = new Pool({
   host: 'aws-1-us-east-2.pooler.supabase.com',
   port: 6543,
   database: 'postgres',
   user: 'postgres.mrnoglxbkzcrxqracpon',
-  password: 'Inversionesrubi',
+  // OJO: Es mejor que pases esta contraseña al .env más adelante por seguridad ;)
+  password: 'Inversionesrubi', 
   ssl: { rejectUnauthorized: false },
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 30000,
-  max: 20
+  
+  // --- OPTIMIZACIONES PARA RENDER Y SUPABASE ---
+  
+  // 1. Reducimos el máximo de conexiones. Node es rápido, 5 es más que suficiente 
+  // para evitar el cuello de botella en Supabase.
+  max: 5, 
+  
+  // 2. Cerramos conexiones inactivas más rápido para liberar espacio.
+  idleTimeoutMillis: 10000, 
+  
+  // 3. Si falla, que falle rápido y no deje la pantalla cargando 1 minuto.
+  connectionTimeoutMillis: 5000, 
+  
+  // 4. ¡LA MAGIA! Evita que los balanceadores de Render corten la conexión de golpe.
+  keepAlive: true 
 });
 
-// Manejar errores del pool
-pool.on('error', (err) => {
-  console.error('❌ Error en el pool de conexiones:', err);
+// Manejo de errores para que el servidor no se caiga si hay un micro-corte
+pool.on('error', (err, client) => {
+  console.error('❌ Error inesperado en el cliente de base de datos:', err.message);
 });
 
 pool.on('connect', () => {
-  console.log('📡 Conexión establecida con Supabase');
+  console.log('📡 Conexión optimizada establecida con Supabase');
 });
 
 module.exports = pool;
