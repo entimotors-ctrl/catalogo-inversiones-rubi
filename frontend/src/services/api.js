@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // Reemplaza esto con tu URL real de Render que aparece en tu captura
-  baseURL: 'https://inversiones-rubi-web.onrender.com/api', 
+  // ¡ESTA ES LA CLAVE! Debe apuntar al backend, no al frontend.
+  baseURL: 'https://catalogo-inversiones-rubi.onrender.com/api', 
   headers: {
     'Content-Type': 'application/json'
   }

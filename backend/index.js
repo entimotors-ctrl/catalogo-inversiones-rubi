@@ -5,7 +5,6 @@ const pool = require('./db');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 
-// 1. Inicializar Supabase (Variables según tu captura de Render)
 const supabase = createClient(
     process.env.SUPABASE_URL, 
     process.env.SUPABASE_KEY
@@ -14,6 +13,7 @@ const supabase = createClient(
 const upload = multer({ storage: multer.memoryStorage() });
 const app = express();
 
+// Permite que tu frontend (inversiones-rubi-web) hable con este backend
 app.use(cors({
   origin: '*', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -22,46 +22,59 @@ app.use(cors({
 
 app.use(express.json());
 
-// --- RUTAS DE CONSULTA (GET) ---
-
+// --- RUTAS ---
 app.get('/', (req, res) => {
-    res.send('¡Servidor de Inversiones Rubi activo!');
+    res.send('Backend activo. Ve a /api/productos para ver datos.');
 });
 
+// Obtener productos
 app.get('/api/productos', async (req, res) => {
     try {
-        const resDB = await pool.query(`
+        const result = await pool.query(`
             SELECT p.*, c.nombre AS categoria_nombre 
             FROM productos p 
             LEFT JOIN categorias c ON p.categoria_id = c.id 
             ORDER BY p.id DESC
         `);
-        res.json(resDB.rows);
+        res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error(err);
+        res.status(500).json({ error: "Error al cargar productos" });
     }
 });
 
+// Obtener categorías
 app.get('/api/categorias', async (req, res) => {
     try {
-        const resDB = await pool.query("SELECT * FROM categorias ORDER BY nombre ASC");
-        res.json(resDB.rows);
+        const result = await pool.query("SELECT * FROM categorias ORDER BY nombre ASC");
+        res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error(err);
+        res.status(500).json({ error: "Error al cargar categorías" });
     }
 });
 
-// --- RUTA CRÍTICA: SUBIDA DE PRODUCTOS CON IMAGEN ---
-// Esta es la que probablemente te está dando el error 404 al intentar usar el panel
+// Crear categoría
+app.post('/api/categorias', async (req, res) => {
+    try {
+        const { nombre } = req.body;
+        const result = await pool.query("INSERT INTO categorias (nombre) VALUES ($1) RETURNING *", [nombre]);
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: "Error al crear categoría" });
+    }
+});
+
+// Subir producto con imagen
 app.post('/api/productos', upload.single('imagen'), async (req, res) => {
     try {
         const { nombre, descripcion, precio, categoria_id } = req.body;
         let imagen_url = null;
 
         if (req.file) {
-            const fileName = `${Date.now()}_${req.file.originalname}`;
-            const { data, error } = await supabase.storage
-                .from('productos') // Asegúrate que tu bucket en Supabase se llame 'productos'
+            const fileName = `${Date.now()}_${req.file.originalname.replace(/\s+/g, '_')}`;
+            const { error } = await supabase.storage
+                .from('productos') 
                 .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
 
             if (error) throw error;
@@ -73,29 +86,14 @@ app.post('/api/productos', upload.single('imagen'), async (req, res) => {
             imagen_url = publicUrl.publicUrl;
         }
 
-        const nuevoProducto = await pool.query(
+        const result = await pool.query(
             "INSERT INTO productos (nombre, descripcion, precio, categoria_id, imagen_url) VALUES ($1, $2, $3, $4, $5) RETURNING *",
             [nombre, descripcion, precio, categoria_id, imagen_url]
         );
-
-        res.json(nuevoProducto.rows[0]);
+        res.json(result.rows[0]);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Error al guardar producto" });
-    }
-});
-
-// --- RUTA PARA CREAR CATEGORÍAS ---
-app.post('/api/categorias', async (req, res) => {
-    try {
-        const { nombre } = req.body;
-        const nuevaCat = await pool.query(
-            "INSERT INTO categorias (nombre) VALUES ($1) RETURNING *", 
-            [nombre]
-        );
-        res.json(nuevaCat.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: "Error al crear categoría" });
     }
 });
 
