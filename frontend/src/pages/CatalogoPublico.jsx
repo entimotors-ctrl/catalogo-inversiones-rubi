@@ -10,10 +10,19 @@ function CatalogoPublico() {
   const [darkMode, setDarkMode] = useState(true)
   const [productosDestacados, setProductosDestacados] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [showScrollTop, setShowScrollTop] = useState(false)
   
-  // Número de WhatsApp actualizado
+  // Número de WhatsApp actualizado según tu solicitud
   const numeroWhatsApp = '50497432867' 
+
+  // Control del botón "Volver Arriba" al hacer scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -31,11 +40,10 @@ function CatalogoPublico() {
           ? prodRes.data.filter(p => p.destacado)
           : [...prodRes.data].sort(() => 0.5 - Math.random()).slice(0, 6);
         
+        // Triple carga para asegurar que el carrusel infinito no tenga cortes
         setProductosDestacados([...destacadosBase, ...destacadosBase, ...destacadosBase]); 
-        setError(null);
       } catch (err) {
         console.error("Error al conectar:", err);
-        setError("Error de conexión");
       } finally {
         setLoading(false);
       }
@@ -53,7 +61,7 @@ function CatalogoPublico() {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center ${darkMode ? 'bg-zinc-950' : 'bg-white'}`}>
         <div className="w-16 h-16 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-rose-600 font-black tracking-widest animate-pulse uppercase">Inversiones Rubi</p>
+        <p className="text-rose-600 font-black tracking-widest animate-pulse uppercase italic">Inversiones Rubi</p>
       </div>
     );
   }
@@ -61,10 +69,11 @@ function CatalogoPublico() {
   return (
     <div className={`min-h-screen transition-colors duration-500 overflow-x-hidden ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
       
+      {/* ESTILOS INTERNOS: CARRUSEL Y ANIMACIONES */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes scroll {
           0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          100% { transform: translateX(-33.33%); }
         }
         .animate-infinite-scroll {
           display: flex;
@@ -79,6 +88,7 @@ function CatalogoPublico() {
         }
       `}} />
 
+      {/* MARCA DE AGUA */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] flex items-center justify-center overflow-hidden">
         <img src={watermarkLogo} className="w-[80%] max-w-2xl rotate-12" alt="" />
       </div>
@@ -111,6 +121,7 @@ function CatalogoPublico() {
 
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
         
+        {/* CARRUSEL DE DESTACADOS */}
         {!searchTerm && !categoriaActiva && (
           <section className="mb-12 overflow-hidden">
              <h2 className="text-xs font-black tracking-widest uppercase mb-6 text-rose-600 flex items-center gap-2">
@@ -139,45 +150,46 @@ function CatalogoPublico() {
           </section>
         )}
 
-        {/* SELECTOR DE CATEGORÍAS TIPO PESTAÑA DESPLEGABLE */}
-        <div className="mb-10 flex flex-col items-center">
-          <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Filtrar por categoría</label>
-          <div className="relative w-full max-w-xs">
+        {/* SELECTOR DE CATEGORÍAS TIPO DESPLEGABLE (ACTUALIZADO) */}
+        <div className="mb-12 flex flex-col items-center">
+          <label className="text-[10px] font-black uppercase tracking-widest text-rose-600 mb-3 bg-rose-600/10 px-4 py-1 rounded-full">Explorar Categorías</label>
+          <div className="relative w-full max-w-sm">
             <select
               onChange={(e) => {
                 const selected = categorias.find(c => c.id === Number(e.target.value));
                 setCategoriaActiva(selected || null);
               }}
               value={categoriaActiva?.id || ""}
-              className={`w-full appearance-none px-6 py-3 rounded-2xl font-black uppercase text-sm border-2 outline-none transition-all cursor-pointer ${
+              className={`w-full appearance-none px-6 py-4 rounded-2xl font-black uppercase text-sm border-2 outline-none transition-all cursor-pointer ${
                 darkMode 
-                ? 'bg-zinc-900 border-white/5 text-white focus:border-rose-600' 
-                : 'bg-white border-gray-200 text-zinc-900 focus:border-rose-600 shadow-sm'
+                ? 'bg-zinc-900 border-white/5 text-white focus:border-rose-600 shadow-xl shadow-black/40' 
+                : 'bg-white border-gray-200 text-zinc-900 focus:border-rose-600 shadow-lg'
               }`}
             >
-              <option value="">🏁 TODAS LAS CATEGORÍAS</option>
+              <option value="">🏁 MOSTRAR TODO EL INVENTARIO</option>
               {categorias.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.nombre}</option>
               ))}
             </select>
-            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-rose-600">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
+            <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none text-rose-600">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M19 9l-7 7-7-7"></path></svg>
             </div>
           </div>
         </div>
 
+        {/* GRILLA DE PRODUCTOS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {productosFiltrados.map((p) => (
-            <div key={p.id} className={`group flex flex-col h-full rounded-3xl overflow-hidden border transition-all hover:translate-y-[-5px] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/50' : 'bg-white border-zinc-200 hover:border-rose-600/50 shadow-md'}`}>
+            <div key={p.id} className={`group flex flex-col h-full rounded-3xl overflow-hidden border transition-all hover:translate-y-[-8px] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/50' : 'bg-white border-zinc-200 hover:border-rose-600/50 shadow-md'}`}>
               <div className="aspect-square relative overflow-hidden bg-white">
-                <span className="absolute top-3 right-3 z-10 bg-green-600 text-white text-[10px] px-2 py-1 rounded-full font-black shadow-lg uppercase">En Stock</span>
-                <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+                <span className="absolute top-3 right-3 z-10 bg-green-600 text-white text-[10px] px-3 py-1 rounded-full font-black shadow-lg uppercase tracking-tighter">Disponible</span>
+                <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-700" />
               </div>
               <div className="p-6 flex flex-col flex-grow">
-                <h3 className="font-black text-lg uppercase mb-1 leading-tight tracking-tight">{p.nombre}</h3>
-                <p className={`text-xs mb-5 line-clamp-2 font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{p.descripcion}</p>
+                <h3 className="font-black text-lg uppercase mb-2 leading-tight tracking-tight">{p.nombre}</h3>
+                <p className={`text-xs mb-6 line-clamp-2 font-medium leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{p.descripcion}</p>
                 <div className="mt-auto">
-                   <div className="bg-rose-600/10 p-3 rounded-2xl border-l-4 border-rose-600 mb-5">
+                   <div className="bg-rose-600/10 p-4 rounded-2xl border-l-4 border-rose-600 mb-5 group-hover:bg-rose-600/20 transition-colors">
                       <p className="text-[10px] font-bold text-rose-600 uppercase mb-1 opacity-70">Precio Catálogo</p>
                       <span className="text-xl font-black text-rose-600">L {p.precio}</span>
                    </div>
@@ -185,7 +197,7 @@ function CatalogoPublico() {
                       target="_blank" rel="noopener noreferrer" 
                       className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20 active:scale-95">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.539 2.016 2.126-.54c1.029.563 2.028.913 3.162.914.004 0 .007 0 .011 0 3.181 0 5.767-2.586 5.768-5.766 0-3.18-2.586-5.765-5.766-5.765-1.542 0-2.993.6-4.086 1.693-1.092 1.092-1.693 2.544-1.693 4.085 0 1.258.38 2.155.938 3.109l-.53 1.986 2.115-.537c.974.526 1.916.85 2.992.85h.01c2.81 0 5.097-2.287 5.098-5.097 0-2.81-2.287-5.097-5.098-5.097zM20.52 3.449c-2.274-2.273-5.297-3.524-8.513-3.525-6.632 0-12.03 5.398-12.033 12.031 0 2.12.553 4.189 1.601 6.005l-1.703 6.22 6.363-1.669c1.758.959 3.743 1.465 5.763 1.466h.005c6.633 0 12.032-5.398 12.035-12.032.001-3.212-1.249-6.233-3.524-8.508z" /></svg>
-                      COTIZAR POR WHATSAPP
+                      CONSULTAR PRECIO
                    </a>
                 </div>
               </div>
@@ -193,6 +205,19 @@ function CatalogoPublico() {
           ))}
         </div>
       </main>
+
+      {/* BOTÓN FLOTANTE VOLVER ARRIBA */}
+      {showScrollTop && (
+        <button 
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-8 right-8 p-4 bg-rose-600 text-white rounded-full shadow-2xl hover:bg-rose-700 transition-all z-50 active:scale-90 animate-bounce"
+          title="Volver arriba"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 15l7-7 7 7"></path>
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
