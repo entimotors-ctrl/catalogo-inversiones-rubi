@@ -5,14 +5,12 @@ function PanelAdmin() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
   
-  // Estados para nueva categoría
   const [nombreCategoria, setNombreCategoria] = useState('')
   const [temaVisual, setTemaVisual] = useState('general')
   
-  // Estados para nuevo producto
   const [nombreProducto, setNombreProducto] = useState('')
   const [descripcionProducto, setDescripcionProducto] = useState('')
-  const [precioProducto, setPrecioProducto] = useState('')
+  const [precioProducto, setPrecioProducto] = useState('') // Ahora es texto
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
@@ -58,17 +56,16 @@ function PanelAdmin() {
   const handleCrearProducto = async (e) => {
     e.preventDefault();
     try {
-      // Usamos FormData para enviar texto + archivos
       const formData = new FormData();
       formData.append('nombre', nombreProducto);
       formData.append('descripcion', descripcionProducto);
-      formData.append('precio', parseFloat(precioProducto));
+      // Enviamos el precio como texto para permitir variantes (ej. Clavos)
+      formData.append('precio', precioProducto);
       formData.append('categoria_id', parseInt(categoriaId));
       if (imagenArchivo) {
         formData.append('imagen', imagenArchivo);
       }
 
-      // IMPORTANTE: Tu backend debe tener configurado multer para recibir esto
       await api.post('/productos', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -77,7 +74,7 @@ function PanelAdmin() {
       setNombreProducto('');
       setDescripcionProducto('');
       setPrecioProducto('');
-      setImagenArchivo(null); // Limpiamos el archivo
+      setImagenArchivo(null);
       setCategoriaId('');
       cargarDatos();
     } catch (error) {
@@ -114,32 +111,35 @@ function PanelAdmin() {
     window.location.href = '/login'
   }
 
+  // Estilo común para todos los inputs para asegurar visibilidad
+  const inputStyle = "w-full px-4 py-3 rounded-lg outline-none text-sm bg-white text-black border-2 border-gray-300 focus:border-rose-600 transition-all placeholder:text-gray-500 font-medium";
+
   return (
-    <div className="min-h-screen bg-glassblack-theme text-white py-10 px-4">
+    <div className="min-h-screen bg-zinc-950 text-white py-10 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* CABECERA DEL PANEL */}
-        <div className="glass-panel p-8 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6 border-l-4 border-l-rose-600">
+        {/* CABECERA */}
+        <div className="bg-zinc-900/50 p-8 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6 border-l-4 border-l-rose-600 border border-white/5">
           <div className="flex items-center gap-4">
-            <div className="text-4xl text-rose-600 drop-shadow-[0_0_20px_rgba(225,29,72,0.8)]">🌹</div>
+            <div className="text-4xl text-rose-600">🌹</div>
             <div>
-              <h1 className="text-3xl font-black uppercase font-montserrat tracking-tight ruby-title">
+              <h1 className="text-3xl font-black uppercase tracking-tight">
                 Panel de <span className="text-rose-600">Control</span>
               </h1>
-              <p className="text-gray-400 font-bold tracking-widest text-sm mt-1">INVERSIONES RUBI - SISTEMA DE GESTIÓN</p>
+              <p className="text-gray-400 font-bold tracking-widest text-sm mt-1">INVERSIONES RUBI - GESTIÓN PROFESIONAL</p>
             </div>
           </div>
           <button 
             onClick={handleLogout}
-            className="px-6 py-3 bg-rose-600/20 hover:bg-rose-600 text-rose-500 hover:text-white border border-rose-600/50 rounded-xl font-bold transition-all uppercase tracking-wider text-sm shadow-[0_0_15px_rgba(225,29,72,0.2)] hover:shadow-[0_0_20px_rgba(225,29,72,0.6)]"
+            className="px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition-all uppercase tracking-wider text-sm"
           >
             Cerrar Sesión ✕
           </button>
         </div>
 
-        {/* ALERTAS */}
+        {/* MENSAJES */}
         {mensaje.texto && (
-          <div className={`p-4 rounded-xl font-bold uppercase tracking-wider text-sm animate-enter border ${
+          <div className={`p-4 rounded-xl font-bold uppercase tracking-wider text-sm border ${
             mensaje.tipo === 'error' 
               ? 'bg-rose-900/50 border-rose-500 text-rose-200' 
               : 'bg-green-900/50 border-green-500 text-green-200'
@@ -150,35 +150,34 @@ function PanelAdmin() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* COLUMNA IZQUIERDA - FORMULARIOS */}
           <div className="lg:col-span-1 space-y-8">
             
-            {/* FORMULARIO DE CATEGORÍAS */}
-            <div className="glass-panel p-6 rounded-2xl border-t border-white/10">
-              <h2 className="text-xl font-black uppercase font-montserrat mb-6 flex items-center gap-2">
+            {/* NUEVA CATEGORÍA */}
+            <div className="bg-zinc-900 p-6 rounded-2xl border border-white/5">
+              <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
                 <span className="text-rose-600">📁</span> Nueva Categoría
               </h2>
               <form onSubmit={handleCrearCategoria} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nombre de categoría</label>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nombre</label>
                   <input
                     type="text"
                     required
                     value={nombreCategoria}
                     onChange={(e) => setNombreCategoria(e.target.value)}
-                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm"
-                    placeholder="Ej. Herramientas..."
+                    className={inputStyle}
+                    placeholder="Ej. Herramientas Eléctricas"
                   />
                 </div>
-                <button type="submit" className="w-full py-3 bg-white text-black hover:bg-gray-200 rounded-lg font-black uppercase tracking-wider transition-all text-sm">
+                <button type="submit" className="w-full py-3 bg-rose-600 text-white hover:bg-rose-700 rounded-lg font-black uppercase tracking-wider transition-all text-sm">
                   Guardar Categoría
                 </button>
               </form>
             </div>
 
-            {/* FORMULARIO DE PRODUCTOS */}
-            <div className="glass-panel p-6 rounded-2xl border-t border-white/10">
-              <h2 className="text-xl font-black uppercase font-montserrat mb-6 flex items-center gap-2">
+            {/* NUEVO PRODUCTO */}
+            <div className="bg-zinc-900 p-6 rounded-2xl border border-white/5">
+              <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
                 <span className="text-rose-600">📦</span> Nuevo Producto
               </h2>
               <form onSubmit={handleCrearProducto} className="space-y-4">
@@ -188,11 +187,11 @@ function PanelAdmin() {
                     required
                     value={categoriaId}
                     onChange={(e) => setCategoriaId(e.target.value)}
-                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm appearance-none"
+                    className={inputStyle}
                   >
-                    <option value="">-- Seleccionar --</option>
+                    <option value="" className="text-gray-500">-- Seleccionar --</option>
                     {categorias.map(cat => (
-                      <option key={cat.id} value={cat.id} className="bg-zinc-900">{cat.nombre}</option>
+                      <option key={cat.id} value={cat.id}>{cat.nombre}</option>
                     ))}
                   </select>
                 </div>
@@ -203,39 +202,30 @@ function PanelAdmin() {
                     required
                     value={nombreProducto}
                     onChange={(e) => setNombreProducto(e.target.value)}
-                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm"
+                    className={inputStyle}
+                    placeholder="Nombre del artículo"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Precio (L)</label>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Precio / Variantes</label>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     required
                     value={precioProducto}
                     onChange={(e) => setPrecioProducto(e.target.value)}
-                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm"
+                    className={inputStyle}
+                    placeholder="Ej: 10.00 o 1': L5 | 2': L10"
                   />
                 </div>
                 
-                {/* AQUI ESTÁ EL NUEVO BOTÓN DE SUBIR FOTO */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Subir Foto del Producto</label>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Foto</label>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => setImagenArchivo(e.target.files[0])}
-                    className="w-full text-sm text-gray-400
-                      file:mr-4 file:py-3 file:px-4
-                      file:rounded-lg file:border-0
-                      file:text-sm file:font-black file:uppercase file:tracking-wider
-                      file:bg-rose-600 file:text-white
-                      hover:file:bg-rose-700
-                      cursor-pointer transition-all"
+                    className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer"
                   />
-                  {imagenArchivo && (
-                    <p className="mt-2 text-xs text-green-400 font-bold">✓ Archivo seleccionado: {imagenArchivo.name}</p>
-                  )}
                 </div>
 
                 <div>
@@ -244,22 +234,21 @@ function PanelAdmin() {
                     rows="3"
                     value={descripcionProducto}
                     onChange={(e) => setDescripcionProducto(e.target.value)}
-                    className="search-input w-full px-4 py-3 rounded-lg outline-none text-sm resize-none"
+                    className={inputStyle}
+                    placeholder="Detalles adicionales..."
                   ></textarea>
                 </div>
-                <button type="submit" className="btn-whatsapp w-full py-3 rounded-lg font-black text-white uppercase tracking-wider transition-all text-sm border-none">
-                  Guardar Producto
+                <button type="submit" className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-black uppercase tracking-wider transition-all text-sm">
+                  Publicar en Catálogo
                 </button>
               </form>
             </div>
           </div>
 
-          {/* COLUMNA DERECHA - TABLAS DE DATOS */}
           <div className="lg:col-span-2 space-y-8">
-            
             {/* TABLA CATEGORÍAS */}
-            <div className="glass-panel p-6 rounded-2xl">
-              <h2 className="text-xl font-black uppercase font-montserrat mb-6">Categorías Registradas</h2>
+            <div className="bg-zinc-900 p-6 rounded-2xl border border-white/5">
+              <h2 className="text-xl font-black uppercase mb-6">Categorías</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="text-xs text-gray-400 uppercase bg-black/40">
@@ -270,10 +259,10 @@ function PanelAdmin() {
                   </thead>
                   <tbody>
                     {categorias.map(cat => (
-                      <tr key={cat.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <tr key={cat.id} className="border-b border-white/5 hover:bg-white/5">
                         <td className="px-4 py-4 font-bold">{cat.nombre}</td>
                         <td className="px-4 py-4 text-right">
-                          <button onClick={() => handleEliminarCategoria(cat.id)} className="text-rose-500 hover:text-rose-400 font-bold uppercase text-xs tracking-wider">
+                          <button onClick={() => handleEliminarCategoria(cat.id)} className="text-rose-500 hover:text-rose-400 font-bold text-xs uppercase">
                             Eliminar ✕
                           </button>
                         </td>
@@ -285,48 +274,42 @@ function PanelAdmin() {
             </div>
 
             {/* TABLA PRODUCTOS */}
-            <div className="glass-panel p-6 rounded-2xl">
-              <h2 className="text-xl font-black uppercase font-montserrat mb-6">Inventario de Productos</h2>
+            <div className="bg-zinc-900 p-6 rounded-2xl border border-white/5">
+              <h2 className="text-xl font-black uppercase mb-6">Inventario</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="text-xs text-gray-400 uppercase bg-black/40">
                     <tr>
                       <th className="px-4 py-3 rounded-l-lg">Producto</th>
                       <th className="px-4 py-3">Precio</th>
-                      <th className="px-4 py-3">Categoría</th>
                       <th className="px-4 py-3 text-right rounded-r-lg">Acción</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {productos.map(prod => {
-                      const cat = categorias.find(c => c.id === prod.categoria_id)
-                      return (
-                        <tr key={prod.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              {prod.imagen_url ? (
-                                <img src={prod.imagen_url} alt="" className="w-10 h-10 rounded object-cover border border-white/10" />
-                              ) : (
-                                <div className="w-10 h-10 rounded bg-white/10 flex items-center justify-center text-xs">📷</div>
-                              )}
-                              <span className="font-bold line-clamp-1">{prod.nombre}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 font-black text-rose-500 font-montserrat">L {Number(prod.precio).toFixed(2)}</td>
-                          <td className="px-4 py-4 text-gray-400">{cat ? cat.nombre : 'N/A'}</td>
-                          <td className="px-4 py-4 text-right">
-                            <button onClick={() => handleEliminarProducto(prod.id)} className="text-rose-500 hover:text-rose-400 font-bold uppercase text-xs tracking-wider">
-                              Borrar ✕
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
+                    {productos.map(prod => (
+                      <tr key={prod.id} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            {prod.imagen_url ? (
+                              <img src={prod.imagen_url} alt="" className="w-10 h-10 rounded object-cover" />
+                            ) : (
+                              <div className="w-10 h-10 rounded bg-zinc-800 flex items-center justify-center text-xs">📷</div>
+                            )}
+                            <span className="font-bold">{prod.nombre}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 font-black text-rose-500">{prod.precio}</td>
+                        <td className="px-4 py-4 text-right">
+                          <button onClick={() => handleEliminarProducto(prod.id)} className="text-rose-500 hover:text-rose-400 font-bold text-xs uppercase">
+                            Borrar ✕
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
             </div>
-
           </div>
         </div>
       </div>

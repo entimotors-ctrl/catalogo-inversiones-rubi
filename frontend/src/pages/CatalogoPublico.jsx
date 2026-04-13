@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
 import api from '../services/api'
-// Usamos el logo que tengas en assets para la marca de agua
 import watermarkLogo from '../assets/hero.png' 
 
 function CatalogoPublico() {
@@ -13,10 +12,8 @@ function CatalogoPublico() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   
-  // Número actualizado de Inversiones Rubi
   const numeroWhatsApp = '50499999999' 
 
-  // 1. CARGA DE DATOS OPTIMIZADA
   useEffect(() => {
     const fetchDatos = async () => {
       try {
@@ -29,16 +26,16 @@ function CatalogoPublico() {
         setCategorias(catRes.data);
         setProductos(prodRes.data);
 
-        // Seleccionamos destacados y duplicamos el array para el efecto de carrusel infinito
+        // Selección de destacados dinámica
         const destacados = prodRes.data.filter(p => p.destacado).length > 0 
           ? prodRes.data.filter(p => p.destacado)
           : [...prodRes.data].sort(() => 0.5 - Math.random()).slice(0, 6);
         
-        setProductosDestacados([...destacados, ...destacados]); // Duplicado para loop infinito
+        setProductosDestacados([...destacados, ...destacados]); 
         setError(null);
       } catch (err) {
-        console.error("Error al conectar con Render:", err);
-        setError("Error de conexión: Verifica que el servidor en Render esté activo.");
+        console.error("Error al conectar:", err);
+        setError("Error de conexión");
       } finally {
         setLoading(false);
       }
@@ -46,117 +43,117 @@ function CatalogoPublico() {
     fetchDatos();
   }, []);
 
-  // 2. FILTRADO INTELIGENTE
   const productosFiltrados = useMemo(() => productos.filter(producto => {
     const matchCategory = !categoriaActiva || Number(producto.categoria_id) === Number(categoriaActiva.id)
     const term = searchTerm.toLowerCase()
     return matchCategory && (producto.nombre.toLowerCase().includes(term) || (producto.descripcion?.toLowerCase().includes(term)))
   }), [productos, categoriaActiva, searchTerm])
 
-  const productosPorCategoria = useMemo(() => categorias.map(categoria => ({
-    ...categoria,
-    productos: productos.filter(p => Number(p.categoria_id) === Number(categoria.id))
-  })), [categorias, productos])
-
-  // PANTALLA DE CARGA CON EL RUBÍ PULSANTE
   if (loading) {
     return (
-      <div className={`min-h-screen flex flex-col items-center justify-center ${darkMode ? 'bg-glassblack-theme' : 'bg-light-theme'}`}>
-        <div className="loader-rubi mb-8"></div>
-        <p className="text-rose-600 font-black tracking-widest animate-pulse font-montserrat uppercase">Inversiones Rubi</p>
-        <p className="text-gray-500 text-xs mt-2 uppercase font-bold">Cargando el brillo del rubí...</p>
+      <div className={`min-h-screen flex flex-col items-center justify-center ${darkMode ? 'bg-zinc-950' : 'bg-white'}`}>
+        <div className="w-16 h-16 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-rose-600 font-black tracking-widest animate-pulse uppercase">Inversiones Rubi</p>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-glassblack-theme' : 'bg-light-theme'}`}>
+    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
       
-      {/* 3. MARCA DE AGUA DINÁMICA */}
-      <div className="watermark-container">
-        <img src={watermarkLogo} className="watermark-logo" alt="watermark" />
+      {/* MARCA DE AGUA */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] flex items-center justify-center overflow-hidden">
+        <img src={watermarkLogo} className="w-[80%] max-w-2xl rotate-12" alt="" />
       </div>
 
-      <header className={`sticky-header py-5 px-4 ${darkMode ? 'glass-panel' : 'light-panel shadow-md'}`}>
+      <header className={`sticky top-0 z-50 py-5 px-4 backdrop-blur-md ${darkMode ? 'bg-zinc-950/80 border-b border-white/5' : 'bg-white/80 border-b border-zinc-200'}`}>
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between gap-4 mb-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 text-rose-600 drop-shadow-[0_0_15px_rgba(225,29,72,0.8)]">
+              <div className="w-10 h-10 text-rose-600">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25l-9 4.5 3 10.5 6 4.5 6-4.5 3-10.5-9-4.5z" /></svg>
               </div>
               <div>
-                <span className={`text-[10px] font-montserrat font-bold tracking-[0.3em] uppercase block ${darkMode ? 'text-gray-300' : 'text-rose-900'}`}>Inversiones</span>
-                <h1 className="text-3xl font-black font-dancing leading-none ruby-title">Rubi</h1>
+                <span className={`text-[10px] font-bold tracking-[0.3em] uppercase block ${darkMode ? 'text-gray-400' : 'text-rose-900'}`}>Inversiones</span>
+                <h1 className="text-3xl font-black leading-none italic">Rubi</h1>
               </div>
             </div>
-            <button onClick={() => setDarkMode(!darkMode)} className={`p-2 px-4 rounded-xl font-bold text-xs transition-all border ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-white text-rose-600 border-rose-200'}`}>
-              {darkMode ? '🌙 NOCHE' : '🌟 LUZ'}
+            <button onClick={() => setDarkMode(!darkMode)} className={`p-2 px-4 rounded-xl font-bold text-xs transition-all border ${darkMode ? 'bg-zinc-800 text-zinc-300 border-white/10' : 'bg-white text-rose-600 border-rose-200 shadow-sm'}`}>
+              {darkMode ? '🌙 OSCURO' : '☀️ CLARO'}
             </button>
           </div>
           <input
             type="text"
-            placeholder="🔍 Buscar en Rubi..."
+            placeholder="🔍 ¿Qué estás buscando hoy?"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input w-full px-6 py-4 rounded-2xl outline-none text-base"
+            className={`w-full px-6 py-4 rounded-2xl outline-none text-base border-2 transition-all ${darkMode ? 'bg-zinc-900 border-white/5 focus:border-rose-600' : 'bg-white border-zinc-100 focus:border-rose-600 shadow-sm'}`}
           />
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
         
-        {/* 4. SECCIÓN DESTACADOS CON CARRUSEL INFINITO */}
+        {/* CARRUSEL DE DESTACADOS */}
         {!searchTerm && !categoriaActiva && (
-          <section className="mb-12 overflow-hidden">
-             <h2 className="text-xs font-black tracking-widest uppercase mb-4 text-rose-600 font-montserrat">✨ Productos Destacados</h2>
-             <div className="relative">
-                <div className="carousel-track flex gap-4">
-                  {productosDestacados.map((p, idx) => (
-                    <div key={`${p.id}-${idx}`} className={`flex-shrink-0 w-72 p-3 rounded-2xl border ${darkMode ? 'glass-panel border-white/10' : 'light-panel border-rose-100'}`}>
-                      <div className="flex gap-3 items-center">
-                        <img src={p.imagen_url} className="w-16 h-16 rounded-lg object-cover bg-white" alt={p.nombre} />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-black uppercase truncate font-montserrat">{p.nombre}</h3>
-                          <span className="text-rose-600 font-black text-lg">L {Number(p.precio).toFixed(2)}</span>
-                        </div>
+          <section className="mb-12">
+             <h2 className="text-xs font-black tracking-widest uppercase mb-4 text-rose-600">✨ Los más buscados</h2>
+             <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                {productosDestacados.map((p, idx) => (
+                  <div key={`${p.id}-${idx}`} className={`flex-shrink-0 w-72 p-3 rounded-2xl border ${darkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex gap-3 items-center">
+                      <img src={p.imagen_url} className="w-16 h-16 rounded-lg object-cover bg-white" alt={p.nombre} />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-black uppercase truncate">{p.nombre}</h3>
+                        <span className="text-rose-600 font-black">L {p.precio}</span>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
              </div>
           </section>
         )}
 
-        {/* SELECTOR DE CATEGORÍAS */}
-        <div className="mb-10 flex justify-center">
-          <select
-            onChange={(e) => setCategoriaActiva(categorias.find(c => c.id === Number(e.target.value)) || null)}
-            className={`px-6 py-3 rounded-xl font-bold uppercase text-sm border outline-none ${darkMode ? 'bg-black text-white border-white/10' : 'bg-white text-slate-800'}`}
+        {/* FILTRO DE CATEGORÍAS */}
+        <div className="mb-10 flex flex-wrap justify-center gap-2">
+          <button
+            onClick={() => setCategoriaActiva(null)}
+            className={`px-5 py-2 rounded-full text-xs font-black uppercase transition-all ${!categoriaActiva ? 'bg-rose-600 text-white' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
           >
-            <option value="">🏁 Todas las Categorías</option>
-            {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
-          </select>
+            Todos
+          </button>
+          {categorias.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setCategoriaActiva(cat)}
+              className={`px-5 py-2 rounded-full text-xs font-black uppercase transition-all ${categoriaActiva?.id === cat.id ? 'bg-rose-600 text-white' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+            >
+              {cat.nombre}
+            </button>
+          ))}
         </div>
 
-        {/* LISTADO DE PRODUCTOS */}
+        {/* GRILLA DE PRODUCTOS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {productosFiltrados.map((p) => (
-            <div key={p.id} className={`product-card flex flex-col h-full ${darkMode ? 'glass-panel' : 'light-panel'}`}>
-              <div className="img-container aspect-square relative">
-                <span className="absolute top-2 right-2 bg-rose-600 text-white text-[9px] px-2 py-1 rounded font-black">DISPONIBLE</span>
-                <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-cover" />
+            <div key={p.id} className={`group flex flex-col h-full rounded-3xl overflow-hidden border transition-all hover:scale-[1.02] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/50' : 'bg-white border-zinc-200 hover:border-rose-600/50 shadow-md'}`}>
+              <div className="aspect-square relative overflow-hidden bg-white">
+                <span className="absolute top-3 right-3 z-10 bg-green-600 text-white text-[10px] px-2 py-1 rounded-full font-black shadow-lg">DISPONIBLE</span>
+                <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500" />
               </div>
               <div className="p-5 flex flex-col flex-grow">
-                <h3 className="font-black text-lg uppercase mb-2 font-montserrat">{p.nombre}</h3>
-                <p className="text-xs text-gray-400 mb-4 line-clamp-2">{p.descripcion}</p>
+                <h3 className="font-black text-lg uppercase mb-1 leading-tight">{p.nombre}</h3>
+                <p className={`text-xs mb-4 line-clamp-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{p.descripcion}</p>
                 <div className="mt-auto">
-                   <div className="bg-black/20 p-2 rounded-lg border-l-4 border-rose-600 mb-4">
-                      <span className="text-2xl font-black text-rose-600">L {Number(p.precio).toFixed(2)}</span>
+                   <div className="bg-rose-600/10 p-3 rounded-2xl border-l-4 border-rose-600 mb-4">
+                      <p className="text-[10px] font-bold text-rose-600 uppercase mb-1">Precio Sugerido</p>
+                      <span className="text-xl font-black text-rose-600">L {p.precio}</span>
                    </div>
-                   <a href={`https://wa.me/${numeroWhatsApp}?text=Hola Inversiones Rubi, me interesa: *${p.nombre}*`} 
+                   <a href={`https://wa.me/${numeroWhatsApp}?text=Hola Inversiones Rubi, me interesa este producto: *${p.nombre}*`} 
                       target="_blank" rel="noopener noreferrer" 
-                      className="btn-whatsapp w-full py-3 rounded-xl text-white font-black flex items-center justify-center gap-2">
-                      💬 LO QUIERO
+                      className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-colors shadow-lg shadow-green-900/20">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.539 2.016 2.126-.54c1.029.563 2.028.913 3.162.914.004 0 .007 0 .011 0 3.181 0 5.767-2.586 5.768-5.766 0-3.18-2.586-5.765-5.766-5.765-1.542 0-2.993.6-4.086 1.693-1.092 1.092-1.693 2.544-1.693 4.085 0 1.258.38 2.155.938 3.109l-.53 1.986 2.115-.537c.974.526 1.916.85 2.992.85h.01c2.81 0 5.097-2.287 5.098-5.097 0-2.81-2.287-5.097-5.098-5.097zM20.52 3.449c-2.274-2.273-5.297-3.524-8.513-3.525-6.632 0-12.03 5.398-12.033 12.031 0 2.12.553 4.189 1.601 6.005l-1.703 6.22 6.363-1.669c1.758.959 3.743 1.465 5.763 1.466h.005c6.633 0 12.032-5.398 12.035-12.032.001-3.212-1.249-6.233-3.524-8.508z" /></svg>
+                      COTIZAR AHORA
                    </a>
                 </div>
               </div>
