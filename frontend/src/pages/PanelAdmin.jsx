@@ -2,28 +2,39 @@ import { useState, useEffect } from 'react'
 import api from '../services/api'
 
 function PanelAdmin() {
+  const [activeTab, setActiveTab] = useState('inventario') // Control de pestañas: inventario o manager
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
   
+  // Estados para Categorías y Productos
   const [nombreCategoria, setNombreCategoria] = useState('')
-  const [temaVisual, setTemaVisual] = useState('general')
-  
   const [nombreProducto, setNombreProducto] = useState('')
   const [descripcionProducto, setDescripcionProducto] = useState('')
-  const [precioProducto, setPrecioProducto] = useState('') // Ahora es texto
+  const [precioProducto, setPrecioProducto] = useState('') 
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
+
+  // Estados para Sección Manager (Configuración)
+  const [config, setConfig] = useState({
+    facebook: '',
+    instagram: '',
+    tiktok: '',
+    whatsapp: '',
+    password_admin: ''
+  })
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
 
   const cargarDatos = async () => {
     try {
-      const [catRes, prodRes] = await Promise.all([
+      const [catRes, prodRes, configRes] = await Promise.all([
         api.get('/categorias'),
-        api.get('/productos')
+        api.get('/productos'),
+        api.get('/configuracion') // Nueva ruta para traer los links
       ])
       setCategorias(catRes.data)
       setProductos(prodRes.data)
+      if (configRes.data) setConfig({ ...configRes.data, password_admin: '' }) 
     } catch (error) {
       mostrarMensaje('Error al cargar los datos del servidor.', 'error')
     }
@@ -38,19 +49,15 @@ function PanelAdmin() {
     setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000)
   }
 
+  // --- MANEJADORES DE INVENTARIO ---
   const handleCrearCategoria = async (e) => {
     e.preventDefault()
     try {
-      await api.post('/categorias', {
-        nombre: nombreCategoria,
-        tema_visual: temaVisual
-      })
-      mostrarMensaje('¡Categoría creada con éxito!', 'exito')
+      await api.post('/categorias', { nombre: nombreCategoria })
+      mostrarMensaje('¡Categoría creada!', 'exito')
       setNombreCategoria('')
       cargarDatos()
-    } catch (error) {
-      mostrarMensaje('Error al crear la categoría.', 'error')
-    }
+    } catch (error) { mostrarMensaje('Error al crear categoría.', 'error') }
   }
 
   const handleCrearProducto = async (e) => {
@@ -59,50 +66,29 @@ function PanelAdmin() {
       const formData = new FormData();
       formData.append('nombre', nombreProducto);
       formData.append('descripcion', descripcionProducto);
-      // Enviamos el precio como texto para permitir variantes (ej. Clavos)
       formData.append('precio', precioProducto);
       formData.append('categoria_id', parseInt(categoriaId));
-      if (imagenArchivo) {
-        formData.append('imagen', imagenArchivo);
-      }
+      if (imagenArchivo) formData.append('imagen', imagenArchivo);
 
       await api.post('/productos', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
-      mostrarMensaje('¡Producto creado con éxito!', 'exito');
-      setNombreProducto('');
-      setDescripcionProducto('');
-      setPrecioProducto('');
-      setImagenArchivo(null);
-      setCategoriaId('');
+      mostrarMensaje('¡Producto publicado!', 'exito');
+      setNombreProducto(''); setPrecioProducto(''); setImagenArchivo(null);
       cargarDatos();
+    } catch (error) { mostrarMensaje('Error al crear producto.', 'error'); }
+  }
+
+  // --- MANEJADOR DE CONFIGURACIÓN (MANAGER) ---
+  const handleUpdateConfig = async (e) => {
+    e.preventDefault()
+    try {
+      await api.put('/configuracion', config)
+      mostrarMensaje('Configuración actualizada correctamente', 'exito')
+      cargarDatos()
     } catch (error) {
-      mostrarMensaje('Error al crear el producto.', 'error');
-    }
-  }
-
-  const handleEliminarProducto = async (id) => {
-    if (window.confirm('¿Estás seguro de eliminar este producto?')) {
-      try {
-        await api.delete(`/productos/${id}`)
-        mostrarMensaje('Producto eliminado.', 'exito')
-        cargarDatos()
-      } catch (error) {
-        mostrarMensaje('Error al eliminar el producto.', 'error')
-      }
-    }
-  }
-
-  const handleEliminarCategoria = async (id) => {
-    if (window.confirm('¿Eliminar categoría? Los productos asociados también se borrarán.')) {
-      try {
-        await api.delete(`/categorias/${id}`)
-        mostrarMensaje('Categoría eliminada.', 'exito')
-        cargarDatos()
-      } catch (error) {
-        mostrarMensaje('Error al eliminar la categoría.', 'error')
-      }
+      mostrarMensaje('Error al actualizar ajustes.', 'error')
     }
   }
 
@@ -111,207 +97,137 @@ function PanelAdmin() {
     window.location.href = '/login'
   }
 
-  // Estilo común para todos los inputs para asegurar visibilidad
   const inputStyle = "w-full px-4 py-3 rounded-lg outline-none text-sm bg-white text-black border-2 border-gray-300 focus:border-rose-600 transition-all placeholder:text-gray-500 font-medium";
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white py-10 px-4">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* CABECERA */}
-        <div className="bg-zinc-900/50 p-8 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6 border-l-4 border-l-rose-600 border border-white/5">
+        {/* HEADER MODERNO */}
+        <div className="bg-zinc-900 p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-6 border border-white/5 shadow-2xl">
           <div className="flex items-center gap-4">
-            <div className="text-4xl text-rose-600">🌹</div>
+            <div className="w-12 h-12 bg-rose-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-rose-900/20">🌹</div>
             <div>
-              <h1 className="text-3xl font-black uppercase tracking-tight">
-                Panel de <span className="text-rose-600">Control</span>
-              </h1>
-              <p className="text-gray-400 font-bold tracking-widest text-sm mt-1">INVERSIONES RUBI - GESTIÓN PROFESIONAL</p>
+              <h1 className="text-2xl font-black uppercase italic tracking-tighter">Rubi <span className="text-rose-600 italic">Admin</span></h1>
+              <p className="text-[10px] text-gray-500 font-bold tracking-[0.3em] uppercase">Gestión de Catálogo</p>
             </div>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="px-6 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition-all uppercase tracking-wider text-sm"
-          >
-            Cerrar Sesión ✕
-          </button>
+          
+          <div className="flex bg-black/40 p-1.5 rounded-2xl gap-2">
+            <button onClick={() => setActiveTab('inventario')} className={`px-5 py-2 rounded-xl text-xs font-black transition-all ${activeTab === 'inventario' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>INVENTARIO</button>
+            <button onClick={() => setActiveTab('manager')} className={`px-5 py-2 rounded-xl text-xs font-black transition-all ${activeTab === 'manager' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>MANAGER</button>
+          </div>
+
+          <button onClick={handleLogout} className="text-gray-500 hover:text-rose-500 font-black text-[10px] uppercase tracking-widest transition-colors">Salir ✕</button>
         </div>
 
-        {/* MENSAJES */}
         {mensaje.texto && (
-          <div className={`p-4 rounded-xl font-bold uppercase tracking-wider text-sm border ${
-            mensaje.tipo === 'error' 
-              ? 'bg-rose-900/50 border-rose-500 text-rose-200' 
-              : 'bg-green-900/50 border-green-500 text-green-200'
-          }`}>
-            {mensaje.tipo === 'error' ? '⚠️ ' : '✅ '} {mensaje.texto}
+          <div className={`p-4 rounded-2xl font-bold text-center text-xs tracking-widest border animate-pulse ${mensaje.tipo === 'error' ? 'bg-rose-900/20 border-rose-500 text-rose-500' : 'bg-green-900/20 border-green-500 text-green-500'}`}>
+            {mensaje.texto}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          <div className="lg:col-span-1 space-y-8">
-            
-            {/* NUEVA CATEGORÍA */}
-            <div className="bg-zinc-900 p-6 rounded-2xl border border-white/5">
-              <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-                <span className="text-rose-600">📁</span> Nueva Categoría
-              </h2>
-              <form onSubmit={handleCrearCategoria} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nombre</label>
-                  <input
-                    type="text"
-                    required
-                    value={nombreCategoria}
-                    onChange={(e) => setNombreCategoria(e.target.value)}
-                    className={inputStyle}
-                    placeholder="Ej. Herramientas Eléctricas"
-                  />
-                </div>
-                <button type="submit" className="w-full py-3 bg-rose-600 text-white hover:bg-rose-700 rounded-lg font-black uppercase tracking-wider transition-all text-sm">
-                  Guardar Categoría
-                </button>
-              </form>
-            </div>
-
-            {/* NUEVO PRODUCTO */}
-            <div className="bg-zinc-900 p-6 rounded-2xl border border-white/5">
-              <h2 className="text-xl font-black uppercase mb-6 flex items-center gap-2">
-                <span className="text-rose-600">📦</span> Nuevo Producto
-              </h2>
-              <form onSubmit={handleCrearProducto} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Categoría</label>
-                  <select
-                    required
-                    value={categoriaId}
-                    onChange={(e) => setCategoriaId(e.target.value)}
-                    className={inputStyle}
-                  >
-                    <option value="" className="text-gray-500">-- Seleccionar --</option>
-                    {categorias.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                    ))}
+        {activeTab === 'inventario' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 space-y-6">
+              {/* FORMULARIO PRODUCTO */}
+              <div className="bg-zinc-900 p-6 rounded-3xl border border-white/5">
+                <h2 className="text-sm font-black uppercase text-rose-600 mb-6 flex items-center gap-2">Nuevo Artículo</h2>
+                <form onSubmit={handleCrearProducto} className="space-y-4">
+                  <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
+                    <option value="">Categoría...</option>
+                    {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
                   </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nombre</label>
-                  <input
-                    type="text"
-                    required
-                    value={nombreProducto}
-                    onChange={(e) => setNombreProducto(e.target.value)}
-                    className={inputStyle}
-                    placeholder="Nombre del artículo"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Precio / Variantes</label>
-                  <input
-                    type="text"
-                    required
-                    value={precioProducto}
-                    onChange={(e) => setPrecioProducto(e.target.value)}
-                    className={inputStyle}
-                    placeholder="Ej: 10.00 o 1': L5 | 2': L10"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Foto</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setImagenArchivo(e.target.files[0])}
-                    className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700 cursor-pointer"
-                  />
-                </div>
+                  <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del producto" />
+                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (ej: L 500 o Variantes)" />
+                  <input type="file" onChange={(e) => setImagenArchivo(e.target.files[0])} className="text-xs text-gray-500 file:bg-zinc-800 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-lg file:mr-4 cursor-pointer w-full" />
+                  <textarea rows="2" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción breve..."></textarea>
+                  <button className="w-full py-4 bg-rose-600 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-900/20 hover:scale-[1.02] transition-transform">Publicar Producto</button>
+                </form>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Descripción</label>
-                  <textarea
-                    rows="3"
-                    value={descripcionProducto}
-                    onChange={(e) => setDescripcionProducto(e.target.value)}
-                    className={inputStyle}
-                    placeholder="Detalles adicionales..."
-                  ></textarea>
-                </div>
-                <button type="submit" className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-black uppercase tracking-wider transition-all text-sm">
-                  Publicar en Catálogo
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <div className="lg:col-span-2 space-y-8">
-            {/* TABLA CATEGORÍAS */}
-            <div className="bg-zinc-900 p-6 rounded-2xl border border-white/5">
-              <h2 className="text-xl font-black uppercase mb-6">Categorías</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="text-xs text-gray-400 uppercase bg-black/40">
-                    <tr>
-                      <th className="px-4 py-3 rounded-l-lg">Nombre</th>
-                      <th className="px-4 py-3 text-right rounded-r-lg">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categorias.map(cat => (
-                      <tr key={cat.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="px-4 py-4 font-bold">{cat.nombre}</td>
-                        <td className="px-4 py-4 text-right">
-                          <button onClick={() => handleEliminarCategoria(cat.id)} className="text-rose-500 hover:text-rose-400 font-bold text-xs uppercase">
-                            Eliminar ✕
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* FORMULARIO CATEGORIA */}
+              <div className="bg-zinc-900 p-6 rounded-3xl border border-white/5">
+                <h2 className="text-sm font-black uppercase text-rose-600 mb-6">Añadir Categoría</h2>
+                <form onSubmit={handleCrearCategoria} className="space-y-4">
+                  <input type="text" required value={nombreCategoria} onChange={(e) => setNombreCategoria(e.target.value)} className={inputStyle} placeholder="Nombre categoría" />
+                  <button className="w-full py-3 bg-zinc-800 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/5">Guardar Grupo</button>
+                </form>
               </div>
             </div>
 
-            {/* TABLA PRODUCTOS */}
-            <div className="bg-zinc-900 p-6 rounded-2xl border border-white/5">
-              <h2 className="text-xl font-black uppercase mb-6">Inventario</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="text-xs text-gray-400 uppercase bg-black/40">
-                    <tr>
-                      <th className="px-4 py-3 rounded-l-lg">Producto</th>
-                      <th className="px-4 py-3">Precio</th>
-                      <th className="px-4 py-3 text-right rounded-r-lg">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {productos.map(prod => (
-                      <tr key={prod.id} className="border-b border-white/5 hover:bg-white/5">
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            {prod.imagen_url ? (
-                              <img src={prod.imagen_url} alt="" className="w-10 h-10 rounded object-cover" />
-                            ) : (
-                              <div className="w-10 h-10 rounded bg-zinc-800 flex items-center justify-center text-xs">📷</div>
-                            )}
-                            <span className="font-bold">{prod.nombre}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 font-black text-rose-500">{prod.precio}</td>
-                        <td className="px-4 py-4 text-right">
-                          <button onClick={() => handleEliminarProducto(prod.id)} className="text-rose-500 hover:text-rose-400 font-bold text-xs uppercase">
-                            Borrar ✕
-                          </button>
-                        </td>
+            <div className="lg:col-span-2 space-y-6">
+              {/* TABLA DE PRODUCTOS */}
+              <div className="bg-zinc-900 rounded-3xl border border-white/5 overflow-hidden">
+                <div className="p-6 border-b border-white/5 flex justify-between items-center">
+                  <h2 className="text-sm font-black uppercase tracking-widest">Inventario Actual</h2>
+                  <span className="text-[10px] bg-rose-600/20 text-rose-500 px-3 py-1 rounded-full font-black">{productos.length} ITEMS</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-black/20 text-gray-500 font-black uppercase">
+                      <tr>
+                        <th className="p-4">Producto</th>
+                        <th className="p-4">Precio</th>
+                        <th className="p-4 text-right">Acción</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {productos.map(p => (
+                        <tr key={p.id} className="hover:bg-white/5 transition-colors">
+                          <td className="p-4 flex items-center gap-3">
+                            <img src={p.imagen_url || 'https://via.placeholder.com/40'} className="w-10 h-10 rounded-lg object-cover bg-white" alt="" />
+                            <span className="font-bold uppercase">{p.nombre}</span>
+                          </td>
+                          <td className="p-4 font-black text-rose-600">{p.precio}</td>
+                          <td className="p-4 text-right">
+                            <button onClick={() => api.delete(`/productos/${p.id}`).then(cargarDatos)} className="bg-rose-600/10 text-rose-500 p-2 rounded-lg hover:bg-rose-600 hover:text-white transition-all">✕</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* SECCIÓN MANAGER (CONFIGURACIÓN) */
+          <div className="max-w-2xl mx-auto bg-zinc-900 p-8 rounded-3xl border border-white/5 shadow-2xl">
+            <h2 className="text-xl font-black uppercase italic mb-8 flex items-center gap-3">
+              <span className="w-8 h-8 bg-rose-600/20 text-rose-600 rounded-lg flex items-center justify-center not-italic">⚙️</span>
+              Ajustes del Manager
+            </h2>
+            <form onSubmit={handleUpdateConfig} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link Facebook</label>
+                  <input type="text" value={config.facebook} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="https://facebook.com/..." />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link Instagram</label>
+                  <input type="text" value={config.instagram} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="https://instagram.com/..." />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link TikTok</label>
+                  <input type="text" value={config.tiktok} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="https://tiktok.com/@..." />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">WhatsApp de Ventas</label>
+                  <input type="text" value={config.whatsapp} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-white/5">
+                <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2 block">Cambiar Contraseña de Acceso</label>
+                <input type="password" value={config.password_admin} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Escribe la nueva clave solo si quieres cambiarla" />
+                <p className="text-[9px] text-gray-500 mt-2 font-bold uppercase italic">* Deja en blanco para mantener la actual</p>
+              </div>
+
+              <button className="w-full py-4 bg-green-600 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-green-900/20 hover:scale-[1.01] transition-transform">Actualizar Datos de Empresa</button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   )
