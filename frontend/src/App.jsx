@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
-import Navbar from './components/Navbar'
+// Ya no necesitamos importar Navbar si no lo vamos a usar
 import CatalogoPublico from './pages/CatalogoPublico'
 import PanelAdmin from './pages/PanelAdmin'
 import Login from './pages/Login'
@@ -17,8 +17,9 @@ function RutaProtegida({ children }) {
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
+      {/* Cambié bg-gray-50 por bg-zinc-950 para que no haya destellos blancos al cargar */}
+      <div className="min-h-screen bg-zinc-950">
+        {/* Se eliminó el componente <Navbar /> para limpiar la interfaz */}
         <Routes>
           <Route path="/" element={<CatalogoPublico />} />
           <Route
