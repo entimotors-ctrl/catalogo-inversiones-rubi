@@ -26,7 +26,7 @@ function PanelAdmin() {
 
   const cargarDatos = async () => {
     try {
-      // Cargamos productos y categorías primero
+      // Cargamos productos y categorías con manejo de errores individual
       const [catRes, prodRes] = await Promise.all([
         api.get('/categorias').catch(() => ({ data: [] })),
         api.get('/productos').catch(() => ({ data: [] }))
@@ -35,18 +35,17 @@ function PanelAdmin() {
       setCategorias(catRes.data)
       setProductos(prodRes.data)
 
-      // Carga de configuración independiente para evitar bloqueos
+      // Carga de configuración independiente
       try {
         const configRes = await api.get('/configuracion')
         if (configRes.data) {
-          // No mostramos la contraseña por seguridad al cargar
           setConfig({ ...configRes.data, password_admin: '' })
         }
       } catch (e) {
-        console.warn("La tabla de configuración no respondió, usando valores por defecto.")
+        console.warn("La tabla de configuración no respondió.")
       }
     } catch (error) {
-      mostrarMensaje('Error crítico al conectar con el servidor.', 'error')
+      mostrarMensaje('Error al conectar con el servidor.', 'error')
     } finally {
       setLoading(false)
     }
@@ -61,7 +60,6 @@ function PanelAdmin() {
     setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000)
   }
 
-  // --- MANEJADORES DE INVENTARIO ---
   const handleCrearCategoria = async (e) => {
     e.preventDefault()
     try {
@@ -74,6 +72,8 @@ function PanelAdmin() {
 
   const handleCrearProducto = async (e) => {
     e.preventDefault();
+    if (!categoriaId) return mostrarMensaje('Selecciona una categoría', 'error');
+    
     try {
       const formData = new FormData();
       formData.append('nombre', nombreProducto);
@@ -101,18 +101,16 @@ function PanelAdmin() {
     } catch (error) { mostrarMensaje('No se pudo eliminar.', 'error'); }
   }
 
-  // --- MANEJADOR DE CONFIGURACIÓN ---
   const handleUpdateConfig = async (e) => {
     e.preventDefault()
     try {
-      // Si el campo de password está vacío, mantenemos una marca o el backend lo ignorará
-      await api.put('/api/configuracion', config) // Usamos la ruta completa del backend
+      // Ajuste de ruta para coincidir con el backend
+      await api.put('/configuracion', config)
       mostrarMensaje('Configuración actualizada correctamente', 'exito')
-      // Limpiamos el campo de password por seguridad tras guardar
       setConfig(prev => ({ ...prev, password_admin: '' }))
       cargarDatos()
     } catch (error) {
-      mostrarMensaje('Error al actualizar ajustes. Verifica la conexión.', 'error')
+      mostrarMensaje('Error al actualizar ajustes.', 'error')
     }
   }
 
@@ -160,7 +158,6 @@ function PanelAdmin() {
         {activeTab === 'inventario' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
-              {/* FORM PRODUCTO */}
               <div className="bg-zinc-900 p-6 rounded-3xl border border-white/5">
                 <h2 className="text-sm font-black uppercase text-rose-600 mb-6 flex items-center gap-2">Nuevo Artículo</h2>
                 <form onSubmit={handleCrearProducto} className="space-y-4">
@@ -176,7 +173,6 @@ function PanelAdmin() {
                 </form>
               </div>
 
-              {/* FORM CATEGORIA */}
               <div className="bg-zinc-900 p-6 rounded-3xl border border-white/5">
                 <h2 className="text-sm font-black uppercase text-rose-600 mb-6">Añadir Categoría</h2>
                 <form onSubmit={handleCrearCategoria} className="space-y-4">
@@ -186,7 +182,6 @@ function PanelAdmin() {
               </div>
             </div>
 
-            {/* TABLA */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-zinc-900 rounded-3xl border border-white/5 overflow-hidden">
                 <div className="p-6 border-b border-white/5 flex justify-between items-center">
@@ -240,4 +235,26 @@ function PanelAdmin() {
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link TikTok</label>
-                  <input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={
+                  <input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="https://tiktok.com/@..." />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">WhatsApp de Ventas</label>
+                  <input type="text" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-white/5">
+                <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2 block">Nueva Contraseña</label>
+                <input type="password" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Solo si deseas cambiarla" />
+              </div>
+
+              <button className="w-full py-4 bg-green-600 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-green-900/20 hover:scale-[1.01] transition-transform">Actualizar Datos</button>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default PanelAdmin
