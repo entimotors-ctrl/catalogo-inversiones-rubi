@@ -12,7 +12,8 @@ function CatalogoPublico() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   
-  const numeroWhatsApp = '50499999999' 
+  // Número de WhatsApp actualizado
+  const numeroWhatsApp = '50497432867' 
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -26,12 +27,10 @@ function CatalogoPublico() {
         setCategorias(catRes.data);
         setProductos(prodRes.data);
 
-        // Filtramos destacados y duplicamos el array para el efecto infinito
         const destacadosBase = prodRes.data.filter(p => p.destacado).length > 0 
           ? prodRes.data.filter(p => p.destacado)
           : [...prodRes.data].sort(() => 0.5 - Math.random()).slice(0, 6);
         
-        // Duplicamos 3 veces para asegurar que no haya huecos en pantallas grandes
         setProductosDestacados([...destacadosBase, ...destacadosBase, ...destacadosBase]); 
         setError(null);
       } catch (err) {
@@ -62,7 +61,6 @@ function CatalogoPublico() {
   return (
     <div className={`min-h-screen transition-colors duration-500 overflow-x-hidden ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
       
-      {/* ESTILOS DEL CARRUSEL INFINITO */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes scroll {
           0% { transform: translateX(0); }
@@ -81,7 +79,6 @@ function CatalogoPublico() {
         }
       `}} />
 
-      {/* MARCA DE AGUA */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] flex items-center justify-center overflow-hidden">
         <img src={watermarkLogo} className="w-[80%] max-w-2xl rotate-12" alt="" />
       </div>
@@ -114,7 +111,6 @@ function CatalogoPublico() {
 
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
         
-        {/* CARRUSEL DE DESTACADOS (RECUPERADO E INFINITO) */}
         {!searchTerm && !categoriaActiva && (
           <section className="mb-12 overflow-hidden">
              <h2 className="text-xs font-black tracking-widest uppercase mb-6 text-rose-600 flex items-center gap-2">
@@ -143,26 +139,33 @@ function CatalogoPublico() {
           </section>
         )}
 
-        {/* FILTRO DE CATEGORÍAS */}
-        <div className="mb-10 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => setCategoriaActiva(null)}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase transition-all ${!categoriaActiva ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/40' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
-          >
-            Todos
-          </button>
-          {categorias.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setCategoriaActiva(cat)}
-              className={`px-6 py-2 rounded-full text-xs font-black uppercase transition-all ${categoriaActiva?.id === cat.id ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/40' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+        {/* SELECTOR DE CATEGORÍAS TIPO PESTAÑA DESPLEGABLE */}
+        <div className="mb-10 flex flex-col items-center">
+          <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Filtrar por categoría</label>
+          <div className="relative w-full max-w-xs">
+            <select
+              onChange={(e) => {
+                const selected = categorias.find(c => c.id === Number(e.target.value));
+                setCategoriaActiva(selected || null);
+              }}
+              value={categoriaActiva?.id || ""}
+              className={`w-full appearance-none px-6 py-3 rounded-2xl font-black uppercase text-sm border-2 outline-none transition-all cursor-pointer ${
+                darkMode 
+                ? 'bg-zinc-900 border-white/5 text-white focus:border-rose-600' 
+                : 'bg-white border-gray-200 text-zinc-900 focus:border-rose-600 shadow-sm'
+              }`}
             >
-              {cat.nombre}
-            </button>
-          ))}
+              <option value="">🏁 TODAS LAS CATEGORÍAS</option>
+              {categorias.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-rose-600">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
         </div>
 
-        {/* GRILLA DE PRODUCTOS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {productosFiltrados.map((p) => (
             <div key={p.id} className={`group flex flex-col h-full rounded-3xl overflow-hidden border transition-all hover:translate-y-[-5px] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/50' : 'bg-white border-zinc-200 hover:border-rose-600/50 shadow-md'}`}>
