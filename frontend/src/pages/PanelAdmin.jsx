@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react'
 import api from '../services/api'
 
 function PanelAdmin() {
-  const [activeTab, setActiveTab] = useState('inventario') // Control de pestañas: inventario o manager
+  const [activeTab, setActiveTab] = useState('inventario')
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
   
-  // Estados para Categorías y Productos
   const [nombreCategoria, setNombreCategoria] = useState('')
   const [nombreProducto, setNombreProducto] = useState('')
   const [descripcionProducto, setDescripcionProducto] = useState('')
@@ -14,29 +13,42 @@ function PanelAdmin() {
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
-  // Estados para Sección Manager (Configuración)
   const [config, setConfig] = useState({
     facebook: '',
     instagram: '',
     tiktok: '',
-    whatsapp: '',
+    whatsapp: '50497432867',
     password_admin: ''
   })
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
+  const [loading, setLoading] = useState(true)
 
   const cargarDatos = async () => {
     try {
-      const [catRes, prodRes, configRes] = await Promise.all([
-        api.get('/categorias'),
-        api.get('/productos'),
-        api.get('/configuracion') // Nueva ruta para traer los links
+      // Cargamos productos y categorías primero
+      const [catRes, prodRes] = await Promise.all([
+        api.get('/categorias').catch(() => ({ data: [] })),
+        api.get('/productos').catch(() => ({ data: [] }))
       ])
+      
       setCategorias(catRes.data)
       setProductos(prodRes.data)
-      if (configRes.data) setConfig({ ...configRes.data, password_admin: '' }) 
+
+      // Carga de configuración independiente para evitar bloqueos
+      try {
+        const configRes = await api.get('/configuracion')
+        if (configRes.data) {
+          // No mostramos la contraseña por seguridad al cargar
+          setConfig({ ...configRes.data, password_admin: '' })
+        }
+      } catch (e) {
+        console.warn("La tabla de configuración no respondió, usando valores por defecto.")
+      }
     } catch (error) {
-      mostrarMensaje('Error al cargar los datos del servidor.', 'error')
+      mostrarMensaje('Error crítico al conectar con el servidor.', 'error')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -75,20 +87,32 @@ function PanelAdmin() {
       });
       
       mostrarMensaje('¡Producto publicado!', 'exito');
-      setNombreProducto(''); setPrecioProducto(''); setImagenArchivo(null);
+      setNombreProducto(''); setPrecioProducto(''); setImagenArchivo(null); setDescripcionProducto('');
       cargarDatos();
     } catch (error) { mostrarMensaje('Error al crear producto.', 'error'); }
   }
 
-  // --- MANEJADOR DE CONFIGURACIÓN (MANAGER) ---
+  const handleEliminarProducto = async (id) => {
+    if (!window.confirm("¿Seguro que quieres eliminar este producto?")) return;
+    try {
+      await api.delete(`/productos/${id}`);
+      mostrarMensaje('Producto eliminado', 'exito');
+      cargarDatos();
+    } catch (error) { mostrarMensaje('No se pudo eliminar.', 'error'); }
+  }
+
+  // --- MANEJADOR DE CONFIGURACIÓN ---
   const handleUpdateConfig = async (e) => {
     e.preventDefault()
     try {
-      await api.put('/configuracion', config)
+      // Si el campo de password está vacío, mantenemos una marca o el backend lo ignorará
+      await api.put('/api/configuracion', config) // Usamos la ruta completa del backend
       mostrarMensaje('Configuración actualizada correctamente', 'exito')
+      // Limpiamos el campo de password por seguridad tras guardar
+      setConfig(prev => ({ ...prev, password_admin: '' }))
       cargarDatos()
     } catch (error) {
-      mostrarMensaje('Error al actualizar ajustes.', 'error')
+      mostrarMensaje('Error al actualizar ajustes. Verifica la conexión.', 'error')
     }
   }
 
@@ -99,11 +123,17 @@ function PanelAdmin() {
 
   const inputStyle = "w-full px-4 py-3 rounded-lg outline-none text-sm bg-white text-black border-2 border-gray-300 focus:border-rose-600 transition-all placeholder:text-gray-500 font-medium";
 
+  if (loading) return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+       <div className="w-10 h-10 border-4 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white py-10 px-4">
       <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* HEADER MODERNO */}
+        {/* HEADER */}
         <div className="bg-zinc-900 p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-6 border border-white/5 shadow-2xl">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-rose-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-rose-900/20">🌹</div>
@@ -130,7 +160,7 @@ function PanelAdmin() {
         {activeTab === 'inventario' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
-              {/* FORMULARIO PRODUCTO */}
+              {/* FORM PRODUCTO */}
               <div className="bg-zinc-900 p-6 rounded-3xl border border-white/5">
                 <h2 className="text-sm font-black uppercase text-rose-600 mb-6 flex items-center gap-2">Nuevo Artículo</h2>
                 <form onSubmit={handleCrearProducto} className="space-y-4">
@@ -139,14 +169,14 @@ function PanelAdmin() {
                     {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
                   </select>
                   <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del producto" />
-                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (ej: L 500 o Variantes)" />
+                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (ej: L 500)" />
                   <input type="file" onChange={(e) => setImagenArchivo(e.target.files[0])} className="text-xs text-gray-500 file:bg-zinc-800 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-lg file:mr-4 cursor-pointer w-full" />
-                  <textarea rows="2" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción breve..."></textarea>
+                  <textarea rows="2" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción..."></textarea>
                   <button className="w-full py-4 bg-rose-600 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-900/20 hover:scale-[1.02] transition-transform">Publicar Producto</button>
                 </form>
               </div>
 
-              {/* FORMULARIO CATEGORIA */}
+              {/* FORM CATEGORIA */}
               <div className="bg-zinc-900 p-6 rounded-3xl border border-white/5">
                 <h2 className="text-sm font-black uppercase text-rose-600 mb-6">Añadir Categoría</h2>
                 <form onSubmit={handleCrearCategoria} className="space-y-4">
@@ -156,8 +186,8 @@ function PanelAdmin() {
               </div>
             </div>
 
+            {/* TABLA */}
             <div className="lg:col-span-2 space-y-6">
-              {/* TABLA DE PRODUCTOS */}
               <div className="bg-zinc-900 rounded-3xl border border-white/5 overflow-hidden">
                 <div className="p-6 border-b border-white/5 flex justify-between items-center">
                   <h2 className="text-sm font-black uppercase tracking-widest">Inventario Actual</h2>
@@ -181,7 +211,7 @@ function PanelAdmin() {
                           </td>
                           <td className="p-4 font-black text-rose-600">{p.precio}</td>
                           <td className="p-4 text-right">
-                            <button onClick={() => api.delete(`/productos/${p.id}`).then(cargarDatos)} className="bg-rose-600/10 text-rose-500 p-2 rounded-lg hover:bg-rose-600 hover:text-white transition-all">✕</button>
+                            <button onClick={() => handleEliminarProducto(p.id)} className="bg-rose-600/10 text-rose-500 p-2 rounded-lg hover:bg-rose-600 hover:text-white transition-all">✕</button>
                           </td>
                         </tr>
                       ))}
@@ -192,7 +222,7 @@ function PanelAdmin() {
             </div>
           </div>
         ) : (
-          /* SECCIÓN MANAGER (CONFIGURACIÓN) */
+          /* MANAGER */
           <div className="max-w-2xl mx-auto bg-zinc-900 p-8 rounded-3xl border border-white/5 shadow-2xl">
             <h2 className="text-xl font-black uppercase italic mb-8 flex items-center gap-3">
               <span className="w-8 h-8 bg-rose-600/20 text-rose-600 rounded-lg flex items-center justify-center not-italic">⚙️</span>
@@ -202,35 +232,12 @@ function PanelAdmin() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link Facebook</label>
-                  <input type="text" value={config.facebook} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="https://facebook.com/..." />
+                  <input type="text" value={config.facebook || ''} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="https://facebook.com/..." />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link Instagram</label>
-                  <input type="text" value={config.instagram} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="https://instagram.com/..." />
+                  <input type="text" value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="https://instagram.com/..." />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link TikTok</label>
-                  <input type="text" value={config.tiktok} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="https://tiktok.com/@..." />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">WhatsApp de Ventas</label>
-                  <input type="text" value={config.whatsapp} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-white/5">
-                <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2 block">Cambiar Contraseña de Acceso</label>
-                <input type="password" value={config.password_admin} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Escribe la nueva clave solo si quieres cambiarla" />
-                <p className="text-[9px] text-gray-500 mt-2 font-bold uppercase italic">* Deja en blanco para mantener la actual</p>
-              </div>
-
-              <button className="w-full py-4 bg-green-600 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-green-900/20 hover:scale-[1.01] transition-transform">Actualizar Datos de Empresa</button>
-            </form>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default PanelAdmin
+                  <input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={

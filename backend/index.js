@@ -13,7 +13,6 @@ const supabase = createClient(
 const upload = multer({ storage: multer.memoryStorage() });
 const app = express();
 
-// Permite que tu frontend (inversiones-rubi-web) hable con este backend
 app.use(cors({
   origin: '*', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -22,12 +21,42 @@ app.use(cors({
 
 app.use(express.json());
 
-// --- RUTAS ---
-app.get('/', (req, res) => {
-    res.send('Backend activo. Ve a /api/productos para ver datos.');
+// --- RUTAS DE CONFIGURACIÓN (NUEVAS) ---
+
+// Obtener configuración (Redes sociales, WhatsApp, etc)
+app.get('/api/configuracion', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM configuracion WHERE id = 1");
+        if (result.rows.length === 0) {
+            // Si no existe la fila, enviamos un objeto por defecto
+            return res.json({ whatsapp: '50497432867', facebook: '', instagram: '', tiktok: '', password_admin: 'admin123' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error("Error en GET /configuracion:", err);
+        res.status(500).json({ error: "Error al cargar configuración" });
+    }
 });
 
-// Obtener productos
+// Actualizar configuración
+app.put('/api/configuracion', async (req, res) => {
+    try {
+        const { facebook, instagram, tiktok, whatsapp, password_admin } = req.body;
+        const result = await pool.query(
+            `UPDATE configuracion 
+             SET facebook=$1, instagram=$2, tiktok=$3, whatsapp=$4, password_admin=$5 
+             WHERE id=1 RETURNING *`,
+            [facebook, instagram, tiktok, whatsapp, password_admin]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error("Error en PUT /configuracion:", err);
+        res.status(500).json({ error: "Error al actualizar configuración" });
+    }
+});
+
+// --- RUTAS DE PRODUCTOS ---
+
 app.get('/api/productos', async (req, res) => {
     try {
         const result = await pool.query(`
@@ -43,7 +72,6 @@ app.get('/api/productos', async (req, res) => {
     }
 });
 
-// Obtener categorías
 app.get('/api/categorias', async (req, res) => {
     try {
         const result = await pool.query("SELECT * FROM categorias ORDER BY nombre ASC");
@@ -54,7 +82,6 @@ app.get('/api/categorias', async (req, res) => {
     }
 });
 
-// Crear categoría
 app.post('/api/categorias', async (req, res) => {
     try {
         const { nombre } = req.body;
@@ -65,7 +92,6 @@ app.post('/api/categorias', async (req, res) => {
     }
 });
 
-// Subir producto con imagen
 app.post('/api/productos', upload.single('imagen'), async (req, res) => {
     try {
         const { nombre, descripcion, precio, categoria_id } = req.body;
@@ -96,9 +122,7 @@ app.post('/api/productos', upload.single('imagen'), async (req, res) => {
         res.status(500).json({ error: "Error al guardar producto" });
     }
 });
-// --- RUTAS PARA ELIMINAR ---
 
-// Eliminar Producto
 app.delete('/api/productos/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -110,33 +134,23 @@ app.delete('/api/productos/:id', async (req, res) => {
     }
 });
 
-// Eliminar Categoría
 app.delete('/api/categorias/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        
-        // 1. Primero verificamos si hay productos usando esta categoría
-        const checkProductos = await pool.query(
-            "SELECT COUNT(*) FROM productos WHERE categoria_id = $1", 
-            [id]
-        );
+        const checkProductos = await pool.query("SELECT COUNT(*) FROM productos WHERE categoria_id = $1", [id]);
         
         if (parseInt(checkProductos.rows[0].count) > 0) {
-            // Si hay productos, enviamos un error claro al frontend
-            return res.status(400).json({ 
-                error: "No puedes eliminar esta categoría porque aún tiene productos. Elimina los productos primero." 
-            });
+            return res.status(400).json({ error: "No puedes eliminar esta categoría porque aún tiene productos." });
         }
 
-        // 2. Si no hay productos, procedemos a borrar la categoría
         await pool.query("DELETE FROM categorias WHERE id = $1", [id]);
         res.json({ message: "Categoría eliminada exitosamente" });
-        
     } catch (err) {
         console.error("Error al eliminar categoría:", err);
         res.status(500).json({ error: "No se pudo eliminar la categoría" });
     }
 });
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor listo en puerto ${PORT}`);
