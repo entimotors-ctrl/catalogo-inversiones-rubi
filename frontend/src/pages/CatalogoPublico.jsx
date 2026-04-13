@@ -23,23 +23,36 @@ function CatalogoPublico() {
     const fetchDatos = async () => {
       try {
         setLoading(true);
-        const [catRes, prodRes, configRes] = await Promise.all([
-          api.get('/categorias'),
-          api.get('/productos'),
-          api.get('/configuracion')
+        
+        // Paso 1: Cargar categorías y productos (lo esencial)
+        // Usamos peticiones separadas o manejamos errores individuales para que uno no bloquee al otro
+        const [catRes, prodRes] = await Promise.all([
+          api.get('/categorias').catch(err => ({ data: [] })),
+          api.get('/productos').catch(err => ({ data: [] }))
         ]);
         
         setCategorias(catRes.data);
         setProductos(prodRes.data);
-        if (configRes.data) setConfig(configRes.data);
 
-        const destacadosBase = prodRes.data.filter(p => p.destacado).length > 0 
-          ? prodRes.data.filter(p => p.destacado)
-          : [...prodRes.data].sort(() => 0.5 - Math.random()).slice(0, 6);
-        
-        setProductosDestacados([...destacadosBase, ...destacadosBase, ...destacadosBase]); 
+        // Paso 2: Cargar configuración (opcional)
+        // Si falla, el catálogo seguirá funcionando con los valores por defecto del useState
+        try {
+          const configRes = await api.get('/configuracion');
+          if (configRes.data) setConfig(configRes.data);
+        } catch (configErr) {
+          console.warn("Aviso: No se pudo cargar la configuración, usando valores por defecto.");
+        }
+
+        // Paso 3: Lógica de destacados
+        if (prodRes.data.length > 0) {
+          const destacadosBase = prodRes.data.filter(p => p.destacado).length > 0 
+            ? prodRes.data.filter(p => p.destacado)
+            : [...prodRes.data].sort(() => 0.5 - Math.random()).slice(0, 6);
+          
+          setProductosDestacados([...destacadosBase, ...destacadosBase, ...destacadosBase]); 
+        }
       } catch (err) {
-        console.error("Error al conectar:", err);
+        console.error("Error crítico en la carga de datos:", err);
       } finally {
         setLoading(false);
       }
@@ -102,8 +115,9 @@ function CatalogoPublico() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
-        {/* CARRUSEL Y SELECTOR (IGUAL QUE ANTES) */}
-        {!searchTerm && !categoriaActiva && (
+        
+        {/* CARRUSEL DE DESTACADOS */}
+        {productosDestacados.length > 0 && !searchTerm && !categoriaActiva && (
           <section className="mb-12 overflow-hidden">
              <h2 className="text-xs font-black tracking-widest uppercase mb-6 text-rose-600 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
@@ -131,6 +145,7 @@ function CatalogoPublico() {
           </section>
         )}
 
+        {/* SELECTOR DE CATEGORÍAS */}
         <div className="mb-12 flex flex-col items-center">
           <label className="text-[10px] font-black uppercase tracking-widest text-rose-600 mb-3 bg-rose-600/10 px-4 py-1 rounded-full">Explorar Categorías</label>
           <div className="relative w-full max-w-sm">
@@ -149,33 +164,39 @@ function CatalogoPublico() {
         </div>
 
         {/* GRILLA DE PRODUCTOS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {productosFiltrados.map((p) => (
-            <div key={p.id} className={`group flex flex-col h-full rounded-3xl overflow-hidden border transition-all hover:translate-y-[-8px] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/50' : 'bg-white border-zinc-200 hover:border-rose-600/50 shadow-md'}`}>
-              <div className="aspect-square relative overflow-hidden bg-white">
-                <span className="absolute top-3 right-3 z-10 bg-green-600 text-white text-[10px] px-3 py-1 rounded-full font-black shadow-lg uppercase tracking-tighter">Disponible</span>
-                <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-700" />
-              </div>
-              <div className="p-6 flex flex-col flex-grow">
-                <h3 className="font-black text-lg uppercase mb-2 leading-tight tracking-tight">{p.nombre}</h3>
-                <p className={`text-xs mb-6 line-clamp-2 font-medium leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{p.descripcion}</p>
-                <div className="mt-auto">
-                   <div className="bg-rose-600/10 p-4 rounded-2xl border-l-4 border-rose-600 mb-5 group-hover:bg-rose-600/20 transition-colors">
-                      <p className="text-[10px] font-bold text-rose-600 uppercase mb-1 opacity-70">Precio Catálogo</p>
-                      <span className="text-xl font-black text-rose-600">L {p.precio}</span>
-                   </div>
-                   <a href={`https://wa.me/${config.whatsapp}?text=Hola Inversiones Rubi, solicito información de: *${p.nombre}*`} 
-                      target="_blank" rel="noopener noreferrer" 
-                      className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20 active:scale-95">
-                      CONSULTAR PRECIO
-                   </a>
+        {productosFiltrados.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {productosFiltrados.map((p) => (
+              <div key={p.id} className={`group flex flex-col h-full rounded-3xl overflow-hidden border transition-all hover:translate-y-[-8px] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/50' : 'bg-white border-zinc-200 hover:border-rose-600/50 shadow-md'}`}>
+                <div className="aspect-square relative overflow-hidden bg-white">
+                  <span className="absolute top-3 right-3 z-10 bg-green-600 text-white text-[10px] px-3 py-1 rounded-full font-black shadow-lg uppercase tracking-tighter">Disponible</span>
+                  <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-700" />
+                </div>
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="font-black text-lg uppercase mb-2 leading-tight tracking-tight">{p.nombre}</h3>
+                  <p className={`text-xs mb-6 line-clamp-2 font-medium leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{p.descripcion}</p>
+                  <div className="mt-auto">
+                     <div className="bg-rose-600/10 p-4 rounded-2xl border-l-4 border-rose-600 mb-5 group-hover:bg-rose-600/20 transition-colors">
+                        <p className="text-[10px] font-bold text-rose-600 uppercase mb-1 opacity-70">Precio Catálogo</p>
+                        <span className="text-xl font-black text-rose-600">L {p.precio}</span>
+                     </div>
+                     <a href={`https://wa.me/${config.whatsapp}?text=Hola Inversiones Rubi, solicito información de: *${p.nombre}*`} 
+                        target="_blank" rel="noopener noreferrer" 
+                        className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20 active:scale-95">
+                        CONSULTAR PRECIO
+                     </a>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 opacity-50">
+            <p className="font-bold uppercase tracking-widest">No se encontraron productos en esta sección.</p>
+          </div>
+        )}
 
-        {/* NUEVO: FOOTER CON REDES SOCIALES DINÁMICAS */}
+        {/* FOOTER */}
         <footer className="mt-20 py-12 border-t border-white/5 flex flex-col items-center">
             <h3 className="text-[10px] font-black tracking-[0.4em] uppercase text-gray-500 mb-8">Síguenos en nuestras redes</h3>
             <div className="flex gap-8 items-center">
