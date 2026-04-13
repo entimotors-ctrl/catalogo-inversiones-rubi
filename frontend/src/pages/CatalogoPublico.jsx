@@ -219,16 +219,6 @@ function CatalogoPublico() {
             <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-10 italic">© 2026 Inversiones Rubi - Calidad y Confianza</p>
         </footer>
       </main>
-
-      {/* BOTÓN VOLVER ARRIBA */}
-      {showScrollTop && (
-        <button 
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-8 right-8 p-4 bg-rose-600 text-white rounded-full shadow-2xl hover:bg-rose-700 transition-all z-50 animate-bounce"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 15l7-7 7 7"></path></svg>
-        </button>
-      )}
     </div>
   )
 }
