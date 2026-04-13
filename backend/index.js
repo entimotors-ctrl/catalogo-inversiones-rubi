@@ -96,7 +96,47 @@ app.post('/api/productos', upload.single('imagen'), async (req, res) => {
         res.status(500).json({ error: "Error al guardar producto" });
     }
 });
+// --- RUTAS PARA ELIMINAR ---
 
+// Eliminar Producto
+app.delete('/api/productos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query("DELETE FROM productos WHERE id = $1", [id]);
+        res.json({ message: "Producto eliminado exitosamente" });
+    } catch (err) {
+        console.error("Error al eliminar producto:", err);
+        res.status(500).json({ error: "No se pudo eliminar el producto" });
+    }
+});
+
+// Eliminar Categoría
+app.delete('/api/categorias/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // 1. Primero verificamos si hay productos usando esta categoría
+        const checkProductos = await pool.query(
+            "SELECT COUNT(*) FROM productos WHERE categoria_id = $1", 
+            [id]
+        );
+        
+        if (parseInt(checkProductos.rows[0].count) > 0) {
+            // Si hay productos, enviamos un error claro al frontend
+            return res.status(400).json({ 
+                error: "No puedes eliminar esta categoría porque aún tiene productos. Elimina los productos primero." 
+            });
+        }
+
+        // 2. Si no hay productos, procedemos a borrar la categoría
+        await pool.query("DELETE FROM categorias WHERE id = $1", [id]);
+        res.json({ message: "Categoría eliminada exitosamente" });
+        
+    } catch (err) {
+        console.error("Error al eliminar categoría:", err);
+        res.status(500).json({ error: "No se pudo eliminar la categoría" });
+    }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor listo en puerto ${PORT}`);
