@@ -26,12 +26,13 @@ function CatalogoPublico() {
         setCategorias(catRes.data);
         setProductos(prodRes.data);
 
-        // Selección de destacados dinámica
-        const destacados = prodRes.data.filter(p => p.destacado).length > 0 
+        // Filtramos destacados y duplicamos el array para el efecto infinito
+        const destacadosBase = prodRes.data.filter(p => p.destacado).length > 0 
           ? prodRes.data.filter(p => p.destacado)
           : [...prodRes.data].sort(() => 0.5 - Math.random()).slice(0, 6);
         
-        setProductosDestacados([...destacados, ...destacados]); 
+        // Duplicamos 3 veces para asegurar que no haya huecos en pantallas grandes
+        setProductosDestacados([...destacadosBase, ...destacadosBase, ...destacadosBase]); 
         setError(null);
       } catch (err) {
         console.error("Error al conectar:", err);
@@ -59,8 +60,27 @@ function CatalogoPublico() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
+    <div className={`min-h-screen transition-colors duration-500 overflow-x-hidden ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
       
+      {/* ESTILOS DEL CARRUSEL INFINITO */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-infinite-scroll {
+          display: flex;
+          width: max-content;
+          animation: scroll 40s linear infinite;
+        }
+        .animate-infinite-scroll:hover {
+          animation-play-state: paused;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}} />
+
       {/* MARCA DE AGUA */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] flex items-center justify-center overflow-hidden">
         <img src={watermarkLogo} className="w-[80%] max-w-2xl rotate-12" alt="" />
@@ -94,22 +114,31 @@ function CatalogoPublico() {
 
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
         
-        {/* CARRUSEL DE DESTACADOS */}
+        {/* CARRUSEL DE DESTACADOS (RECUPERADO E INFINITO) */}
         {!searchTerm && !categoriaActiva && (
-          <section className="mb-12">
-             <h2 className="text-xs font-black tracking-widest uppercase mb-4 text-rose-600">✨ Los más buscados</h2>
-             <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                {productosDestacados.map((p, idx) => (
-                  <div key={`${p.id}-${idx}`} className={`flex-shrink-0 w-72 p-3 rounded-2xl border ${darkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <div className="flex gap-3 items-center">
-                      <img src={p.imagen_url} className="w-16 h-16 rounded-lg object-cover bg-white" alt={p.nombre} />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-black uppercase truncate">{p.nombre}</h3>
-                        <span className="text-rose-600 font-black">L {p.precio}</span>
+          <section className="mb-12 overflow-hidden">
+             <h2 className="text-xs font-black tracking-widest uppercase mb-6 text-rose-600 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                Destacados de la semana
+             </h2>
+             <div className="relative w-full">
+                <div className="animate-infinite-scroll gap-6">
+                  {productosDestacados.map((p, idx) => (
+                    <div key={`${p.id}-${idx}`} className={`flex-shrink-0 w-80 p-4 rounded-2xl border transition-all ${darkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                      <div className="flex gap-4 items-center">
+                        <div className="w-20 h-20 rounded-xl overflow-hidden bg-white flex-shrink-0">
+                           <img src={p.imagen_url} className="w-full h-full object-contain" alt={p.nombre} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-black uppercase truncate">{p.nombre}</h3>
+                          <div className="bg-rose-600/10 inline-block px-2 py-1 rounded-lg mt-1">
+                             <span className="text-rose-600 font-black text-sm">L {p.precio}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
              </div>
           </section>
         )}
@@ -118,7 +147,7 @@ function CatalogoPublico() {
         <div className="mb-10 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => setCategoriaActiva(null)}
-            className={`px-5 py-2 rounded-full text-xs font-black uppercase transition-all ${!categoriaActiva ? 'bg-rose-600 text-white' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+            className={`px-6 py-2 rounded-full text-xs font-black uppercase transition-all ${!categoriaActiva ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/40' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
           >
             Todos
           </button>
@@ -126,7 +155,7 @@ function CatalogoPublico() {
             <button
               key={cat.id}
               onClick={() => setCategoriaActiva(cat)}
-              className={`px-5 py-2 rounded-full text-xs font-black uppercase transition-all ${categoriaActiva?.id === cat.id ? 'bg-rose-600 text-white' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
+              className={`px-6 py-2 rounded-full text-xs font-black uppercase transition-all ${categoriaActiva?.id === cat.id ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/40' : 'bg-zinc-800 text-gray-400 hover:bg-zinc-700'}`}
             >
               {cat.nombre}
             </button>
@@ -136,24 +165,24 @@ function CatalogoPublico() {
         {/* GRILLA DE PRODUCTOS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {productosFiltrados.map((p) => (
-            <div key={p.id} className={`group flex flex-col h-full rounded-3xl overflow-hidden border transition-all hover:scale-[1.02] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/50' : 'bg-white border-zinc-200 hover:border-rose-600/50 shadow-md'}`}>
+            <div key={p.id} className={`group flex flex-col h-full rounded-3xl overflow-hidden border transition-all hover:translate-y-[-5px] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/50' : 'bg-white border-zinc-200 hover:border-rose-600/50 shadow-md'}`}>
               <div className="aspect-square relative overflow-hidden bg-white">
-                <span className="absolute top-3 right-3 z-10 bg-green-600 text-white text-[10px] px-2 py-1 rounded-full font-black shadow-lg">DISPONIBLE</span>
-                <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500" />
+                <span className="absolute top-3 right-3 z-10 bg-green-600 text-white text-[10px] px-2 py-1 rounded-full font-black shadow-lg uppercase">En Stock</span>
+                <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
               </div>
-              <div className="p-5 flex flex-col flex-grow">
-                <h3 className="font-black text-lg uppercase mb-1 leading-tight">{p.nombre}</h3>
-                <p className={`text-xs mb-4 line-clamp-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{p.descripcion}</p>
+              <div className="p-6 flex flex-col flex-grow">
+                <h3 className="font-black text-lg uppercase mb-1 leading-tight tracking-tight">{p.nombre}</h3>
+                <p className={`text-xs mb-5 line-clamp-2 font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{p.descripcion}</p>
                 <div className="mt-auto">
-                   <div className="bg-rose-600/10 p-3 rounded-2xl border-l-4 border-rose-600 mb-4">
-                      <p className="text-[10px] font-bold text-rose-600 uppercase mb-1">Precio Sugerido</p>
+                   <div className="bg-rose-600/10 p-3 rounded-2xl border-l-4 border-rose-600 mb-5">
+                      <p className="text-[10px] font-bold text-rose-600 uppercase mb-1 opacity-70">Precio Catálogo</p>
                       <span className="text-xl font-black text-rose-600">L {p.precio}</span>
                    </div>
-                   <a href={`https://wa.me/${numeroWhatsApp}?text=Hola Inversiones Rubi, me interesa este producto: *${p.nombre}*`} 
+                   <a href={`https://wa.me/${numeroWhatsApp}?text=Hola Inversiones Rubi, solicito información de: *${p.nombre}*`} 
                       target="_blank" rel="noopener noreferrer" 
-                      className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-colors shadow-lg shadow-green-900/20">
+                      className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20 active:scale-95">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.539 2.016 2.126-.54c1.029.563 2.028.913 3.162.914.004 0 .007 0 .011 0 3.181 0 5.767-2.586 5.768-5.766 0-3.18-2.586-5.765-5.766-5.765-1.542 0-2.993.6-4.086 1.693-1.092 1.092-1.693 2.544-1.693 4.085 0 1.258.38 2.155.938 3.109l-.53 1.986 2.115-.537c.974.526 1.916.85 2.992.85h.01c2.81 0 5.097-2.287 5.098-5.097 0-2.81-2.287-5.097-5.098-5.097zM20.52 3.449c-2.274-2.273-5.297-3.524-8.513-3.525-6.632 0-12.03 5.398-12.033 12.031 0 2.12.553 4.189 1.601 6.005l-1.703 6.22 6.363-1.669c1.758.959 3.743 1.465 5.763 1.466h.005c6.633 0 12.032-5.398 12.035-12.032.001-3.212-1.249-6.233-3.524-8.508z" /></svg>
-                      COTIZAR AHORA
+                      COTIZAR POR WHATSAPP
                    </a>
                 </div>
               </div>
