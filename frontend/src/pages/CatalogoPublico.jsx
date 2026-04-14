@@ -1,31 +1,28 @@
 import { useState, useEffect, useMemo } from 'react'
 import api from '../services/api'
+// 1. Importación de los nuevos activos
+import logo1 from '../assets/logo1.png'
+import logo2 from '../assets/logo2.png'
+import logowas from '../assets/logowas.png'
 import watermarkLogo from '../assets/hero.png' 
+// Iconos necesarios
+import { FaMapMarkerAlt, FaWhatsapp } from 'react-icons/fa'
 
 function CatalogoPublico() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
-  const [config, setConfig] = useState({ facebook: '', instagram: '', tiktok: '', whatsapp: '50497432867' })
+  // Iniciamos WhatsApp vacío para que mande el del Panel Admin
+  const [config, setConfig] = useState({ facebook: '', instagram: '', tiktok: '', whatsapp: '' })
   const [categoriaActiva, setCategoriaActiva] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [darkMode, setDarkMode] = useState(true)
   const [productosDestacados, setProductosDestacados] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showScrollTop, setShowScrollTop] = useState(false)
-
-  useEffect(() => {
-    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   useEffect(() => {
     const fetchDatos = async () => {
       try {
         setLoading(true);
-        
-        // Paso 1: Cargar categorías y productos (lo esencial)
-        // Usamos peticiones separadas o manejamos errores individuales para que uno no bloquee al otro
         const [catRes, prodRes] = await Promise.all([
           api.get('/categorias').catch(err => ({ data: [] })),
           api.get('/productos').catch(err => ({ data: [] }))
@@ -34,16 +31,13 @@ function CatalogoPublico() {
         setCategorias(catRes.data);
         setProductos(prodRes.data);
 
-        // Paso 2: Cargar configuración (opcional)
-        // Si falla, el catálogo seguirá funcionando con los valores por defecto del useState
         try {
           const configRes = await api.get('/configuracion');
           if (configRes.data) setConfig(configRes.data);
         } catch (configErr) {
-          console.warn("Aviso: No se pudo cargar la configuración, usando valores por defecto.");
+          console.warn("Cargando configuración dinámica...");
         }
 
-        // Paso 3: Lógica de destacados
         if (prodRes.data.length > 0) {
           const destacadosBase = prodRes.data.filter(p => p.destacado).length > 0 
             ? prodRes.data.filter(p => p.destacado)
@@ -52,7 +46,7 @@ function CatalogoPublico() {
           setProductosDestacados([...destacadosBase, ...destacadosBase, ...destacadosBase]); 
         }
       } catch (err) {
-        console.error("Error crítico en la carga de datos:", err);
+        console.error("Error crítico:", err);
       } finally {
         setLoading(false);
       }
@@ -75,8 +69,13 @@ function CatalogoPublico() {
     );
   }
 
+  // Estilo Darkglass para el Header y tarjetas
+  const darkglassStyle = darkMode 
+    ? "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl"
+    : "bg-white/70 backdrop-blur-md border border-zinc-200 shadow-lg";
+
   return (
-    <div className={`min-h-screen transition-colors duration-500 overflow-x-hidden ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
+    <div className={`min-h-screen transition-colors duration-500 overflow-x-hidden relative ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
       
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-33.33%); } }
@@ -84,33 +83,43 @@ function CatalogoPublico() {
         .animate-infinite-scroll:hover { animation-play-state: paused; }
       `}} />
 
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] flex items-center justify-center overflow-hidden">
-        <img src={watermarkLogo} className="w-[80%] max-w-2xl rotate-12" alt="" />
+      {/* 2. LOGO2 DE FONDO (Efecto marca de agua premium) */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.04] flex items-center justify-center overflow-hidden z-0">
+        <img src={logo2} className="w-[110%] max-w-7xl rotate-[-15deg] object-contain" alt="" />
       </div>
 
-      <header className={`sticky top-0 z-50 py-5 px-4 backdrop-blur-md ${darkMode ? 'bg-zinc-950/80 border-b border-white/5' : 'bg-white/80 border-b border-zinc-200'}`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between gap-4 mb-5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 text-rose-600">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25l-9 4.5 3 10.5 6 4.5 6-4.5 3-10.5-9-4.5z" /></svg>
-              </div>
-              <div>
-                <span className={`text-[10px] font-bold tracking-[0.3em] uppercase block ${darkMode ? 'text-gray-400' : 'text-rose-900'}`}>Inversiones</span>
-                <h1 className="text-3xl font-black leading-none italic">Rubi</h1>
-              </div>
-            </div>
-            <button onClick={() => setDarkMode(!darkMode)} className={`p-2 px-4 rounded-xl font-bold text-xs transition-all border ${darkMode ? 'bg-zinc-800 text-zinc-300 border-white/10' : 'bg-white text-rose-600 border-rose-200 shadow-sm'}`}>
-              {darkMode ? '🌙 OSCURO' : '☀️ CLARO'}
+      {/* HEADER DARKGLASS MEJORADO */}
+      <header className={`sticky top-0 z-50 py-4 px-4 ${darkglassStyle}`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          
+          {/* 1. LOGO1 en el círculo */}
+          <div className="flex items-center gap-3">
+             <img src={logo1} alt="Logo" className="h-12 w-auto object-contain drop-shadow-md" />
+          </div>
+
+          <div className="flex-1 max-w-xl relative">
+            <input
+              type="text"
+              placeholder="¿Qué buscas?"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`w-full px-6 py-3 rounded-full outline-none text-sm border transition-all ${darkMode ? 'bg-black/20 border-white/10 focus:border-rose-600' : 'bg-white border-zinc-200 focus:border-rose-600'}`}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* LINK GOOGLE MAPS */}
+            <a 
+              href="https://maps.app.goo.gl/rfY7ku8WPs1JJXxBA" 
+              target="_blank" rel="noreferrer"
+              className={`p-3 rounded-full border transition-all ${darkMode ? 'bg-zinc-800 text-rose-500 border-white/10' : 'bg-white text-rose-600 border-rose-200'}`}
+            >
+              <FaMapMarkerAlt />
+            </a>
+            <button onClick={() => setDarkMode(!darkMode)} className={`p-3 rounded-full border transition-all ${darkMode ? 'bg-zinc-800 text-yellow-500 border-white/10' : 'bg-white text-rose-600 border-rose-200'}`}>
+              {darkMode ? '🌙' : '☀️'}
             </button>
           </div>
-          <input
-            type="text"
-            placeholder="🔍 ¿Qué estás buscando hoy?"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full px-6 py-4 rounded-2xl outline-none text-base border-2 transition-all ${darkMode ? 'bg-zinc-900 border-white/5 focus:border-rose-600' : 'bg-white border-zinc-100 focus:border-rose-600 shadow-sm'}`}
-          />
         </div>
       </header>
 
@@ -119,23 +128,21 @@ function CatalogoPublico() {
         {/* CARRUSEL DE DESTACADOS */}
         {productosDestacados.length > 0 && !searchTerm && !categoriaActiva && (
           <section className="mb-12 overflow-hidden">
-             <h2 className="text-xs font-black tracking-widest uppercase mb-6 text-rose-600 flex items-center gap-2">
+             <h2 className="text-[10px] font-black tracking-[0.3em] uppercase mb-6 text-rose-600 flex items-center gap-2 justify-center">
                 <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
-                Destacados de la semana
+                Destacados Premium
              </h2>
              <div className="relative w-full">
                 <div className="animate-infinite-scroll gap-6">
                   {productosDestacados.map((p, idx) => (
-                    <div key={`${p.id}-${idx}`} className={`flex-shrink-0 w-80 p-4 rounded-2xl border transition-all ${darkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div key={`${p.id}-${idx}`} className={`flex-shrink-0 w-72 p-4 rounded-3xl border transition-all ${darkMode ? 'bg-zinc-900/40 border-white/5' : 'bg-white border-zinc-200 shadow-sm'}`}>
                       <div className="flex gap-4 items-center">
-                        <div className="w-20 h-20 rounded-xl overflow-hidden bg-white flex-shrink-0">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white p-1">
                            <img src={p.imagen_url} className="w-full h-full object-contain" alt={p.nombre} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-black uppercase truncate">{p.nombre}</h3>
-                          <div className="bg-rose-600/10 inline-block px-2 py-1 rounded-lg mt-1">
-                             <span className="text-rose-600 font-black text-sm">L {p.precio}</span>
-                          </div>
+                          <h3 className="text-xs font-black uppercase truncate">{p.nombre}</h3>
+                          <span className="text-rose-600 font-black text-sm">L {p.precio}</span>
                         </div>
                       </div>
                     </div>
@@ -145,78 +152,59 @@ function CatalogoPublico() {
           </section>
         )}
 
-        {/* SELECTOR DE CATEGORÍAS */}
+        {/* SELECTOR CATEGORÍAS */}
         <div className="mb-12 flex flex-col items-center">
-          <label className="text-[10px] font-black uppercase tracking-widest text-rose-600 mb-3 bg-rose-600/10 px-4 py-1 rounded-full">Explorar Categorías</label>
-          <div className="relative w-full max-w-sm">
+          <div className="relative w-full max-w-xs">
             <select
               onChange={(e) => {
                 const selected = categorias.find(c => c.id === Number(e.target.value));
                 setCategoriaActiva(selected || null);
               }}
               value={categoriaActiva?.id || ""}
-              className={`w-full appearance-none px-6 py-4 rounded-2xl font-black uppercase text-sm border-2 outline-none transition-all cursor-pointer ${darkMode ? 'bg-zinc-900 border-white/5 text-white focus:border-rose-600 shadow-xl shadow-black/40' : 'bg-white border-gray-200 text-zinc-900 focus:border-rose-600 shadow-lg'}`}
+              className={`w-full px-6 py-4 rounded-2xl font-black uppercase text-xs border-2 outline-none text-center appearance-none cursor-pointer ${darkMode ? 'bg-zinc-900 border-white/5' : 'bg-white border-zinc-100'}`}
             >
-              <option value="">🏁 MOSTRAR TODO EL INVENTARIO</option>
+              <option value="">✨ TODO EL CATÁLOGO</option>
               {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
             </select>
           </div>
         </div>
 
-        {/* GRILLA DE PRODUCTOS */}
-        {productosFiltrados.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {productosFiltrados.map((p) => (
-              <div key={p.id} className={`group flex flex-col h-full rounded-3xl overflow-hidden border transition-all hover:translate-y-[-8px] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/50' : 'bg-white border-zinc-200 hover:border-rose-600/50 shadow-md'}`}>
-                <div className="aspect-square relative overflow-hidden bg-white">
-                  <span className="absolute top-3 right-3 z-10 bg-green-600 text-white text-[10px] px-3 py-1 rounded-full font-black shadow-lg uppercase tracking-tighter">Disponible</span>
-                  <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-700" />
-                </div>
-                <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="font-black text-lg uppercase mb-2 leading-tight tracking-tight">{p.nombre}</h3>
-                  <p className={`text-xs mb-6 line-clamp-2 font-medium leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{p.descripcion}</p>
-                  <div className="mt-auto">
-                     <div className="bg-rose-600/10 p-4 rounded-2xl border-l-4 border-rose-600 mb-5 group-hover:bg-rose-600/20 transition-colors">
-                        <p className="text-[10px] font-bold text-rose-600 uppercase mb-1 opacity-70">Precio Catálogo</p>
-                        <span className="text-xl font-black text-rose-600">L {p.precio}</span>
-                     </div>
-                     <a href={`https://wa.me/${config.whatsapp}?text=Hola Inversiones Rubi, solicito información de: *${p.nombre}*`} 
-                        target="_blank" rel="noopener noreferrer" 
-                        className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20 active:scale-95">
-                        CONSULTAR PRECIO
-                     </a>
-                  </div>
+        {/* GRILLA PRODUCTOS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {productosFiltrados.map((p) => (
+            <div key={p.id} className={`group flex flex-col rounded-[2.5rem] overflow-hidden border transition-all duration-300 hover:scale-[1.02] ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
+              <div className="aspect-square relative overflow-hidden bg-white p-6">
+                <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+              </div>
+              <div className="p-8 flex flex-col flex-grow">
+                <h3 className="font-black text-lg uppercase mb-2 tracking-tight">{p.nombre}</h3>
+                <p className={`text-xs mb-6 line-clamp-2 opacity-60 leading-relaxed font-medium`}>{p.descripcion}</p>
+                <div className="mt-auto">
+                   <div className="bg-rose-600/10 p-4 rounded-2xl border-l-4 border-rose-600 mb-6">
+                      <span className="text-xl font-black text-rose-600">L {p.precio}</span>
+                   </div>
+                   <a href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por: *${p.nombre}*`} 
+                      target="_blank" rel="noopener noreferrer" 
+                      className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-xs uppercase tracking-widest">
+                      <FaWhatsapp size={16} /> CONSULTAR
+                   </a>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20 opacity-50">
-            <p className="font-bold uppercase tracking-widest">No se encontraron productos en esta sección.</p>
-          </div>
-        )}
-
-        {/* FOOTER */}
-        <footer className="mt-20 py-12 border-t border-white/5 flex flex-col items-center">
-            <h3 className="text-[10px] font-black tracking-[0.4em] uppercase text-gray-500 mb-8">Síguenos en nuestras redes</h3>
-            <div className="flex gap-8 items-center">
-                {config.facebook && (
-                  <a href={config.facebook} target="_blank" rel="noopener noreferrer" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-zinc-900 border border-white/5 hover:border-blue-600 hover:text-blue-600 transition-all">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/></svg>
-                  </a>
-                )}
-                {config.instagram && (
-                  <a href={config.instagram} target="_blank" rel="noopener noreferrer" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-zinc-900 border border-white/5 hover:border-pink-500 hover:text-pink-500 transition-all">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.266.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.668-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                  </a>
-                )}
-                {config.tiktok && (
-                  <a href={config.tiktok} target="_blank" rel="noopener noreferrer" className="w-12 h-12 flex items-center justify-center rounded-2xl bg-zinc-900 border border-white/5 hover:border-cyan-400 hover:text-cyan-400 transition-all">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.17-2.89-.6-4.09-1.47-.88-.64-1.61-1.47-2.11-2.43v10.3c0 5.17-4.22 9.38-9.39 9.38S1.44 21.6 1.44 16.42s4.22-9.38 9.39-9.38c.63 0 1.26.06 1.88.19v4.1c-1.85-.56-3.89-.04-5.26 1.32-1.37 1.36-1.83 3.44-1.18 5.25.64 1.81 2.37 3 4.29 3 2.58 0 4.67-2.09 4.67-4.67V.02z"/></svg>
-                  </a>
-                )}
             </div>
-            <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-10 italic">© 2026 Inversiones Rubi - Calidad y Confianza</p>
+          ))}
+        </div>
+
+        {/* FOOTER Y FIRMA LOGOWAS */}
+        <footer className="mt-32 pb-12 flex flex-col items-center">
+            <img src={logo1} alt="" className="h-8 opacity-20 mb-10" />
+            
+            <div className="flex flex-col items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
+                <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-gray-500">Diseñado por</span>
+                {/* 3. LOGOWAS FIRMA (Pequeña y elegante) */}
+                <img src={logowas} alt="WASystem" className="h-4 w-auto grayscale" />
+            </div>
+            
+            <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest mt-8 italic">© 2026 Inversiones Rubi</p>
         </footer>
       </main>
     </div>

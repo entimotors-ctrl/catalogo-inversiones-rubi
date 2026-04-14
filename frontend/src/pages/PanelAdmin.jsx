@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
+// 1. Importamos el logo1 para el encabezado
+import logo1 from '../assets/logo1.png'
 
 function PanelAdmin() {
   const [activeTab, setActiveTab] = useState('inventario')
@@ -26,7 +28,6 @@ function PanelAdmin() {
 
   const cargarDatos = async () => {
     try {
-      // Cargamos productos y categorías con manejo de errores individual
       const [catRes, prodRes] = await Promise.all([
         api.get('/categorias').catch(() => ({ data: [] })),
         api.get('/productos').catch(() => ({ data: [] }))
@@ -35,7 +36,6 @@ function PanelAdmin() {
       setCategorias(catRes.data)
       setProductos(prodRes.data)
 
-      // Carga de configuración independiente
       try {
         const configRes = await api.get('/configuracion')
         if (configRes.data) {
@@ -104,7 +104,6 @@ function PanelAdmin() {
   const handleUpdateConfig = async (e) => {
     e.preventDefault()
     try {
-      // Ajuste de ruta para coincidir con el backend
       await api.put('/configuracion', config)
       mostrarMensaje('Configuración actualizada correctamente', 'exito')
       setConfig(prev => ({ ...prev, password_admin: '' }))
@@ -119,94 +118,112 @@ function PanelAdmin() {
     window.location.href = '/login'
   }
 
-  const inputStyle = "w-full px-4 py-3 rounded-lg outline-none text-sm bg-white text-black border-2 border-gray-300 focus:border-rose-600 transition-all placeholder:text-gray-500 font-medium";
+  // Clases CSS para el estilo Darkglass Elegant
+  const inputStyle = "w-full px-5 py-3.5 rounded-2xl outline-none text-sm bg-black/40 text-white border border-white/10 focus:border-rose-600 transition-all placeholder:text-gray-600 font-medium shadow-inner";
+  const cardStyle = "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-[2rem]";
 
   if (loading) return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-       <div className="w-10 h-10 border-4 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center">
+       <div className="w-12 h-12 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+       <p className="text-rose-600 font-black tracking-widest text-xs animate-pulse uppercase">Cargando Sistema...</p>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white py-10 px-4">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-zinc-950 text-white py-10 px-4 font-sans">
+      <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* HEADER */}
-        <div className="bg-zinc-900 p-6 rounded-3xl flex flex-col md:flex-row justify-between items-center gap-6 border border-white/5 shadow-2xl">
+        {/* HEADER DARKGLASS */}
+        <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-rose-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-rose-900/20">🌹</div>
+            {/* LOGO 1 PRINCIPAL */}
+            <img src={logo1} alt="Rubi Logo" className="h-12 w-auto object-contain" />
+            <div className="h-10 w-[1px] bg-white/10 hidden md:block"></div>
             <div>
-              <h1 className="text-2xl font-black uppercase italic tracking-tighter">Rubi <span className="text-rose-600 italic">Admin</span></h1>
-              <p className="text-[10px] text-gray-500 font-bold tracking-[0.3em] uppercase">Gestión de Catálogo</p>
+              <h1 className="text-xl font-black uppercase italic tracking-tighter">Panel <span className="text-rose-600 italic">Admin</span></h1>
             </div>
           </div>
           
-          <div className="flex bg-black/40 p-1.5 rounded-2xl gap-2">
-            <button onClick={() => setActiveTab('inventario')} className={`px-5 py-2 rounded-xl text-xs font-black transition-all ${activeTab === 'inventario' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>INVENTARIO</button>
-            <button onClick={() => setActiveTab('manager')} className={`px-5 py-2 rounded-xl text-xs font-black transition-all ${activeTab === 'manager' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}>MANAGER</button>
+          <div className="flex bg-black/60 p-1.5 rounded-2xl gap-2 border border-white/5">
+            <button onClick={() => setActiveTab('inventario')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'inventario' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
+            <button onClick={() => setActiveTab('manager')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'manager' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
           </div>
 
-          <button onClick={handleLogout} className="text-gray-500 hover:text-rose-500 font-black text-[10px] uppercase tracking-widest transition-colors">Salir ✕</button>
+          <button onClick={handleLogout} className="text-gray-600 hover:text-rose-500 font-black text-[10px] uppercase tracking-widest transition-colors flex items-center gap-2">
+            Cerrar Sesión ✕
+          </button>
         </div>
 
         {mensaje.texto && (
-          <div className={`p-4 rounded-2xl font-bold text-center text-xs tracking-widest border animate-pulse ${mensaje.tipo === 'error' ? 'bg-rose-900/20 border-rose-500 text-rose-500' : 'bg-green-900/20 border-green-500 text-green-500'}`}>
-            {mensaje.texto}
+          <div className={`p-4 rounded-2xl font-bold text-center text-xs tracking-[0.2em] border animate-pulse ${mensaje.tipo === 'error' ? 'bg-rose-900/30 border-rose-500 text-rose-500' : 'bg-green-900/30 border-green-500 text-green-500'}`}>
+            {mensaje.texto.toUpperCase()}
           </div>
         )}
 
         {activeTab === 'inventario' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 space-y-6">
-              <div className="bg-zinc-900 p-6 rounded-3xl border border-white/5">
-                <h2 className="text-sm font-black uppercase text-rose-600 mb-6 flex items-center gap-2">Nuevo Artículo</h2>
-                <form onSubmit={handleCrearProducto} className="space-y-4">
+            {/* COLUMNA IZQUIERDA: FORMULARIOS */}
+            <div className="lg:col-span-1 space-y-8">
+              <div className={`${cardStyle} p-8`}>
+                <h2 className="text-[10px] font-black uppercase text-rose-600 mb-8 tracking-[0.3em] flex items-center gap-2">
+                   <span className="w-2 h-2 rounded-full bg-rose-600"></span> 
+                   Publicar Producto
+                </h2>
+                <form onSubmit={handleCrearProducto} className="space-y-5">
                   <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
-                    <option value="">Categoría...</option>
+                    <option value="">Seleccionar Categoría...</option>
                     {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
                   </select>
-                  <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del producto" />
-                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (ej: L 500)" />
-                  <input type="file" onChange={(e) => setImagenArchivo(e.target.files[0])} className="text-xs text-gray-500 file:bg-zinc-800 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-lg file:mr-4 cursor-pointer w-full" />
-                  <textarea rows="2" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción..."></textarea>
-                  <button className="w-full py-4 bg-rose-600 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-900/20 hover:scale-[1.02] transition-transform">Publicar Producto</button>
+                  <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
+                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (L 0.00)" />
+                  
+                  <div className="bg-black/40 p-4 rounded-2xl border border-white/5">
+                      <p className="text-[9px] font-black text-gray-600 uppercase mb-3 tracking-widest">Fotografía de Producto</p>
+                      <input type="file" onChange={(e) => setImagenArchivo(e.target.files[0])} className="text-[10px] text-gray-500 file:bg-zinc-800 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-full file:mr-4 cursor-pointer w-full" />
+                  </div>
+
+                  <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Breve descripción de las características..."></textarea>
+                  <button className="w-full py-4.5 bg-rose-600 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-rose-900/20 hover:scale-[1.02] active:scale-95 transition-all">Subir al Catálogo</button>
                 </form>
               </div>
 
-              <div className="bg-zinc-900 p-6 rounded-3xl border border-white/5">
-                <h2 className="text-sm font-black uppercase text-rose-600 mb-6">Añadir Categoría</h2>
+              <div className={`${cardStyle} p-8`}>
+                <h2 className="text-[10px] font-black uppercase text-rose-600 mb-6 tracking-[0.3em]">Nueva Categoría</h2>
                 <form onSubmit={handleCrearCategoria} className="space-y-4">
-                  <input type="text" required value={nombreCategoria} onChange={(e) => setNombreCategoria(e.target.value)} className={inputStyle} placeholder="Nombre categoría" />
-                  <button className="w-full py-3 bg-zinc-800 rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/5">Guardar Grupo</button>
+                  <input type="text" required value={nombreCategoria} onChange={(e) => setNombreCategoria(e.target.value)} className={inputStyle} placeholder="Ej: Relojes, Joyas..." />
+                  <button className="w-full py-3.5 bg-zinc-800/50 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-zinc-800 transition-colors">Crear Grupo</button>
                 </form>
               </div>
             </div>
 
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-zinc-900 rounded-3xl border border-white/5 overflow-hidden">
-                <div className="p-6 border-b border-white/5 flex justify-between items-center">
-                  <h2 className="text-sm font-black uppercase tracking-widest">Inventario Actual</h2>
-                  <span className="text-[10px] bg-rose-600/20 text-rose-500 px-3 py-1 rounded-full font-black">{productos.length} ITEMS</span>
+            {/* COLUMNA DERECHA: TABLA */}
+            <div className="lg:col-span-2">
+              <div className={`${cardStyle} overflow-hidden`}>
+                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/80">Listado de Inventario</h2>
+                  <span className="text-[10px] bg-rose-600/20 text-rose-600 px-4 py-1.5 rounded-full font-black border border-rose-600/20">{productos.length} ARTÍCULOS</span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-black/20 text-gray-500 font-black uppercase">
+                  <table className="w-full text-left text-[11px]">
+                    <thead className="bg-black/40 text-gray-500 font-black uppercase tracking-widest">
                       <tr>
-                        <th className="p-4">Producto</th>
-                        <th className="p-4">Precio</th>
-                        <th className="p-4 text-right">Acción</th>
+                        <th className="p-6">Producto</th>
+                        <th className="p-6">Precio</th>
+                        <th className="p-6 text-right">Acción</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {productos.map(p => (
-                        <tr key={p.id} className="hover:bg-white/5 transition-colors">
-                          <td className="p-4 flex items-center gap-3">
-                            <img src={p.imagen_url || 'https://via.placeholder.com/40'} className="w-10 h-10 rounded-lg object-cover bg-white" alt="" />
-                            <span className="font-bold uppercase">{p.nombre}</span>
+                        <tr key={p.id} className="hover:bg-rose-900/5 transition-colors group">
+                          <td className="p-5 flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 shadow-md">
+                                <img src={p.imagen_url || 'https://via.placeholder.com/40'} className="w-full h-full object-contain" alt="" />
+                            </div>
+                            <span className="font-bold uppercase tracking-tight text-white/90">{p.nombre}</span>
                           </td>
-                          <td className="p-4 font-black text-rose-600">{p.precio}</td>
-                          <td className="p-4 text-right">
-                            <button onClick={() => handleEliminarProducto(p.id)} className="bg-rose-600/10 text-rose-500 p-2 rounded-lg hover:bg-rose-600 hover:text-white transition-all">✕</button>
+                          <td className="p-5 font-black text-rose-600 text-sm">{p.precio}</td>
+                          <td className="p-5 text-right">
+                            <button onClick={() => handleEliminarProducto(p.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
                           </td>
                         </tr>
                       ))}
@@ -217,38 +234,38 @@ function PanelAdmin() {
             </div>
           </div>
         ) : (
-          /* MANAGER */
-          <div className="max-w-2xl mx-auto bg-zinc-900 p-8 rounded-3xl border border-white/5 shadow-2xl">
-            <h2 className="text-xl font-black uppercase italic mb-8 flex items-center gap-3">
-              <span className="w-8 h-8 bg-rose-600/20 text-rose-600 rounded-lg flex items-center justify-center not-italic">⚙️</span>
-              Ajustes del Manager
+          /* PESTAÑA AJUSTES (MANAGER) */
+          <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
+            <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4 tracking-tighter">
+              <span className="w-10 h-10 bg-rose-600/10 text-rose-600 rounded-2xl flex items-center justify-center not-italic border border-rose-600/20 shadow-inner">⚙️</span>
+              Configuración del Sistema
             </h2>
             <form onSubmit={handleUpdateConfig} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link Facebook</label>
-                  <input type="text" value={config.facebook || ''} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="https://facebook.com/..." />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Facebook URL</label>
+                  <input type="text" value={config.facebook || ''} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="https://..." />
                 </div>
-                <div>
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link Instagram</label>
-                  <input type="text" value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="https://instagram.com/..." />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Instagram URL</label>
+                  <input type="text" value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="https://..." />
                 </div>
-                <div>
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">Link TikTok</label>
-                  <input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="https://tiktok.com/@..." />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">TikTok URL</label>
+                  <input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="https://..." />
                 </div>
-                <div>
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 block">WhatsApp de Ventas</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1">WhatsApp Ventas</label>
                   <input type="text" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-white/5">
-                <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2 block">Nueva Contraseña</label>
-                <input type="password" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Solo si deseas cambiarla" />
+              <div className="pt-8 border-t border-white/5 space-y-2">
+                <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Cambiar Contraseña de Acceso</label>
+                <input type="password" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Dejar en blanco para no cambiar" />
               </div>
 
-              <button className="w-full py-4 bg-green-600 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-green-900/20 hover:scale-[1.01] transition-transform">Actualizar Datos</button>
+              <button className="w-full py-4.5 bg-green-600 hover:bg-green-700 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] shadow-xl shadow-green-900/20 transition-all hover:scale-[1.01] active:scale-95 mt-4">Guardar Cambios</button>
             </form>
           </div>
         )}
