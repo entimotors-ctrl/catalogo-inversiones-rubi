@@ -14,7 +14,6 @@ function PanelAdmin() {
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
-  // Agregamos 'ubicacion' al estado inicial
   const [config, setConfig] = useState({
     facebook: '',
     instagram: '',
@@ -29,6 +28,7 @@ function PanelAdmin() {
 
   const cargarDatos = async () => {
     try {
+      setLoading(true);
       const [catRes, prodRes] = await Promise.all([
         api.get('/categorias').catch(() => ({ data: [] })),
         api.get('/productos').catch(() => ({ data: [] }))
@@ -40,7 +40,12 @@ function PanelAdmin() {
       try {
         const configRes = await api.get('/configuracion')
         if (configRes.data) {
-          setConfig({ ...configRes.data, password_admin: '' })
+          // Aseguramos que la ubicación no se pierda al cargar
+          setConfig({ 
+            ...configRes.data, 
+            ubicacion: configRes.data.ubicacion || '',
+            password_admin: '' 
+          })
         }
       } catch (e) {
         console.warn("La tabla de configuración no respondió.")
@@ -105,6 +110,8 @@ function PanelAdmin() {
   const handleUpdateConfig = async (e) => {
     e.preventDefault()
     try {
+      // Verificamos en consola qué estamos enviando
+      console.log("Guardando configuración:", config);
       await api.put('/configuracion', config)
       mostrarMensaje('Configuración actualizada correctamente', 'exito')
       setConfig(prev => ({ ...prev, password_admin: '' }))
@@ -130,16 +137,20 @@ function PanelAdmin() {
   )
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white py-10 px-4 font-sans">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-zinc-950 text-white py-10 px-4 font-sans relative overflow-hidden">
+      
+      {/* MARCA DE AGUA DE FONDO */}
+      <img src={logo1} className="fixed w-[120%] max-w-7xl rotate-[-15deg] object-contain brightness-125 opacity-[0.07] pointer-events-none inset-0 m-auto z-0" alt="" />
+
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
         
         {/* HEADER */}
         <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
           <div className="flex items-center gap-4">
-            <img src={logo1} alt="Rubi Logo" className="h-12 w-auto object-contain" />
+            <img src={logo1} alt="Rubi Logo" className="h-12 w-auto object-contain drop-shadow-2xl" />
             <div className="h-10 w-[1px] bg-white/10 hidden md:block"></div>
             <div>
-              <h1 className="text-xl font-black uppercase italic tracking-tighter">Panel <span className="text-rose-600 italic">Admin</span></h1>
+              <h1 className="text-xl font-black uppercase italic tracking-tighter text-white/90">Panel <span className="text-rose-600 italic">Admin</span></h1>
             </div>
           </div>
           
@@ -231,7 +242,7 @@ function PanelAdmin() {
             </div>
           </div>
         ) : (
-          /* PESTAÑA AJUSTES (MANAGER) - ACTUALIZADA CON UBICACIÓN */
+          /* PESTAÑA AJUSTES (MANAGER) */
           <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
             <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4 tracking-tighter">
               <span className="w-10 h-10 bg-rose-600/10 text-rose-600 rounded-2xl flex items-center justify-center not-italic border border-rose-600/20 shadow-inner">⚙️</span>
@@ -255,10 +266,9 @@ function PanelAdmin() {
                   <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1">WhatsApp Ventas</label>
                   <input type="text" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
                 </div>
-                {/* CAMPO DE UBICACIÓN AÑADIDO */}
                 <div className="md:col-span-2 space-y-2">
                   <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Link de Google Maps</label>
-                  <input type="text" value={config.ubicacion || ''} onChange={e => setConfig({...config, ubicacion: e.target.value})} className={inputStyle} placeholder="Copia aquí el enlace de compartir de Google Maps..." />
+                  <input type="text" value={config.ubicacion || ''} onChange={e => setConfig({...config, ubicacion: e.target.value})} className={inputStyle} placeholder="Pega aquí el enlace de compartir de Google Maps..." />
                 </div>
               </div>
 
@@ -267,7 +277,8 @@ function PanelAdmin() {
                 <input type="password" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Dejar en blanco para no cambiar" />
               </div>
 
-              <button className="w-full py-4.5 bg-green-600 hover:bg-green-700 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] shadow-xl shadow-green-900/20 transition-all hover:scale-[1.01] active:scale-95 mt-4">Guardar Cambios</button>
+              {/* BOTÓN PREMIUM CONFIGURADO EN APP.CSS */}
+              <button className="btn-save-premium">Guardar Cambios</button>
             </form>
           </div>
         )}

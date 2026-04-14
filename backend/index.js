@@ -21,15 +21,22 @@ app.use(cors({
 
 app.use(express.json());
 
-// --- RUTAS DE CONFIGURACIÓN (NUEVAS) ---
+// --- RUTAS DE CONFIGURACIÓN ---
 
-// Obtener configuración (Redes sociales, WhatsApp, etc)
+// Obtener configuración (Redes sociales, WhatsApp, Ubicación, etc)
 app.get('/api/configuracion', async (req, res) => {
     try {
         const result = await pool.query("SELECT * FROM configuracion WHERE id = 1");
         if (result.rows.length === 0) {
-            // Si no existe la fila, enviamos un objeto por defecto
-            return res.json({ whatsapp: '50497432867', facebook: '', instagram: '', tiktok: '', password_admin: 'admin123' });
+            // Si no existe la fila, enviamos un objeto por defecto incluyendo ubicación
+            return res.json({ 
+                whatsapp: '50497432867', 
+                facebook: '', 
+                instagram: '', 
+                tiktok: '', 
+                ubicacion: '', 
+                password_admin: 'admin123' 
+            });
         }
         res.json(result.rows[0]);
     } catch (err) {
@@ -38,16 +45,23 @@ app.get('/api/configuracion', async (req, res) => {
     }
 });
 
-// Actualizar configuración
+// Actualizar configuración (CORREGIDO CON UBICACION)
 app.put('/api/configuracion', async (req, res) => {
     try {
-        const { facebook, instagram, tiktok, whatsapp, password_admin } = req.body;
+        const { facebook, instagram, tiktok, whatsapp, password_admin, ubicacion } = req.body;
+        
+        // El comando SQL ahora incluye el campo ubicacion ($6)
         const result = await pool.query(
             `UPDATE configuracion 
-             SET facebook=$1, instagram=$2, tiktok=$3, whatsapp=$4, password_admin=$5 
+             SET facebook=$1, instagram=$2, tiktok=$3, whatsapp=$4, password_admin=$5, ubicacion=$6 
              WHERE id=1 RETURNING *`,
-            [facebook, instagram, tiktok, whatsapp, password_admin]
+            [facebook, instagram, tiktok, whatsapp, password_admin, ubicacion]
         );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "No se encontró el registro de configuración con ID 1" });
+        }
+        
         res.json(result.rows[0]);
     } catch (err) {
         console.error("Error en PUT /configuracion:", err);
