@@ -3,12 +3,12 @@ import api from '../services/api'
 import logo1 from '../assets/logo1.png'
 import logo2 from '../assets/logo2.png'
 import logowas from '../assets/logowas.png'
-import { FaMapMarkerAlt, FaWhatsapp } from 'react-icons/fa'
+// Importamos todos los iconos necesarios para los botones flotantes
+import { FaMapMarkerAlt, FaWhatsapp, FaFacebookF, FaInstagram, FaTiktok } from 'react-icons/fa'
 
 function CatalogoPublico() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
-  // Estado inicial incluyendo ubicación
   const [config, setConfig] = useState({ facebook: '', instagram: '', tiktok: '', whatsapp: '', ubicacion: '' })
   const [categoriaActiva, setCategoriaActiva] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -29,7 +29,6 @@ function CatalogoPublico() {
         try {
           const configRes = await api.get('/configuracion');
           if (configRes.data) {
-            // Sincronizamos la configuración incluyendo el link de ubicación
             setConfig({
               ...configRes.data,
               ubicacion: configRes.data.ubicacion || ''
@@ -95,7 +94,7 @@ function CatalogoPublico() {
            <div className="bg-rose-600/10 p-2 md:p-3 rounded-xl border-l-4 border-rose-600 mb-4">
               <span className="text-sm md:text-base font-black text-rose-600">L {p.precio}</span>
            </div>
-           <a href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por: *${p.nombre}*`} 
+           <a href={`https://wa.me/${config.whatsapp?.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por: *${p.nombre}*`} 
               target="_blank" rel="noopener noreferrer" 
               className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-[9px] md:text-[10px] uppercase tracking-widest">
               <FaWhatsapp size={14} /> CONSULTAR
@@ -164,16 +163,54 @@ function CatalogoPublico() {
           </div>
         )}
 
-        {/* BOTÓN FLOTANTE DE UBICACIÓN (Aparece si existe link) */}
-        {config.ubicacion && (
-          <button 
-            onClick={handleOpenMap}
-            className="fixed bottom-6 right-6 z-[60] w-14 h-14 bg-rose-600 text-white rounded-full shadow-2xl shadow-rose-900/40 flex items-center justify-center hover:scale-110 active:scale-90 transition-all border-4 border-white/10 animate-bounce"
-            title="Ver ubicación en Google Maps"
-          >
-            <FaMapMarkerAlt size={24} />
-          </button>
-        )}
+        {/* --- TORRE DE BOTONES FLOTANTES INTEGRADA --- */}
+        <div className="fixed bottom-6 right-4 md:right-6 z-[60] flex flex-col gap-3">
+          
+          {/* Botón WhatsApp */}
+          {config.whatsapp && (
+            <a href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" 
+               className="w-12 h-12 bg-[#25D366] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+               title="Contactar por WhatsApp">
+              <FaWhatsapp size={24} />
+            </a>
+          )}
+
+          {/* Botón Ubicación (Corregido y Funcional) */}
+          {config.ubicacion && (
+            <button onClick={handleOpenMap} 
+               className="w-12 h-12 bg-rose-600 text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-2 border-white/20"
+               title="Ver Ubicación en Google Maps">
+              <FaMapMarkerAlt size={20} />
+            </button>
+          )}
+
+          {/* Botón TikTok */}
+          {config.tiktok && (
+            <a href={config.tiktok} target="_blank" rel="noopener noreferrer" 
+               className="w-12 h-12 bg-black text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-white/10"
+               title="Síguenos en TikTok">
+              <FaTiktok size={20} />
+            </a>
+          )}
+
+          {/* Botón Facebook */}
+          {config.facebook && (
+            <a href={config.facebook} target="_blank" rel="noopener noreferrer" 
+               className="w-12 h-12 bg-[#1877F2] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+               title="Síguenos en Facebook">
+              <FaFacebookF size={20} />
+            </a>
+          )}
+
+          {/* Botón Instagram */}
+          {config.instagram && (
+            <a href={config.instagram} target="_blank" rel="noopener noreferrer" 
+               className="w-12 h-12 bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
+               title="Síguenos en Instagram">
+              <FaInstagram size={22} />
+            </a>
+          )}
+        </div>
 
         <footer className="mt-20 py-10 border-t border-white/5 flex flex-col items-center">
             <div className="flex flex-col items-center gap-3 group">
