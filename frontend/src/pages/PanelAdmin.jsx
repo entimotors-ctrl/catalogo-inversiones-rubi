@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-// 1. Importamos el logo1 para el encabezado
 import logo1 from '../assets/logo1.png'
 
 function PanelAdmin() {
@@ -15,11 +14,13 @@ function PanelAdmin() {
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
+  // Agregamos 'ubicacion' al estado inicial
   const [config, setConfig] = useState({
     facebook: '',
     instagram: '',
     tiktok: '',
     whatsapp: '50497432867',
+    ubicacion: '', 
     password_admin: ''
   })
 
@@ -118,7 +119,6 @@ function PanelAdmin() {
     window.location.href = '/login'
   }
 
-  // Clases CSS para el estilo Darkglass Elegant
   const inputStyle = "w-full px-5 py-3.5 rounded-2xl outline-none text-sm bg-black/40 text-white border border-white/10 focus:border-rose-600 transition-all placeholder:text-gray-600 font-medium shadow-inner";
   const cardStyle = "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-[2rem]";
 
@@ -133,10 +133,9 @@ function PanelAdmin() {
     <div className="min-h-screen bg-zinc-950 text-white py-10 px-4 font-sans">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* HEADER DARKGLASS */}
+        {/* HEADER */}
         <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
           <div className="flex items-center gap-4">
-            {/* LOGO 1 PRINCIPAL */}
             <img src={logo1} alt="Rubi Logo" className="h-12 w-auto object-contain" />
             <div className="h-10 w-[1px] bg-white/10 hidden md:block"></div>
             <div>
@@ -162,7 +161,6 @@ function PanelAdmin() {
 
         {activeTab === 'inventario' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* COLUMNA IZQUIERDA: FORMULARIOS */}
             <div className="lg:col-span-1 space-y-8">
               <div className={`${cardStyle} p-8`}>
                 <h2 className="text-[10px] font-black uppercase text-rose-600 mb-8 tracking-[0.3em] flex items-center gap-2">
@@ -182,7 +180,7 @@ function PanelAdmin() {
                       <input type="file" onChange={(e) => setImagenArchivo(e.target.files[0])} className="text-[10px] text-gray-500 file:bg-zinc-800 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-full file:mr-4 cursor-pointer w-full" />
                   </div>
 
-                  <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Breve descripción de las características..."></textarea>
+                  <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Breve descripción..."></textarea>
                   <button className="w-full py-4.5 bg-rose-600 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-rose-900/20 hover:scale-[1.02] active:scale-95 transition-all">Subir al Catálogo</button>
                 </form>
               </div>
@@ -196,7 +194,6 @@ function PanelAdmin() {
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: TABLA */}
             <div className="lg:col-span-2">
               <div className={`${cardStyle} overflow-hidden`}>
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
@@ -234,7 +231,7 @@ function PanelAdmin() {
             </div>
           </div>
         ) : (
-          /* PESTAÑA AJUSTES (MANAGER) */
+          /* PESTAÑA AJUSTES (MANAGER) - ACTUALIZADA CON UBICACIÓN */
           <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
             <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4 tracking-tighter">
               <span className="w-10 h-10 bg-rose-600/10 text-rose-600 rounded-2xl flex items-center justify-center not-italic border border-rose-600/20 shadow-inner">⚙️</span>
@@ -257,6 +254,11 @@ function PanelAdmin() {
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1">WhatsApp Ventas</label>
                   <input type="text" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
+                </div>
+                {/* CAMPO DE UBICACIÓN AÑADIDO */}
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Link de Google Maps</label>
+                  <input type="text" value={config.ubicacion || ''} onChange={e => setConfig({...config, ubicacion: e.target.value})} className={inputStyle} placeholder="Copia aquí el enlace de compartir de Google Maps..." />
                 </div>
               </div>
 
