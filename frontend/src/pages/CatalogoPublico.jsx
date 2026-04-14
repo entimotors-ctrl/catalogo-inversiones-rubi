@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from 'react'
 import api from '../services/api'
-// 1. Importación de los nuevos activos
+// Importación de los activos
 import logo1 from '../assets/logo1.png'
 import logo2 from '../assets/logo2.png'
 import logowas from '../assets/logowas.png'
-import watermarkLogo from '../assets/hero.png' 
+// Asegúrate de tener esta imagen o comentar la línea si no la usas
+// import watermarkLogo from '../assets/hero.png' 
 // Iconos necesarios
 import { FaMapMarkerAlt, FaWhatsapp } from 'react-icons/fa'
 
 function CatalogoPublico() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
-  // Iniciamos WhatsApp vacío para que mande el del Panel Admin
   const [config, setConfig] = useState({ facebook: '', instagram: '', tiktok: '', whatsapp: '' })
   const [categoriaActiva, setCategoriaActiva] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -83,19 +83,27 @@ function CatalogoPublico() {
         .animate-infinite-scroll:hover { animation-play-state: paused; }
       `}} />
 
-      {/* 2. LOGO2 DE FONDO (Efecto marca de agua premium) */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.04] flex items-center justify-center overflow-hidden z-0">
-        <img src={logo2} className="w-[110%] max-w-7xl rotate-[-15deg] object-contain" alt="" />
-      </div>
+     {/* LOGO2 DE FONDO - Ajustado con más presencia */}
+<div className="fixed inset-0 pointer-events-none opacity-[0.08] flex items-center justify-center overflow-hidden z-0">
+  <img 
+    src={logo2} 
+    className="w-[110%] max-w-7xl rotate-[-15deg] object-contain brightness-110" 
+    alt="" 
+  />
+</div>
 
       {/* HEADER DARKGLASS MEJORADO */}
       <header className={`sticky top-0 z-50 py-4 px-4 ${darkglassStyle}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
-          {/* 1. LOGO1 en el círculo */}
-          <div className="flex items-center gap-3">
-             <img src={logo1} alt="Logo" className="h-12 w-auto object-contain drop-shadow-md" />
-          </div>
+          {/* HEADER - Logo Principal más grande */}
+<div className="flex items-center gap-3">
+   <img 
+     src={logo1} 
+     alt="Logo" 
+     className="h-16 w-auto object-contain drop-shadow-xl" 
+   />
+</div>
 
           <div className="flex-1 max-w-xl relative">
             <input
@@ -137,7 +145,7 @@ function CatalogoPublico() {
                   {productosDestacados.map((p, idx) => (
                     <div key={`${p.id}-${idx}`} className={`flex-shrink-0 w-72 p-4 rounded-3xl border transition-all ${darkMode ? 'bg-zinc-900/40 border-white/5' : 'bg-white border-zinc-200 shadow-sm'}`}>
                       <div className="flex gap-4 items-center">
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white p-1">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white p-1 border border-zinc-100 flex-shrink-0 shadow-md">
                            <img src={p.imagen_url} className="w-full h-full object-contain" alt={p.nombre} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -161,7 +169,7 @@ function CatalogoPublico() {
                 setCategoriaActiva(selected || null);
               }}
               value={categoriaActiva?.id || ""}
-              className={`w-full px-6 py-4 rounded-2xl font-black uppercase text-xs border-2 outline-none text-center appearance-none cursor-pointer ${darkMode ? 'bg-zinc-900 border-white/5' : 'bg-white border-zinc-100'}`}
+              className={`w-full px-6 py-4 rounded-2xl font-black uppercase text-xs border-2 outline-none text-center appearance-none cursor-pointer ${darkMode ? 'bg-zinc-900 border-white/5 focus:border-rose-600' : 'bg-white border-zinc-100 focus:border-rose-600'}`}
             >
               <option value="">✨ TODO EL CATÁLOGO</option>
               {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
@@ -194,15 +202,17 @@ function CatalogoPublico() {
           ))}
         </div>
 
-        {/* FOOTER Y FIRMA LOGOWAS */}
-        <footer className="mt-32 pb-12 flex flex-col items-center">
-            <img src={logo1} alt="" className="h-8 opacity-20 mb-10" />
-            
-            <div className="flex flex-col items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-                <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-gray-500">Diseñado por</span>
-                {/* 3. LOGOWAS FIRMA (Pequeña y elegante) */}
-                <img src={logowas} alt="WASystem" className="h-4 w-auto grayscale" />
-            </div>
+        {/* FOOTER - Firma de Autor a color y más visible */}
+<div className="flex flex-col items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
+    <span className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500">
+      Desarrollado por
+    </span>
+    <img 
+      src={logowas} 
+      alt="WASystem" 
+      className="h-8 w-auto drop-shadow-sm" 
+    />
+</div>
             
             <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest mt-8 italic">© 2026 Inversiones Rubi</p>
         </footer>
