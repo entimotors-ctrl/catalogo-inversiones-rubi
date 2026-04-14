@@ -27,12 +27,13 @@ const RedesFlotantes = () => {
 
   if (!config) return null;
 
+  // Estilo base unificado
   const estiloIcono = "w-11 h-11 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center text-white text-xl md:text-2xl transition-all hover:scale-110 active:scale-95";
 
   return (
     <div className="fixed bottom-6 right-4 md:bottom-10 md:right-6 z-[9999] flex flex-col gap-3 md:gap-4 items-center">
       
-      {/* BOTÓN VOLVER ARRIBA */}
+      {/* 1. BOTÓN VOLVER ARRIBA */}
       {showScroll && (
         <button 
           onClick={subirArriba}
@@ -43,48 +44,51 @@ const RedesFlotantes = () => {
         </button>
       )}
 
-      {/* WHATSAPP */}
+      {/* 2. WHATSAPP */}
       {config.whatsapp && (
         <a 
           href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}`} 
           target="_blank" rel="noreferrer" 
-          className={`${estiloIcono} w-13 h-13 md:w-16 md:h-16 bg-[#25D366] shadow-[0_10px_30px_rgba(37,211,102,0.4)] text-2xl md:text-3xl`}
+          className={`${estiloIcono} bg-[#25D366] shadow-[0_10px_30px_rgba(37,211,102,0.4)]`}
+          title="WhatsApp Ventas"
         >
-          <FaWhatsapp />
+          <FaWhatsapp size={28} />
         </a>
       )}
 
-      {/* UBICACIÓN (NUEVO) - Enlace a San Esteban, Olancho */}
-      <a 
-        href="https://maps.app.goo.gl/YourActualLinkHere" 
-        target="_blank" rel="noreferrer" 
-        className={`${estiloIcono} bg-rose-600 shadow-lg`}
-        title="Nuestra Ubicación"
-      >
-        <FaMapMarkerAlt />
-      </a>
+      {/* 3. UBICACIÓN (Subida de posición para que no se oculte) */}
+      {config.ubicacion && (
+        <a 
+          href={config.ubicacion} 
+          target="_blank" rel="noreferrer" 
+          className={`${estiloIcono} bg-rose-600 shadow-[0_10px_30px_rgba(225,29,72,0.4)] border-2 border-white/20`}
+          title="Ver Ubicación en Mapa"
+        >
+          <FaMapMarkerAlt size={22} />
+        </a>
+      )}
 
-      {/* TIKTOK */}
+      {/* 4. TIKTOK */}
       {config.tiktok && (
         <a href={config.tiktok} target="_blank" rel="noreferrer" 
-           className={`${estiloIcono} bg-black border border-white/10 shadow-lg`}>
-          <FaTiktok />
+           className={`${estiloIcono} bg-black border border-white/10`}>
+          <FaTiktok size={20} />
         </a>
       )}
 
-      {/* FACEBOOK */}
+      {/* 5. FACEBOOK */}
       {config.facebook && (
         <a href={config.facebook} target="_blank" rel="noreferrer" 
-           className={`${estiloIcono} bg-[#1877F2] shadow-lg`}>
-          <FaFacebook />
+           className={`${estiloIcono} bg-[#1877F2]`}>
+          <FaFacebook size={22} />
         </a>
       )}
 
-      {/* INSTAGRAM */}
+      {/* 6. INSTAGRAM */}
       {config.instagram && (
         <a href={config.instagram} target="_blank" rel="noreferrer" 
-           className={`${estiloIcono} bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] shadow-lg`}>
-          <FaInstagram />
+           className={`${estiloIcono} bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]`}>
+          <FaInstagram size={22} />
         </a>
       )}
     </div>

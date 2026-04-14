@@ -3,13 +3,12 @@ import api from '../services/api'
 import logo1 from '../assets/logo1.png'
 import logo2 from '../assets/logo2.png'
 import logowas from '../assets/logowas.png'
-// Importamos todos los iconos necesarios para los botones flotantes
-import { FaMapMarkerAlt, FaWhatsapp, FaFacebookF, FaInstagram, FaTiktok } from 'react-icons/fa'
+import { FaWhatsapp } from 'react-icons/fa'
 
 function CatalogoPublico() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
-  const [config, setConfig] = useState({ facebook: '', instagram: '', tiktok: '', whatsapp: '', ubicacion: '' })
+  const [config, setConfig] = useState({ whatsapp: '' })
   const [categoriaActiva, setCategoriaActiva] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [darkMode, setDarkMode] = useState(true)
@@ -28,12 +27,7 @@ function CatalogoPublico() {
 
         try {
           const configRes = await api.get('/configuracion');
-          if (configRes.data) {
-            setConfig({
-              ...configRes.data,
-              ubicacion: configRes.data.ubicacion || ''
-            });
-          }
+          if (configRes.data) setConfig(configRes.data);
         } catch (configErr) { 
           console.warn("Cargando configuración..."); 
         }
@@ -60,14 +54,6 @@ function CatalogoPublico() {
     const term = searchTerm.toLowerCase()
     return matchCategory && (producto.nombre.toLowerCase().includes(term) || (producto.descripcion?.toLowerCase().includes(term)))
   }), [productos, categoriaActiva, searchTerm])
-
-  const handleOpenMap = () => {
-    if (config.ubicacion && config.ubicacion.startsWith('http')) {
-      window.open(config.ubicacion, '_blank');
-    } else {
-      alert("La ubicación no está disponible en este momento.");
-    }
-  };
 
   if (loading) {
     return (
@@ -162,55 +148,6 @@ function CatalogoPublico() {
             ))}
           </div>
         )}
-
-        {/* --- TORRE DE BOTONES FLOTANTES INTEGRADA --- */}
-        <div className="fixed bottom-6 right-4 md:right-6 z-[60] flex flex-col gap-3">
-          
-          {/* Botón WhatsApp */}
-          {config.whatsapp && (
-            <a href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" 
-               className="w-12 h-12 bg-[#25D366] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
-               title="Contactar por WhatsApp">
-              <FaWhatsapp size={24} />
-            </a>
-          )}
-
-          {/* Botón Ubicación (Corregido y Funcional) */}
-          {config.ubicacion && (
-            <button onClick={handleOpenMap} 
-               className="w-12 h-12 bg-rose-600 text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-2 border-white/20"
-               title="Ver Ubicación en Google Maps">
-              <FaMapMarkerAlt size={20} />
-            </button>
-          )}
-
-          {/* Botón TikTok */}
-          {config.tiktok && (
-            <a href={config.tiktok} target="_blank" rel="noopener noreferrer" 
-               className="w-12 h-12 bg-black text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-white/10"
-               title="Síguenos en TikTok">
-              <FaTiktok size={20} />
-            </a>
-          )}
-
-          {/* Botón Facebook */}
-          {config.facebook && (
-            <a href={config.facebook} target="_blank" rel="noopener noreferrer" 
-               className="w-12 h-12 bg-[#1877F2] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
-               title="Síguenos en Facebook">
-              <FaFacebookF size={20} />
-            </a>
-          )}
-
-          {/* Botón Instagram */}
-          {config.instagram && (
-            <a href={config.instagram} target="_blank" rel="noopener noreferrer" 
-               className="w-12 h-12 bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
-               title="Síguenos en Instagram">
-              <FaInstagram size={22} />
-            </a>
-          )}
-        </div>
 
         <footer className="mt-20 py-10 border-t border-white/5 flex flex-col items-center">
             <div className="flex flex-col items-center gap-3 group">
