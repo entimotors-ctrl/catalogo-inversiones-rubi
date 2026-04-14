@@ -4,8 +4,6 @@ import api from '../services/api'
 import logo1 from '../assets/logo1.png'
 import logo2 from '../assets/logo2.png'
 import logowas from '../assets/logowas.png'
-// Asegúrate de tener esta imagen o comentar la línea si no la usas
-// import watermarkLogo from '../assets/hero.png' 
 // Iconos necesarios
 import { FaMapMarkerAlt, FaWhatsapp } from 'react-icons/fa'
 
@@ -24,8 +22,8 @@ function CatalogoPublico() {
       try {
         setLoading(true);
         const [catRes, prodRes] = await Promise.all([
-          api.get('/categorias').catch(err => ({ data: [] })),
-          api.get('/productos').catch(err => ({ data: [] }))
+          api.get('/categorias').catch(() => ({ data: [] })),
+          api.get('/productos').catch(() => ({ data: [] }))
         ]);
         
         setCategorias(catRes.data);
@@ -35,7 +33,7 @@ function CatalogoPublico() {
           const configRes = await api.get('/configuracion');
           if (configRes.data) setConfig(configRes.data);
         } catch (configErr) {
-          console.warn("Cargando configuración dinámica...");
+          console.warn("Cargando configuración...");
         }
 
         if (prodRes.data.length > 0) {
@@ -69,7 +67,6 @@ function CatalogoPublico() {
     );
   }
 
-  // Estilo Darkglass para el Header y tarjetas
   const darkglassStyle = darkMode 
     ? "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl"
     : "bg-white/70 backdrop-blur-md border border-zinc-200 shadow-lg";
@@ -83,32 +80,32 @@ function CatalogoPublico() {
         .animate-infinite-scroll:hover { animation-play-state: paused; }
       `}} />
 
-     {/* LOGO2 DE FONDO - Ajustado con más presencia */}
-<div className="fixed inset-0 pointer-events-none opacity-[0.08] flex items-center justify-center overflow-hidden z-0">
-  <img 
-    src={logo2} 
-    className="w-[110%] max-w-7xl rotate-[-15deg] object-contain brightness-110" 
-    alt="" 
-  />
-</div>
+      {/* 1. LOGO2 DE FONDO - Brillo y Opacidad aumentada */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.09] flex items-center justify-center overflow-hidden z-0">
+        <img 
+          src={logo2} 
+          className="w-[110%] max-w-7xl rotate-[-15deg] object-contain brightness-125" 
+          alt="" 
+        />
+      </div>
 
-      {/* HEADER DARKGLASS MEJORADO */}
+      {/* HEADER DARKGLASS */}
       <header className={`sticky top-0 z-50 py-4 px-4 ${darkglassStyle}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
-          {/* HEADER - Logo Principal más grande */}
-<div className="flex items-center gap-3">
-   <img 
-     src={logo1} 
-     alt="Logo" 
-     className="h-16 w-auto object-contain drop-shadow-xl" 
-   />
-</div>
+          {/* 2. LOGO PRINCIPAL - Más grande y con sombra */}
+          <div className="flex items-center gap-3">
+             <img 
+               src={logo1} 
+               alt="Inversiones Rubi" 
+               className="h-16 w-auto object-contain drop-shadow-2xl" 
+             />
+          </div>
 
           <div className="flex-1 max-w-xl relative">
             <input
               type="text"
-              placeholder="¿Qué buscas?"
+              placeholder="¿Qué buscas hoy?"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`w-full px-6 py-3 rounded-full outline-none text-sm border transition-all ${darkMode ? 'bg-black/20 border-white/10 focus:border-rose-600' : 'bg-white border-zinc-200 focus:border-rose-600'}`}
@@ -116,9 +113,8 @@ function CatalogoPublico() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* LINK GOOGLE MAPS */}
             <a 
-              href="https://maps.app.goo.gl/rfY7ku8WPs1JJXxBA" 
+              href="https://maps.google.com" 
               target="_blank" rel="noreferrer"
               className={`p-3 rounded-full border transition-all ${darkMode ? 'bg-zinc-800 text-rose-500 border-white/10' : 'bg-white text-rose-600 border-rose-200'}`}
             >
@@ -145,7 +141,7 @@ function CatalogoPublico() {
                   {productosDestacados.map((p, idx) => (
                     <div key={`${p.id}-${idx}`} className={`flex-shrink-0 w-72 p-4 rounded-3xl border transition-all ${darkMode ? 'bg-zinc-900/40 border-white/5' : 'bg-white border-zinc-200 shadow-sm'}`}>
                       <div className="flex gap-4 items-center">
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white p-1 border border-zinc-100 flex-shrink-0 shadow-md">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white p-1 border border-zinc-100 flex-shrink-0">
                            <img src={p.imagen_url} className="w-full h-full object-contain" alt={p.nombre} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -194,7 +190,7 @@ function CatalogoPublico() {
                    <a href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por: *${p.nombre}*`} 
                       target="_blank" rel="noopener noreferrer" 
                       className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-xs uppercase tracking-widest">
-                      <FaWhatsapp size={16} /> CONSULTAR
+                      <FaWhatsapp size={16} /> CONSULTAR PRECIO
                    </a>
                 </div>
               </div>
@@ -202,19 +198,22 @@ function CatalogoPublico() {
           ))}
         </div>
 
-        {/* FOOTER - Firma de Autor a color y más visible */}
-<div className="flex flex-col items-center gap-3 opacity-80 hover:opacity-100 transition-opacity">
-    <span className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500">
-      Desarrollado por
-    </span>
-    <img 
-      src={logowas} 
-      alt="WASystem" 
-      className="h-8 w-auto drop-shadow-sm" 
-    />
-</div>
-            
-            <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest mt-8 italic">© 2026 Inversiones Rubi</p>
+        {/* FOOTER MEJORADO */}
+        <footer className="mt-20 py-10 border-t border-white/5 flex flex-col items-center">
+            {/* 3. LOGOWAS - A color y más grande */}
+            <div className="flex flex-col items-center gap-3 group">
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 group-hover:text-rose-600 transition-colors">
+                  Desarrollado por
+                </span>
+                <img 
+                  src={logowas} 
+                  alt="WASystem" 
+                  className="h-10 w-auto drop-shadow-md transition-transform group-hover:scale-110" 
+                />
+            </div>
+            <p className="text-[8px] font-bold text-gray-700 uppercase tracking-widest mt-8 italic">
+              © 2026 Inversiones Rubi - Santa María del Real, Olancho
+            </p>
         </footer>
       </main>
     </div>
