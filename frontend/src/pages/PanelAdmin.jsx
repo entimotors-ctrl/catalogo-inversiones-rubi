@@ -14,11 +14,12 @@ function PanelAdmin() {
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
+  // ESTADO INICIAL CON UBICACION
   const [config, setConfig] = useState({
     facebook: '',
     instagram: '',
     tiktok: '',
-    whatsapp: '50497432867',
+    whatsapp: '',
     ubicacion: '', 
     password_admin: ''
   })
@@ -40,15 +41,18 @@ function PanelAdmin() {
       try {
         const configRes = await api.get('/configuracion')
         if (configRes.data) {
-          // Aseguramos que la ubicación no se pierda al cargar
+          // CORRECCIÓN: Sincronizamos exactamente lo que viene de la DB
           setConfig({ 
-            ...configRes.data, 
-            ubicacion: configRes.data.ubicacion || '',
+            facebook: configRes.data.facebook || '',
+            instagram: configRes.data.instagram || '',
+            tiktok: configRes.data.tiktok || '',
+            whatsapp: configRes.data.whatsapp || '',
+            ubicacion: configRes.data.ubicacion || '', // Carga el link de la columna nueva
             password_admin: '' 
           })
         }
       } catch (e) {
-        console.warn("La tabla de configuración no respondió.")
+        console.warn("Error al cargar configuración:", e)
       }
     } catch (error) {
       mostrarMensaje('Error al conectar con el servidor.', 'error')
@@ -110,13 +114,15 @@ function PanelAdmin() {
   const handleUpdateConfig = async (e) => {
     e.preventDefault()
     try {
-      // Verificamos en consola qué estamos enviando
-      console.log("Guardando configuración:", config);
+      // Enviamos el objeto 'config' completo al endpoint PUT /api/configuracion
       await api.put('/configuracion', config)
       mostrarMensaje('Configuración actualizada correctamente', 'exito')
+      
+      // Limpiamos el campo de password después de guardar por seguridad
       setConfig(prev => ({ ...prev, password_admin: '' }))
       cargarDatos()
     } catch (error) {
+      console.error("Error guardando:", error);
       mostrarMensaje('Error al actualizar ajustes.', 'error')
     }
   }
@@ -138,13 +144,9 @@ function PanelAdmin() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white py-10 px-4 font-sans relative overflow-hidden">
-      
-      {/* MARCA DE AGUA DE FONDO */}
       <img src={logo1} className="fixed w-[120%] max-w-7xl rotate-[-15deg] object-contain brightness-125 opacity-[0.07] pointer-events-none inset-0 m-auto z-0" alt="" />
 
       <div className="max-w-6xl mx-auto space-y-8 relative z-10">
-        
-        {/* HEADER */}
         <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
           <div className="flex items-center gap-4">
             <img src={logo1} alt="Rubi Logo" className="h-12 w-auto object-contain drop-shadow-2xl" />
@@ -242,7 +244,7 @@ function PanelAdmin() {
             </div>
           </div>
         ) : (
-          /* PESTAÑA AJUSTES (MANAGER) */
+          /* PESTAÑA AJUSTES CORREGIDA */
           <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
             <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4 tracking-tighter">
               <span className="w-10 h-10 bg-rose-600/10 text-rose-600 rounded-2xl flex items-center justify-center not-italic border border-rose-600/20 shadow-inner">⚙️</span>
@@ -252,33 +254,43 @@ function PanelAdmin() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Facebook URL</label>
-                  <input type="text" value={config.facebook || ''} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="https://..." />
+                  <input type="text" value={config.facebook} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="https://..." />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Instagram URL</label>
-                  <input type="text" value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="https://..." />
+                  <input type="text" value={config.instagram} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="https://..." />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">TikTok URL</label>
-                  <input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="https://..." />
+                  <input type="text" value={config.tiktok} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="https://..." />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1">WhatsApp Ventas</label>
-                  <input type="text" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
+                  <input type="text" value={config.whatsapp} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
                 </div>
+                
+                {/* CAMPO DE UBICACIÓN CLAVE */}
                 <div className="md:col-span-2 space-y-2">
                   <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Link de Google Maps</label>
-                  <input type="text" value={config.ubicacion || ''} onChange={e => setConfig({...config, ubicacion: e.target.value})} className={inputStyle} placeholder="Pega aquí el enlace de compartir de Google Maps..." />
+                  <input 
+                    type="text" 
+                    value={config.ubicacion} 
+                    onChange={e => setConfig({...config, ubicacion: e.target.value})} 
+                    className={inputStyle} 
+                    placeholder="Pega aquí el enlace de compartir de Google Maps..." 
+                  />
+                  <p className="text-[9px] text-gray-500 italic mt-1 px-2">Asegúrate de copiar el enlace desde "Compartir" en Google Maps.</p>
                 </div>
               </div>
 
               <div className="pt-8 border-t border-white/5 space-y-2">
                 <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Cambiar Contraseña de Acceso</label>
-                <input type="password" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Dejar en blanco para no cambiar" />
+                <input type="password" value={config.password_admin} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Dejar en blanco para no cambiar" />
               </div>
 
-              {/* BOTÓN PREMIUM CONFIGURADO EN APP.CSS */}
-              <button className="btn-save-premium">Guardar Cambios</button>
+              <button type="submit" className="w-full py-4.5 bg-green-600 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
+                Guardar Cambios
+              </button>
             </form>
           </div>
         )}
@@ -287,4 +299,4 @@ function PanelAdmin() {
   )
 }
 
-export default PanelAdmin
+export default PanelAdmin;

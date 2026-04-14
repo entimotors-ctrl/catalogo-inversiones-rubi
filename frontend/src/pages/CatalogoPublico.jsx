@@ -8,11 +8,11 @@ import { FaMapMarkerAlt, FaWhatsapp } from 'react-icons/fa'
 function CatalogoPublico() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
-  const [config, setConfig] = useState({ facebook: '', instagram: '', tiktok: '', whatsapp: '' })
+  // Estado inicial incluyendo ubicación
+  const [config, setConfig] = useState({ facebook: '', instagram: '', tiktok: '', whatsapp: '', ubicacion: '' })
   const [categoriaActiva, setCategoriaActiva] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [darkMode, setDarkMode] = useState(true)
-  const [productosDestacados, setProductosDestacados] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -28,16 +28,22 @@ function CatalogoPublico() {
 
         try {
           const configRes = await api.get('/configuracion');
-          if (configRes.data) setConfig(configRes.data);
-        } catch (configErr) { console.warn("Cargando configuración..."); }
-
-        if (prodRes.data.length > 0) {
-          const destacadosBase = prodRes.data.filter(p => p.destacado).length > 0 
-            ? prodRes.data.filter(p => p.destacado)
-            : [...prodRes.data].sort(() => 0.5 - Math.random()).slice(0, 6);
-          setProductosDestacados([...destacadosBase, ...destacadosBase]); 
+          if (configRes.data) {
+            // Sincronizamos la configuración incluyendo el link de ubicación
+            setConfig({
+              ...configRes.data,
+              ubicacion: configRes.data.ubicacion || ''
+            });
+          }
+        } catch (configErr) { 
+          console.warn("Cargando configuración..."); 
         }
-      } catch (err) { console.error("Error crítico:", err); } finally { setLoading(false); }
+
+      } catch (err) { 
+        console.error("Error crítico:", err); 
+      } finally { 
+        setLoading(false); 
+      }
     };
     fetchDatos();
   }, []);
@@ -56,6 +62,14 @@ function CatalogoPublico() {
     return matchCategory && (producto.nombre.toLowerCase().includes(term) || (producto.descripcion?.toLowerCase().includes(term)))
   }), [productos, categoriaActiva, searchTerm])
 
+  const handleOpenMap = () => {
+    if (config.ubicacion && config.ubicacion.startsWith('http')) {
+      window.open(config.ubicacion, '_blank');
+    } else {
+      alert("La ubicación no está disponible en este momento.");
+    }
+  };
+
   if (loading) {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center ${darkMode ? 'bg-zinc-950' : 'bg-white'}`}>
@@ -69,7 +83,6 @@ function CatalogoPublico() {
     ? "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl"
     : "bg-white/70 backdrop-blur-md border border-zinc-200 shadow-lg";
 
-  // TARJETA OPTIMIZADA: Ancho fijo en móvil, adaptable en PC
   const ProductoCard = ({ p }) => (
     <div className={`group flex flex-col rounded-[2rem] overflow-hidden border transition-all duration-300 hover:scale-[1.02] flex-shrink-0 w-[210px] md:w-full ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
       <div className="aspect-square relative overflow-hidden bg-white p-4">
@@ -94,17 +107,13 @@ function CatalogoPublico() {
 
   return (
     <div className={`min-h-screen transition-colors duration-500 overflow-x-hidden relative ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .animate-infinite-scroll { display: flex; width: max-content; animation: scroll 40s linear infinite; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}} />
-
+      
+      {/* FONDO CON LOGO MARCA DE AGUA */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.09] flex items-center justify-center overflow-hidden z-0">
         <img src={logo2} className="w-[110%] max-w-7xl rotate-[-15deg] object-contain brightness-125" alt="" />
       </div>
 
+      {/* HEADER */}
       <header className={`sticky top-0 z-50 py-3 px-4 ${darkglassStyle}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -126,7 +135,6 @@ function CatalogoPublico() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
-        {/* CATEGORÍAS EN CARRUSEL (MÓVIL) O GRILLA (PC) */}
         {productosPorCategoria ? (
           <div className="space-y-12 md:space-y-16">
             {productosPorCategoria.map(cat => (
@@ -138,7 +146,6 @@ function CatalogoPublico() {
                   <span className="text-[9px] font-bold opacity-30 uppercase tracking-widest md:hidden">Desliza →</span>
                 </div>
                 
-                {/* Contenedor: Carrusel en móvil / Grilla en PC */}
                 <div className="flex md:grid md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 overflow-x-auto no-scrollbar pb-6 px-2 snap-x">
                   {cat.items.map(p => (
                     <div key={p.id} className="snap-start">
@@ -155,6 +162,17 @@ function CatalogoPublico() {
               <ProductoCard key={p.id} p={p} />
             ))}
           </div>
+        )}
+
+        {/* BOTÓN FLOTANTE DE UBICACIÓN (Aparece si existe link) */}
+        {config.ubicacion && (
+          <button 
+            onClick={handleOpenMap}
+            className="fixed bottom-6 right-6 z-[60] w-14 h-14 bg-rose-600 text-white rounded-full shadow-2xl shadow-rose-900/40 flex items-center justify-center hover:scale-110 active:scale-90 transition-all border-4 border-white/10 animate-bounce"
+            title="Ver ubicación en Google Maps"
+          >
+            <FaMapMarkerAlt size={24} />
+          </button>
         )}
 
         <footer className="mt-20 py-10 border-t border-white/5 flex flex-col items-center">
