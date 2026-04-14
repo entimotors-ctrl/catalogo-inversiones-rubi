@@ -12,12 +12,10 @@ function PanelAdmin() {
   const [error, setError] = useState('')
   const [mensaje, setMensaje] = useState('')
 
-  // Estados para formularios originales
   const [categoriaForm, setCategoriaForm] = useState({ nombre: '', tema_visual: 'general' })
   const [productoForm, setProductoForm] = useState({ nombre: '', descripcion: '', precio: '', imagen_url: '', categoria_id: '' })
   const [imagenArchivo, setImagenArchivo] = useState(null)
 
-  // Estados para edición
   const [categoriaEnEdicion, setCategoriaEnEdicion] = useState(null)
   const [productoEnEdicion, setProductoEnEdicion] = useState(null)
 
@@ -98,15 +96,14 @@ function PanelAdmin() {
     } catch (err) { mostrarMensaje('Error al actualizar ajustes', 'error') }
   }
 
-  const inputStyle = "w-full px-5 py-4 rounded-2xl outline-none text-sm bg-black/60 text-white border border-white/10 focus:border-rose-600 transition-all font-medium shadow-inner";
+  // --- ESTILOS UNIFICADOS (COMO EL BOTÓN VERDE) ---
+  const inputStyle = "w-full px-5 py-4 rounded-2xl outline-none text-sm bg-black/60 text-white border border-white/10 focus:border-rose-600 transition-all font-medium";
   const cardStyle = "bg-zinc-900/80 backdrop-blur-xl border border-white/5 shadow-2xl rounded-[2rem]";
+  
+  // Clase de botón unificada basada en tu preferencia (el subrayado en verde)
+  const btnEstiloUnificado = "w-full py-4 bg-zinc-800 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-zinc-700 transition-all text-white active:scale-95 shadow-lg";
 
-  // === NUEVOS ESTILOS PARA BOTONES ROBUSTOS ===
-  const btnSubir = "w-full py-4.5 bg-rose-600 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-all text-white active:scale-95";
-  const btnCrear = "w-full py-4 bg-zinc-800 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-zinc-700 transition-colors text-white active:scale-95";
-  const btnGuardar = "w-full py-4.5 bg-green-600 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-all text-white active:scale-95";
-
-  if (loading) return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-rose-600 font-black">CARGANDO...</div>
+  if (loading) return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-rose-600 font-black tracking-widest">CARGANDO...</div>
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white py-10 px-4">
@@ -132,7 +129,7 @@ function PanelAdmin() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div className="space-y-8">
-              {/* CREAR PRODUCTO */}
+              {/* FORMULARIO PRODUCTO */}
               <div className={`${cardStyle} p-8`}>
                 <h2 className="text-[10px] font-black uppercase text-rose-600 mb-8 tracking-[0.3em]">{productoEnEdicion ? 'Editando Producto' : 'Publicar Producto'}</h2>
                 <form onSubmit={handleSubmitProducto} className="space-y-5">
@@ -143,34 +140,42 @@ function PanelAdmin() {
                   <input type="text" required value={productoForm.nombre} onChange={(e) => setProductoForm({...productoForm, nombre: e.target.value})} className={inputStyle} placeholder="Nombre del artículo" />
                   <input type="text" required value={productoForm.precio} onChange={(e) => setProductoForm({...productoForm, precio: e.target.value})} className={inputStyle} placeholder="Precio (Ej: 4800)" />
                   
-                  {/* BOTÓN EXAMINAR FOTO (ROBUSTO Y ROJO) */}
+                  {/* BOTÓN EXAMINAR (AHORA IGUAL AL VERDE) */}
                   <div className="relative">
                     <input type="file" id="file-prod" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
-                    <label htmlFor="file-prod" className="flex items-center justify-center gap-3 w-full py-4.5 bg-rose-600 rounded-2xl cursor-pointer hover:bg-rose-700 transition-all text-white font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95">
-                       {imagenArchivo ? '✅ FOTO LISTA' : '📂 EXAMINAR FOTO'}
+                    <label htmlFor="file-prod" className={`flex items-center justify-center cursor-pointer ${btnEstiloUnificado}`}>
+                       {imagenArchivo ? '✅ FOTO SELECCIONADA' : '📂 EXAMINAR FOTO'}
                     </label>
                   </div>
 
-                  <button type="submit" className={btnSubir}>{productoEnEdicion ? 'Actualizar Producto' : 'Subir al Catálogo'}</button>
+                  {/* BOTÓN SUBIR (AHORA IGUAL AL VERDE) */}
+                  <button type="submit" className={btnEstiloUnificado}>
+                    {productoEnEdicion ? 'Actualizar Producto' : 'Subir al Catálogo'}
+                  </button>
+                  
                   {productoEnEdicion && <button type="button" onClick={() => setProductoEnEdicion(null)} className="w-full text-[10px] font-black text-gray-500 uppercase py-2">Cancelar Edición</button>}
                 </form>
               </div>
 
-              {/* CREAR CATEGORÍA */}
+              {/* FORMULARIO CATEGORÍA */}
               <div className={`${cardStyle} p-8`}>
                 <h2 className="text-[10px] font-black uppercase text-rose-600 mb-8 tracking-[0.3em]">{categoriaEnEdicion ? 'Editando Grupo' : 'Nueva Categoría'}</h2>
                 <form onSubmit={handleSubmitCategoria} className="space-y-5">
-                  <input type="text" required value={categoriaForm.nombre} onChange={(e) => setCategoriaForm({...categoriaForm, nombre: e.target.value})} className={inputStyle} placeholder="Ej: Herramientas, Joyas..." />
-                  <button type="submit" className={btnCrear}>{categoriaEnEdicion ? 'Guardar Cambios' : 'Crear Grupo'}</button>
+                  <input type="text" required value={categoriaForm.nombre} onChange={(e) => setCategoriaForm({...categoriaForm, nombre: e.target.value})} className={inputStyle} placeholder="Ej: Relojes, Joyas..." />
+                  <button type="submit" className={btnEstiloUnificado}>
+                    {categoriaEnEdicion ? 'Guardar Cambios' : 'Crear Grupo'}
+                  </button>
                 </form>
               </div>
             </div>
 
-            {/* TABLAS */}
+            {/* LISTADO DE INVENTARIO */}
             <div className="lg:col-span-2 space-y-8">
-              {/* TABLA PRODUCTOS */}
               <div className={`${cardStyle} overflow-hidden`}>
-                <div className="p-8 border-b border-white/5 bg-black/20"><h2 className="text-xs font-black uppercase tracking-[0.3em]">Inventario Actual</h2></div>
+                <div className="p-8 border-b border-white/5 bg-black/20 flex justify-between items-center">
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em]">Inventario Actual</h2>
+                  <span className="bg-rose-600/20 text-rose-500 px-3 py-1 rounded-lg text-[9px] font-black">{productos.length} ARTÍCULOS</span>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-[11px]">
                     <tbody className="divide-y divide-white/5">
@@ -183,7 +188,7 @@ function PanelAdmin() {
                           <td className="p-5 font-black text-rose-600 text-sm">L {p.precio}</td>
                           <td className="p-5 text-right space-x-2">
                             <button onClick={() => { setProductoEnEdicion(p.id); setProductoForm({...p, categoria_id: p.categoria_id.toString()}) }} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all active:scale-90">✎</button>
-                            <button onClick={async () => { if(window.confirm('¿Borrar?')) { await api.delete(`/productos/${p.id}`); cargarDatos(); } }} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
+                            <button onClick={async () => { if(window.confirm('¿Borrar producto?')) { await api.delete(`/productos/${p.id}`); cargarDatos(); } }} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
                           </td>
                         </tr>
                       ))}
@@ -192,7 +197,7 @@ function PanelAdmin() {
                 </div>
               </div>
 
-              {/* TABLA CATEGORÍAS */}
+              {/* GRUPOS Y CATEGORÍAS */}
               <div className={`${cardStyle} overflow-hidden`}>
                 <div className="p-8 border-b border-white/5 bg-black/20"><h2 className="text-xs font-black uppercase tracking-[0.3em]">Grupos y Categorías</h2></div>
                 <div className="overflow-x-auto">
@@ -203,7 +208,7 @@ function PanelAdmin() {
                           <td className="p-5 font-bold uppercase tracking-widest">{c.nombre}</td>
                           <td className="p-5 text-right space-x-2">
                             <button onClick={() => { setCategoriaEnEdicion(c.id); setCategoriaForm({ nombre: c.nombre, tema_visual: c.tema_visual }); }} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all active:scale-90">✎</button>
-                            <button onClick={async () => { if(window.confirm('¿Borrar categoría y sus productos?')) { await api.delete(`/categorias/${c.id}`); cargarDatos(); } }} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
+                            <button onClick={async () => { if(window.confirm('¿Borrar categoría?')) { await api.delete(`/categorias/${c.id}`); cargarDatos(); } }} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
                           </td>
                         </tr>
                       ))}
@@ -225,7 +230,10 @@ function PanelAdmin() {
                 <input type="text" value={config.whatsapp} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="WhatsApp (504...)" />
               </div>
               <input type="password" value={config.password_admin} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Nueva Contraseña (Opcional)" />
-              <button type="submit" className={btnGuardar}>Guardar todos los cambios</button>
+              {/* AQUÍ TAMBIÉN USAMOS EL BOTÓN UNIFICADO PERO VERDE PARA GUARDAR */}
+              <button type="submit" className="w-full py-4.5 bg-green-600 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-all text-white active:scale-95">
+                Guardar todos los cambios
+              </button>
             </form>
           </div>
         )}
