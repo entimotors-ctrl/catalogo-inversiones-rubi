@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaArrowUp } from 'react-icons/fa';
+import { FaWhatsapp, FaFacebook, FaInstagram, FaTiktok, FaArrowUp, FaMapMarkerAlt } from 'react-icons/fa';
 
 const RedesFlotantes = () => {
   const [config, setConfig] = useState(null);
@@ -27,13 +27,12 @@ const RedesFlotantes = () => {
 
   if (!config) return null;
 
-  // Ajustamos el tamaño para que en móvil (w-11) sea un poco más discreto y no tape los productos
   const estiloIcono = "w-11 h-11 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center text-white text-xl md:text-2xl transition-all hover:scale-110 active:scale-95";
 
   return (
     <div className="fixed bottom-6 right-4 md:bottom-10 md:right-6 z-[9999] flex flex-col gap-3 md:gap-4 items-center">
       
-      {/* BOTÓN VOLVER ARRIBA - Estilo más sutil */}
+      {/* BOTÓN VOLVER ARRIBA */}
       {showScroll && (
         <button 
           onClick={subirArriba}
@@ -44,7 +43,7 @@ const RedesFlotantes = () => {
         </button>
       )}
 
-      {/* WHATSAPP - El principal, un poco más grande */}
+      {/* WHATSAPP */}
       {config.whatsapp && (
         <a 
           href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}`} 
@@ -54,6 +53,16 @@ const RedesFlotantes = () => {
           <FaWhatsapp />
         </a>
       )}
+
+      {/* UBICACIÓN (NUEVO) - Enlace a San Esteban, Olancho */}
+      <a 
+        href="https://maps.app.goo.gl/YourActualLinkHere" 
+        target="_blank" rel="noreferrer" 
+        className={`${estiloIcono} bg-rose-600 shadow-lg`}
+        title="Nuestra Ubicación"
+      >
+        <FaMapMarkerAlt />
+      </a>
 
       {/* TIKTOK */}
       {config.tiktok && (
