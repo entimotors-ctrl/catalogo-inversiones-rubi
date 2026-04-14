@@ -14,7 +14,6 @@ function PanelAdmin() {
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
-  // ESTADO INICIAL CON UBICACION
   const [config, setConfig] = useState({
     facebook: '',
     instagram: '',
@@ -31,23 +30,22 @@ function PanelAdmin() {
     try {
       setLoading(true);
       const [catRes, prodRes] = await Promise.all([
-        api.get('/categorias').catch(() => ({ data: [] })),
-        api.get('/productos').catch(() => ({ data: [] }))
+        api.get('/api/categorias').catch(() => ({ data: [] })),
+        api.get('/api/productos').catch(() => ({ data: [] }))
       ])
       
       setCategorias(catRes.data)
       setProductos(prodRes.data)
 
       try {
-        const configRes = await api.get('/configuracion')
+        const configRes = await api.get('/api/configuracion')
         if (configRes.data) {
-          // CORRECCIÓN: Sincronizamos exactamente lo que viene de la DB
           setConfig({ 
             facebook: configRes.data.facebook || '',
             instagram: configRes.data.instagram || '',
             tiktok: configRes.data.tiktok || '',
             whatsapp: configRes.data.whatsapp || '',
-            ubicacion: configRes.data.ubicacion || '', // Carga el link de la columna nueva
+            ubicacion: configRes.data.ubicacion || '', 
             password_admin: '' 
           })
         }
@@ -61,9 +59,7 @@ function PanelAdmin() {
     }
   }
 
-  useEffect(() => {
-    cargarDatos()
-  }, [])
+  useEffect(() => { cargarDatos() }, [])
 
   const mostrarMensaje = (texto, tipo) => {
     setMensaje({ texto, tipo })
@@ -73,7 +69,7 @@ function PanelAdmin() {
   const handleCrearCategoria = async (e) => {
     e.preventDefault()
     try {
-      await api.post('/categorias', { nombre: nombreCategoria })
+      await api.post('/api/categorias', { nombre: nombreCategoria })
       mostrarMensaje('¡Categoría creada!', 'exito')
       setNombreCategoria('')
       cargarDatos()
@@ -92,10 +88,7 @@ function PanelAdmin() {
       formData.append('categoria_id', parseInt(categoriaId));
       if (imagenArchivo) formData.append('imagen', imagenArchivo);
 
-      await api.post('/productos', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      
+      await api.post('/api/productos', formData);
       mostrarMensaje('¡Producto publicado!', 'exito');
       setNombreProducto(''); setPrecioProducto(''); setImagenArchivo(null); setDescripcionProducto('');
       cargarDatos();
@@ -105,7 +98,7 @@ function PanelAdmin() {
   const handleEliminarProducto = async (id) => {
     if (!window.confirm("¿Seguro que quieres eliminar este producto?")) return;
     try {
-      await api.delete(`/productos/${id}`);
+      await api.delete(`/api/productos/${id}`);
       mostrarMensaje('Producto eliminado', 'exito');
       cargarDatos();
     } catch (error) { mostrarMensaje('No se pudo eliminar.', 'error'); }
@@ -114,17 +107,11 @@ function PanelAdmin() {
   const handleUpdateConfig = async (e) => {
     e.preventDefault()
     try {
-      // Enviamos el objeto 'config' completo al endpoint PUT /api/configuracion
-      await api.put('/configuracion', config)
+      await api.put('/api/configuracion', config)
       mostrarMensaje('Configuración actualizada correctamente', 'exito')
-      
-      // Limpiamos el campo de password después de guardar por seguridad
       setConfig(prev => ({ ...prev, password_admin: '' }))
       cargarDatos()
-    } catch (error) {
-      console.error("Error guardando:", error);
-      mostrarMensaje('Error al actualizar ajustes.', 'error')
-    }
+    } catch (error) { mostrarMensaje('Error al actualizar ajustes.', 'error') }
   }
 
   const handleLogout = () => {
@@ -132,8 +119,9 @@ function PanelAdmin() {
     window.location.href = '/login'
   }
 
-  const inputStyle = "w-full px-5 py-3.5 rounded-2xl outline-none text-sm bg-black/40 text-white border border-white/10 focus:border-rose-600 transition-all placeholder:text-gray-600 font-medium shadow-inner";
-  const cardStyle = "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-[2rem]";
+  // ESTILOS MEJORADOS (MÁS ANCHOS Y ROBUSTOS)
+  const inputStyle = "w-full px-6 py-4 rounded-2xl outline-none text-sm bg-black/60 text-white border border-white/10 focus:border-rose-600 transition-all placeholder:text-gray-500 font-medium";
+  const cardStyle = "bg-zinc-900/80 backdrop-blur-2xl border border-white/5 shadow-2xl rounded-[2.5rem]";
 
   if (loading) return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center">
@@ -143,97 +131,112 @@ function PanelAdmin() {
   )
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white py-10 px-4 font-sans relative overflow-hidden">
-      <img src={logo1} className="fixed w-[120%] max-w-7xl rotate-[-15deg] object-contain brightness-125 opacity-[0.07] pointer-events-none inset-0 m-auto z-0" alt="" />
-
-      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
-        <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
-          <div className="flex items-center gap-4">
-            <img src={logo1} alt="Rubi Logo" className="h-12 w-auto object-contain drop-shadow-2xl" />
-            <div className="h-10 w-[1px] bg-white/10 hidden md:block"></div>
-            <div>
-              <h1 className="text-xl font-black uppercase italic tracking-tighter text-white/90">Panel <span className="text-rose-600 italic">Admin</span></h1>
-            </div>
+    <div className="min-h-screen bg-zinc-950 text-white py-12 px-6 font-sans relative overflow-hidden">
+      <div className="max-w-7xl mx-auto space-y-10 relative z-10">
+        
+        {/* HEADER */}
+        <div className={`${cardStyle} p-8 flex flex-col md:flex-row justify-between items-center gap-6`}>
+          <div className="flex items-center gap-6">
+            <img src={logo1} alt="Rubi Logo" className="h-14 w-auto drop-shadow-2xl" />
+            <h1 className="text-2xl font-black uppercase italic tracking-tighter text-white/90">Panel <span className="text-rose-600">Admin</span></h1>
           </div>
-          
-          <div className="flex bg-black/60 p-1.5 rounded-2xl gap-2 border border-white/5">
-            <button onClick={() => setActiveTab('inventario')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'inventario' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
-            <button onClick={() => setActiveTab('manager')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'manager' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
+          <div className="flex bg-black/40 p-2 rounded-2xl border border-white/10">
+            <button onClick={() => setActiveTab('inventario')} className={`px-8 py-3 rounded-xl text-xs font-black tracking-widest transition-all ${activeTab === 'inventario' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
+            <button onClick={() => setActiveTab('manager')} className={`px-8 py-3 rounded-xl text-xs font-black tracking-widest transition-all ${activeTab === 'manager' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
           </div>
-
-          <button onClick={handleLogout} className="text-gray-600 hover:text-rose-500 font-black text-[10px] uppercase tracking-widest transition-colors flex items-center gap-2">
-            Cerrar Sesión ✕
-          </button>
+          <button onClick={handleLogout} className="text-gray-600 hover:text-rose-500 font-black text-xs uppercase tracking-[0.2em] transition-colors">Cerrar Sesión ✕</button>
         </div>
 
         {mensaje.texto && (
-          <div className={`p-4 rounded-2xl font-bold text-center text-xs tracking-[0.2em] border animate-pulse ${mensaje.tipo === 'error' ? 'bg-rose-900/30 border-rose-500 text-rose-500' : 'bg-green-900/30 border-green-500 text-green-500'}`}>
+          <div className={`p-5 rounded-2xl font-bold text-center text-xs tracking-[0.3em] border ${mensaje.tipo === 'error' ? 'bg-rose-900/30 border-rose-500 text-rose-500' : 'bg-green-900/30 border-green-500 text-green-500'}`}>
             {mensaje.texto.toUpperCase()}
           </div>
         )}
 
         {activeTab === 'inventario' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 space-y-8">
-              <div className={`${cardStyle} p-8`}>
-                <h2 className="text-[10px] font-black uppercase text-rose-600 mb-8 tracking-[0.3em] flex items-center gap-2">
-                   <span className="w-2 h-2 rounded-full bg-rose-600"></span> 
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            
+            {/* COLUMNA IZQUIERDA: FORMULARIOS */}
+            <div className="lg:col-span-4 space-y-8">
+              <div className={`${cardStyle} p-10`}>
+                <h2 className="text-xs font-black uppercase text-rose-600 mb-10 tracking-[0.4em] flex items-center gap-3">
+                   <span className="w-3 h-3 rounded-full bg-rose-600 animate-pulse"></span> 
                    Publicar Producto
                 </h2>
-                <form onSubmit={handleCrearProducto} className="space-y-5">
+                <form onSubmit={handleCrearProducto} className="space-y-6">
                   <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
                     <option value="">Seleccionar Categoría...</option>
-                    {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+                    {categorias.map(cat => <option key={cat.id} value={cat.id} className="bg-zinc-900">{cat.nombre.toUpperCase()}</option>)}
                   </select>
                   <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
-                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (L 0.00)" />
+                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (Ej: L 4,800)" />
                   
-                  <div className="bg-black/40 p-4 rounded-2xl border border-white/5">
-                      <p className="text-[9px] font-black text-gray-600 uppercase mb-3 tracking-widest">Fotografía de Producto</p>
-                      <input type="file" onChange={(e) => setImagenArchivo(e.target.files[0])} className="text-[10px] text-gray-500 file:bg-zinc-800 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-full file:mr-4 cursor-pointer w-full" />
+                  {/* BOTÓN EXAMINAR ROJO PERSONALIZADO */}
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      id="file-upload"
+                      onChange={(e) => setImagenArchivo(e.target.files[0])} 
+                      className="hidden" 
+                    />
+                    <label 
+                      htmlFor="file-upload" 
+                      className="flex items-center justify-center gap-3 w-full py-4.5 bg-rose-600 border-2 border-rose-600 rounded-2xl cursor-pointer hover:bg-rose-700 transition-all text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-rose-900/20"
+                    >
+                      {imagenArchivo ? '✅ IMAGEN LISTA' : '📂 EXAMINAR FOTO'}
+                    </label>
                   </div>
 
                   <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Breve descripción..."></textarea>
-                  <button className="w-full py-4.5 bg-rose-600 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-rose-900/20 hover:scale-[1.02] active:scale-95 transition-all">Subir al Catálogo</button>
+                  <button className="w-full py-5 bg-rose-600 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-2xl hover:scale-[1.02] transition-all">Subir al Catálogo</button>
                 </form>
               </div>
 
-              <div className={`${cardStyle} p-8`}>
-                <h2 className="text-[10px] font-black uppercase text-rose-600 mb-6 tracking-[0.3em]">Nueva Categoría</h2>
-                <form onSubmit={handleCrearCategoria} className="space-y-4">
+              <div className={`${cardStyle} p-10`}>
+                <h2 className="text-xs font-black uppercase text-rose-600 mb-8 tracking-[0.4em]">Nueva Categoría</h2>
+                <form onSubmit={handleCrearCategoria} className="space-y-5">
                   <input type="text" required value={nombreCategoria} onChange={(e) => setNombreCategoria(e.target.value)} className={inputStyle} placeholder="Ej: Relojes, Joyas..." />
-                  <button className="w-full py-3.5 bg-zinc-800/50 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-zinc-800 transition-colors">Crear Grupo</button>
+                  <button className="w-full py-4 bg-zinc-800 rounded-2xl font-black text-xs uppercase tracking-widest border border-white/5 hover:bg-zinc-700 transition-colors">Crear Grupo</button>
                 </form>
               </div>
             </div>
 
-            <div className="lg:col-span-2">
+            {/* COLUMNA DERECHA: LISTADO */}
+            <div className="lg:col-span-8">
               <div className={`${cardStyle} overflow-hidden`}>
-                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/80">Listado de Inventario</h2>
-                  <span className="text-[10px] bg-rose-600/20 text-rose-600 px-4 py-1.5 rounded-full font-black border border-rose-600/20">{productos.length} ARTÍCULOS</span>
+                <div className="p-10 border-b border-white/5 flex justify-between items-center bg-black/40">
+                  <h2 className="text-sm font-black uppercase tracking-[0.4em] text-white/90">Listado de Inventario</h2>
+                  <span className="text-xs bg-rose-600/20 text-rose-600 px-6 py-2 rounded-full font-black border border-rose-600/30">{productos.length} ARTÍCULOS</span>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[11px]">
-                    <thead className="bg-black/40 text-gray-500 font-black uppercase tracking-widest">
-                      <tr>
-                        <th className="p-6">Producto</th>
-                        <th className="p-6">Precio</th>
-                        <th className="p-6 text-right">Acción</th>
+                <div className="p-4 overflow-x-auto">
+                  <table className="w-full text-left border-separate border-spacing-y-4">
+                    <thead>
+                      <tr className="text-gray-500 text-[10px] font-black uppercase tracking-widest px-6">
+                        <th className="pb-4 pl-6">Producto</th>
+                        <th className="pb-4">Precio</th>
+                        <th className="pb-4 text-right pr-6">Acciones</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody>
                       {productos.map(p => (
-                        <tr key={p.id} className="hover:bg-rose-900/5 transition-colors group">
-                          <td className="p-5 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 shadow-md">
-                                <img src={p.imagen_url || 'https://via.placeholder.com/40'} className="w-full h-full object-contain" alt="" />
+                        <tr key={p.id} className="bg-black/20 hover:bg-white/5 transition-all group rounded-2xl">
+                          <td className="py-4 pl-6 rounded-l-2xl">
+                            <div className="flex items-center gap-5">
+                              <img src={p.imagen_url} className="w-16 h-16 rounded-xl object-cover border border-white/10 shadow-lg" alt="" />
+                              <span className="font-bold uppercase text-xs tracking-tight">{p.nombre}</span>
                             </div>
-                            <span className="font-bold uppercase tracking-tight text-white/90">{p.nombre}</span>
                           </td>
-                          <td className="p-5 font-black text-rose-600 text-sm">{p.precio}</td>
-                          <td className="p-5 text-right">
-                            <button onClick={() => handleEliminarProducto(p.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
+                          <td className="py-4 font-black text-rose-600 text-sm">{p.precio}</td>
+                          <td className="py-4 text-right pr-6 rounded-r-2xl">
+                            <div className="flex justify-end gap-3">
+                              {/* BOTÓN EDITAR (AZUL) */}
+                              <button className="p-3 bg-blue-600/10 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all">
+                                ✎
+                              </button>
+                              <button onClick={() => handleEliminarProducto(p.id)} className="p-3 bg-rose-600/10 text-rose-500 rounded-xl hover:bg-rose-600 hover:text-white transition-all">
+                                ✕
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -244,53 +247,24 @@ function PanelAdmin() {
             </div>
           </div>
         ) : (
-          /* PESTAÑA AJUSTES CORREGIDA */
-          <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
-            <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4 tracking-tighter">
-              <span className="w-10 h-10 bg-rose-600/10 text-rose-600 rounded-2xl flex items-center justify-center not-italic border border-rose-600/20 shadow-inner">⚙️</span>
+          /* PESTAÑA AJUSTES */
+          <div className={`max-w-3xl mx-auto p-12 ${cardStyle}`}>
+            <h2 className="text-2xl font-black uppercase italic mb-12 flex items-center gap-5 tracking-tighter">
+              <span className="w-12 h-12 bg-rose-600/10 text-rose-600 rounded-2xl flex items-center justify-center not-italic border border-rose-600/20">⚙️</span>
               Configuración del Sistema
             </h2>
-            <form onSubmit={handleUpdateConfig} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Facebook URL</label>
-                  <input type="text" value={config.facebook} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="https://..." />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Instagram URL</label>
-                  <input type="text" value={config.instagram} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="https://..." />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">TikTok URL</label>
-                  <input type="text" value={config.tiktok} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="https://..." />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1">WhatsApp Ventas</label>
-                  <input type="text" value={config.whatsapp} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
-                </div>
-                
-                {/* CAMPO DE UBICACIÓN CLAVE */}
-                <div className="md:col-span-2 space-y-2">
-                  <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Link de Google Maps</label>
-                  <input 
-                    type="text" 
-                    value={config.ubicacion} 
-                    onChange={e => setConfig({...config, ubicacion: e.target.value})} 
-                    className={inputStyle} 
-                    placeholder="Pega aquí el enlace de compartir de Google Maps..." 
-                  />
-                  <p className="text-[9px] text-gray-500 italic mt-1 px-2">Asegúrate de copiar el enlace desde "Compartir" en Google Maps.</p>
+            <form onSubmit={handleUpdateConfig} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <input type="text" value={config.facebook} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="Facebook URL" />
+                <input type="text" value={config.instagram} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="Instagram URL" />
+                <input type="text" value={config.tiktok} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="TikTok URL" />
+                <input type="text" value={config.whatsapp} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="WhatsApp (504...)" />
+                <div className="md:col-span-2">
+                  <input type="text" value={config.ubicacion} onChange={e => setConfig({...config, ubicacion: e.target.value})} className={inputStyle} placeholder="Link de Google Maps" />
                 </div>
               </div>
-
-              <div className="pt-8 border-t border-white/5 space-y-2">
-                <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Cambiar Contraseña de Acceso</label>
-                <input type="password" value={config.password_admin} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Dejar en blanco para no cambiar" />
-              </div>
-
-              <button type="submit" className="w-full py-4.5 bg-green-600 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">
-                Guardar Cambios
-              </button>
+              <input type="password" value={config.password_admin} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Nueva Contraseña (Opcional)" />
+              <button type="submit" className="w-full py-5 bg-green-600 rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-xl hover:scale-[1.02] transition-all">Guardar Ajustes</button>
             </form>
           </div>
         )}
