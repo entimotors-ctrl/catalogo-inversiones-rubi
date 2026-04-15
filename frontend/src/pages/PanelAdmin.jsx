@@ -7,6 +7,7 @@ function PanelAdmin() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
   
+  // Estados para formularios
   const [nombreCategoria, setNombreCategoria] = useState('')
   const [nombreProducto, setNombreProducto] = useState('')
   const [descripcionProducto, setDescripcionProducto] = useState('')
@@ -14,20 +15,22 @@ function PanelAdmin() {
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
+  // Estados de edición
   const [editandoProdId, setEditandoProdId] = useState(null)
+  const [editandoCatId, setEditandoCatId] = useState(null)
 
   const [config, setConfig] = useState({
     facebook: '',
     instagram: '',
     tiktok: '',
     whatsapp: '50497432867',
+    google_maps: '', // Nuevo campo para la dirección
     password_admin: ''
   })
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
   const [loading, setLoading] = useState(true)
 
-  // 1. URL ACTUALIZADA: Apuntando al servidor de Inversiones Rubi
   const BASE_URL = 'https://catalogo-inversiones-rubi.onrender.com';
 
   const cargarDatos = async () => {
@@ -37,47 +40,52 @@ function PanelAdmin() {
         api.get('/productos').catch(() => ({ data: [] }))
       ])
       
-      // Aseguramos que los datos sean arrays
       setCategorias(Array.isArray(catRes.data) ? catRes.data : [])
       setProductos(Array.isArray(prodRes.data) ? prodRes.data : [])
 
-      try {
-        const configRes = await api.get('/configuracion')
-        if (configRes.data) {
-          setConfig({ ...configRes.data, password_admin: '' })
-        }
-      } catch (e) {
-        console.warn("Tabla de configuración no lista.")
+      const configRes = await api.get('/configuracion').catch(() => null)
+      if (configRes && configRes.data) {
+        setConfig({ ...configRes.data, password_admin: '' })
       }
     } catch (error) {
-      mostrarMensaje('Error al conectar con el servidor de Rubi.', 'error')
+      mostrarMensaje('Error al conectar con el servidor.', 'error')
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    cargarDatos()
-  }, [])
+  useEffect(() => { cargarDatos() }, [])
 
   const mostrarMensaje = (texto, tipo) => {
     setMensaje({ texto, tipo })
     setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000)
   }
 
-  // ---- LÓGICA DE CATEGORÍAS ----
-  const handleCrearCategoria = async (e) => {
+  // ---- LÓGICA DE CATEGORÍAS (CON EDICIÓN) ----
+  const handleGuardarCategoria = async (e) => {
     e.preventDefault()
     try {
-      await api.post('/categorias', { nombre: nombreCategoria })
-      mostrarMensaje('¡Categoría creada!', 'exito')
+      if (editandoCatId) {
+        await api.put(`/categorias/${editandoCatId}`, { nombre: nombreCategoria })
+        mostrarMensaje('Categoría actualizada', 'exito')
+      } else {
+        await api.post('/categorias', { nombre: nombreCategoria })
+        mostrarMensaje('Categoría creada', 'exito')
+      }
       setNombreCategoria('')
+      setEditandoCatId(null)
       cargarDatos()
-    } catch (error) { mostrarMensaje('Error al crear categoría.', 'error') }
+    } catch (error) { mostrarMensaje('Error al procesar categoría.', 'error') }
+  }
+
+  const prepararEdicionCat = (c) => {
+    setEditandoCatId(c.id)
+    setNombreCategoria(c.nombre)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleEliminarCategoria = async (id) => {
-    if (!window.confirm("¿Seguro que quieres eliminar esta categoría?")) return;
+    if (!window.confirm("¿Eliminar categoría? Esto podría afectar a los productos asociados.")) return;
     try {
       await api.delete(`/categorias/${id}`);
       mostrarMensaje('Categoría eliminada', 'exito');
@@ -99,20 +107,23 @@ function PanelAdmin() {
       if (imagenArchivo) formData.append('imagen', imagenArchivo);
 
       if (editandoProdId) {
+        // Corrección: Usamos PUT y enviamos el ID correcto
         await api.put(`/productos/${editandoProdId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        mostrarMensaje('¡Producto actualizado!', 'exito');
+        mostrarMensaje('Producto actualizado', 'exito');
       } else {
         await api.post('/productos', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        mostrarMensaje('¡Producto publicado!', 'exito');
+        mostrarMensaje('Producto publicado', 'exito');
       }
-      
       cancelarEdicion();
       cargarDatos();
-    } catch (error) { mostrarMensaje('Error al guardar producto.', 'error'); }
+    } catch (error) { 
+      console.error(error);
+      mostrarMensaje('Error al guardar. Verifica la conexión.', 'error'); 
+    }
   }
 
   const prepararEdicionProd = (p) => {
@@ -147,12 +158,10 @@ function PanelAdmin() {
     e.preventDefault()
     try {
       await api.put('/configuracion', config)
-      mostrarMensaje('Configuración actualizada correctamente', 'exito')
+      mostrarMensaje('Configuración actualizada', 'exito')
       setConfig(prev => ({ ...prev, password_admin: '' }))
       cargarDatos()
-    } catch (error) {
-      mostrarMensaje('Error al actualizar ajustes.', 'error')
-    }
+    } catch (error) { mostrarMensaje('Error al actualizar ajustes.', 'error') }
   }
 
   const handleLogout = () => {
@@ -160,50 +169,47 @@ function PanelAdmin() {
     window.location.href = '/login'
   }
 
-  // 2. FUNCIÓN DE IMAGEN MEJORADA: Soporta URLs directas de Supabase
   const getImageUrl = (path) => {
-    if (!path) return 'https://via.placeholder.com/150?text=Sin+Imagen';
-    if (path.startsWith('http')) return path; // Si ya es una URL de Supabase
-    return `${BASE_URL}/uploads/${path}`; // Si es una ruta local del servidor
+    if (!path) return 'https://via.placeholder.com/150';
+    if (path.startsWith('http')) return path;
+    return `${BASE_URL}/uploads/${path}`;
   };
 
-  const inputStyle = "w-full px-5 py-3.5 rounded-2xl outline-none text-sm bg-black/40 text-white border border-white/10 focus:border-rose-600 transition-all placeholder:text-gray-600 font-medium shadow-inner";
+  // Estilos consistentes
+  const inputStyle = "w-full px-5 py-3.5 rounded-2xl outline-none text-sm bg-black/40 text-white border border-white/10 focus:border-emerald-500 transition-all placeholder:text-gray-600 font-medium";
   const cardStyle = "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-[2rem]";
-  const btnPrincipal = "w-full py-3.5 bg-zinc-800/80 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-zinc-700 transition-all text-white active:scale-95 shadow-lg flex justify-center items-center cursor-pointer";
+  
+  // Botones Verdes (como en Ajustes)
+  const btnVerde = "w-full py-3.5 bg-emerald-600/90 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-emerald-500 transition-all text-white active:scale-95 shadow-lg flex justify-center items-center cursor-pointer";
 
   if (loading) return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center">
-       <div className="w-12 h-12 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-       <p className="text-rose-600 font-black tracking-widest text-xs animate-pulse uppercase">Cargando Inversiones Rubi...</p>
+       <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+       <p className="text-emerald-500 font-black tracking-widest text-xs animate-pulse">CARGANDO...</p>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white py-10 px-4 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-white py-10 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* HEADER */}
         <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
           <div className="flex items-center gap-4">
-            <img src={logo1} alt="Rubi Logo" className="h-12 w-auto object-contain" />
-            <div className="h-10 w-[1px] bg-white/10 hidden md:block"></div>
-            <div>
-              <h1 className="text-xl font-black uppercase italic tracking-tighter">Panel <span className="text-rose-600 italic">Admin</span></h1>
-            </div>
+            <img src={logo1} alt="Logo" className="h-12 w-auto object-contain" />
+            <h1 className="text-xl font-black uppercase italic">Panel <span className="text-emerald-500">Admin</span></h1>
           </div>
           
           <div className="flex bg-black/60 p-1.5 rounded-2xl gap-2 border border-white/5">
-            <button onClick={() => setActiveTab('inventario')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'inventario' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
-            <button onClick={() => setActiveTab('manager')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'manager' ? 'bg-rose-600 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
+            <button onClick={() => setActiveTab('inventario')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'inventario' ? 'bg-emerald-600 text-white' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
+            <button onClick={() => setActiveTab('manager')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'manager' ? 'bg-emerald-600 text-white' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
           </div>
 
-          <button onClick={handleLogout} className="text-gray-600 hover:text-rose-500 font-black text-[10px] uppercase tracking-widest transition-colors flex items-center gap-2">
-            Cerrar Sesión ✕
-          </button>
+          <button onClick={handleLogout} className="text-gray-600 hover:text-rose-500 font-black text-[10px] uppercase">Cerrar Sesión ✕</button>
         </div>
 
         {mensaje.texto && (
-          <div className={`p-4 rounded-2xl font-bold text-center text-xs tracking-[0.2em] border animate-pulse ${mensaje.tipo === 'error' ? 'bg-rose-900/30 border-rose-500 text-rose-500' : 'bg-green-900/30 border-green-500 text-green-500'}`}>
+          <div className={`p-4 rounded-2xl font-bold text-center text-xs border animate-pulse ${mensaje.tipo === 'error' ? 'bg-rose-900/30 border-rose-500 text-rose-500' : 'bg-emerald-900/30 border-emerald-500 text-emerald-500'}`}>
             {mensaje.texto.toUpperCase()}
           </div>
         )}
@@ -211,10 +217,10 @@ function PanelAdmin() {
         {activeTab === 'inventario' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-8">
+              {/* FORM PRODUCTOS */}
               <div className={`${cardStyle} p-8`}>
-                <h2 className="text-[10px] font-black uppercase text-rose-600 mb-8 tracking-[0.3em] flex items-center gap-2">
-                   <span className="w-2 h-2 rounded-full bg-rose-600"></span> 
-                   {editandoProdId ? 'Editando Producto' : 'Publicar Producto'}
+                <h2 className="text-[10px] font-black uppercase text-emerald-500 mb-8 tracking-[0.3em]">
+                   {editandoProdId ? 'Actualizar Producto' : 'Publicar Producto'}
                 </h2>
                 <form onSubmit={handleGuardarProducto} className="space-y-5">
                   <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
@@ -222,34 +228,38 @@ function PanelAdmin() {
                     {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
                   </select>
                   <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
-                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (L 0.00)" />
+                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
                   
                   <div className="relative">
                     <input type="file" id="file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
-                    <label htmlFor="file-prod" className={btnPrincipal}>
-                       {imagenArchivo ? '✅ FOTO SELECCIONADA' : '📂 ELEGIR FOTO'}
+                    <label htmlFor="file-prod" className={btnVerde}>
+                       {imagenArchivo ? '✅ FOTO LISTA' : '📂 ELEGIR FOTO'}
                     </label>
                   </div>
 
                   <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción..."></textarea>
                   
-                  <button type="submit" className={btnPrincipal}>
-                    {editandoProdId ? 'Actualizar Producto' : 'Subir al Catálogo'}
+                  <button type="submit" className={btnVerde}>
+                    {editandoProdId ? 'Guardar Cambios' : 'Subir al Catálogo'}
                   </button>
 
                   {editandoProdId && (
-                    <button type="button" onClick={cancelarEdicion} className="w-full text-[10px] font-black text-gray-500 uppercase py-2 hover:text-white transition-colors">
-                      Cancelar Edición
-                    </button>
+                    <button type="button" onClick={cancelarEdicion} className="w-full text-[10px] font-black text-gray-500 uppercase py-2">Cancelar Edición</button>
                   )}
                 </form>
               </div>
 
+              {/* FORM CATEGORÍAS */}
               <div className={`${cardStyle} p-8`}>
-                <h2 className="text-[10px] font-black uppercase text-rose-600 mb-6 tracking-[0.3em]">Nueva Categoría</h2>
-                <form onSubmit={handleCrearCategoria} className="space-y-4">
+                <h2 className="text-[10px] font-black uppercase text-emerald-500 mb-6 tracking-[0.3em]">
+                  {editandoCatId ? 'Editar Categoría' : 'Nueva Categoría'}
+                </h2>
+                <form onSubmit={handleGuardarCategoria} className="space-y-4">
                   <input type="text" required value={nombreCategoria} onChange={(e) => setNombreCategoria(e.target.value)} className={inputStyle} placeholder="Ej: Relojes, Joyas..." />
-                  <button className={btnPrincipal}>Crear Grupo</button>
+                  <button className={btnVerde}>{editandoCatId ? 'Actualizar' : 'Crear Grupo'}</button>
+                  {editandoCatId && (
+                    <button type="button" onClick={() => {setEditandoCatId(null); setNombreCategoria('')}} className="w-full text-[10px] font-black text-gray-500 uppercase py-2">Cancelar</button>
+                  )}
                 </form>
               </div>
             </div>
@@ -258,8 +268,8 @@ function PanelAdmin() {
               {/* TABLA PRODUCTOS */}
               <div className={`${cardStyle} overflow-hidden`}>
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/80">Listado de Inventario</h2>
-                  <span className="text-[10px] bg-rose-600/20 text-rose-600 px-4 py-1.5 rounded-full font-black border border-rose-600/20">{productos.length} ARTÍCULOS</span>
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em]">Inventario</h2>
+                  <span className="text-[10px] bg-emerald-600/20 text-emerald-500 px-4 py-1.5 rounded-full font-black border border-emerald-600/20">{productos.length} ÍTEMS</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-[11px]">
@@ -272,17 +282,17 @@ function PanelAdmin() {
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {productos.map(p => (
-                        <tr key={p.id} className="hover:bg-rose-900/5 transition-colors group">
+                        <tr key={p.id} className="hover:bg-emerald-900/5 transition-colors">
                           <td className="p-5 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 shadow-md">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100">
                                 <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-contain" alt="" />
                             </div>
-                            <span className="font-bold uppercase tracking-tight text-white/90">{p.nombre}</span>
+                            <span className="font-bold uppercase text-white/90">{p.nombre}</span>
                           </td>
-                          <td className="p-5 font-black text-rose-600 text-sm">{p.precio}</td>
+                          <td className="p-5 font-black text-emerald-500 text-sm">{p.precio}</td>
                           <td className="p-5 text-right space-x-2">
-                            <button onClick={() => prepararEdicionProd(p)} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all active:scale-90">✎</button>
-                            <button onClick={() => handleEliminarProducto(p.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
+                            <button onClick={() => prepararEdicionProd(p)} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all">✎</button>
+                            <button onClick={() => handleEliminarProducto(p.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all">✕</button>
                           </td>
                         </tr>
                       ))}
@@ -294,23 +304,23 @@ function PanelAdmin() {
               {/* TABLA CATEGORÍAS */}
               <div className={`${cardStyle} overflow-hidden`}>
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/80">Grupos de Catálogo</h2>
-                  <span className="text-[10px] bg-zinc-800 text-gray-400 px-4 py-1.5 rounded-full font-black border border-white/5">{categorias.length} GRUPOS</span>
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em]">Categorías</h2>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-[11px]">
                     <thead className="bg-black/40 text-gray-500 font-black uppercase tracking-widest">
                       <tr>
-                        <th className="p-6">Nombre de la Categoría</th>
-                        <th className="p-6 text-right">Acción</th>
+                        <th className="p-6">Nombre</th>
+                        <th className="p-6 text-right">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {categorias.map(c => (
-                        <tr key={c.id} className="hover:bg-white/5 transition-colors group">
+                        <tr key={c.id} className="hover:bg-white/5 transition-colors">
                           <td className="p-6 font-bold uppercase tracking-widest text-white/90">{c.nombre}</td>
-                          <td className="p-6 text-right">
-                            <button onClick={() => handleEliminarCategoria(c.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
+                          <td className="p-6 text-right space-x-2">
+                            <button onClick={() => prepararEdicionCat(c)} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all">✎</button>
+                            <button onClick={() => handleEliminarCategoria(c.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all">✕</button>
                           </td>
                         </tr>
                       ))}
@@ -323,36 +333,43 @@ function PanelAdmin() {
         ) : (
           /* PESTAÑA AJUSTES */
           <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
-            <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4 tracking-tighter">
-              <span className="w-10 h-10 bg-rose-600/10 text-rose-600 rounded-2xl flex items-center justify-center not-italic border border-rose-600/20 shadow-inner">⚙️</span>
-              Configuración del Sistema
+            <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4">
+              <span className="w-10 h-10 bg-emerald-600/10 text-emerald-500 rounded-2xl flex items-center justify-center border border-emerald-600/20">⚙️</span>
+              Ajustes del Sistema
             </h2>
             <form onSubmit={handleUpdateConfig} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Facebook URL</label>
-                  <input type="text" value={config.facebook || ''} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} placeholder="https://..." />
+                  <label className="text-[10px] font-black text-gray-600 uppercase">Facebook</label>
+                  <input type="text" value={config.facebook || ''} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Instagram URL</label>
-                  <input type="text" value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} placeholder="https://..." />
+                  <label className="text-[10px] font-black text-gray-600 uppercase">Instagram</label>
+                  <input type="text" value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">TikTok URL</label>
-                  <input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} placeholder="https://..." />
+                  <label className="text-[10px] font-black text-gray-600 uppercase">TikTok</label>
+                  <input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest ml-1">WhatsApp Ventas</label>
-                  <input type="text" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} placeholder="504..." />
+                  <label className="text-[10px] font-black text-emerald-500 uppercase">WhatsApp</label>
+                  <input type="text" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} />
                 </div>
+              </div>
+
+              {/* NUEVO CAMPO GOOGLE MAPS */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-blue-500 uppercase">Link de Google Maps (Iframe o URL)</label>
+                <textarea rows="2" value={config.google_maps || ''} onChange={e => setConfig({...config, google_maps: e.target.value})} className={inputStyle} placeholder="Pega aquí el link de tu ubicación..."></textarea>
               </div>
 
               <div className="pt-8 border-t border-white/5 space-y-2">
-                <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Cambiar Contraseña de Acceso</label>
-                <input type="password" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="Dejar en blanco para no cambiar" />
+                <label className="text-[10px] font-black text-gray-600 uppercase">Nueva Contraseña</label>
+                <input type="password" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="En blanco para no cambiar" />
               </div>
 
-              <button className="w-full py-4.5 bg-green-600 hover:bg-green-700 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] shadow-xl shadow-green-900/20 transition-all hover:scale-[1.01] active:scale-95 mt-4">Guardar Cambios</button>
+              {/* Botón Guardar con estilo consistente */}
+              <button className={btnVerde}>Guardar Todos los Cambios</button>
             </form>
           </div>
         )}
