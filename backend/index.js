@@ -221,3 +221,13 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor listo en puerto ${PORT}`);
 });
+// Ruta para eliminar una foto específica de la galería
+app.delete('/api/productos/foto/:fotoId', async (req, res) => {
+    try {
+        const { fotoId } = req.params;
+        await pool.query("DELETE FROM producto_imagenes WHERE id = $1", [fotoId]);
+        res.json({ message: "Foto eliminada de la galería" });
+    } catch (err) {
+        res.status(500).json({ error: "Error al eliminar la foto" });
+    }
+});
