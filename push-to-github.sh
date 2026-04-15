@@ -30,7 +30,7 @@ git push -u origin master
 
 if [ $? -eq 0 ]; then
     echo "✅ ¡Proyecto subido exitosamente!"
-    echo "🌐 URL del repositorio: https://github.com/Stwinki/$REPO_NAME"
+    echo "🌐 URL del repositorio: https://github.comentimotors-ctrl/$REPO_NAME"
 else
     echo "❌ Error al subir el proyecto. Verifica:"
     echo "   - Que el repositorio existe en GitHub"
