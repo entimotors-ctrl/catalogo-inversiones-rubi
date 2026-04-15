@@ -15,6 +15,9 @@ function PanelAdmin() {
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
+  // Estado para controlar si estamos creando o editando un producto
+  const [editandoProdId, setEditandoProdId] = useState(null)
+
   const [config, setConfig] = useState({
     facebook: '',
     instagram: '',
@@ -25,6 +28,9 @@ function PanelAdmin() {
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
   const [loading, setLoading] = useState(true)
+
+  // URL BASE para las imágenes
+  const BASE_URL = 'https://entimotors-api-server.onrender.com';
 
   const cargarDatos = async () => {
     try {
@@ -60,6 +66,7 @@ function PanelAdmin() {
     setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000)
   }
 
+  // ---- LÓGICA DE CATEGORÍAS ----
   const handleCrearCategoria = async (e) => {
     e.preventDefault()
     try {
@@ -70,7 +77,17 @@ function PanelAdmin() {
     } catch (error) { mostrarMensaje('Error al crear categoría.', 'error') }
   }
 
-  const handleCrearProducto = async (e) => {
+  const handleEliminarCategoria = async (id) => {
+    if (!window.confirm("¿Seguro que quieres eliminar esta categoría?")) return;
+    try {
+      await api.delete(`/categorias/${id}`);
+      mostrarMensaje('Categoría eliminada', 'exito');
+      cargarDatos();
+    } catch (error) { mostrarMensaje('Error al eliminar.', 'error'); }
+  }
+
+  // ---- LÓGICA DE PRODUCTOS ----
+  const handleGuardarProducto = async (e) => {
     e.preventDefault();
     if (!categoriaId) return mostrarMensaje('Selecciona una categoría', 'error');
     
@@ -82,14 +99,42 @@ function PanelAdmin() {
       formData.append('categoria_id', parseInt(categoriaId));
       if (imagenArchivo) formData.append('imagen', imagenArchivo);
 
-      await api.post('/productos', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      if (editandoProdId) {
+        // ACTUALIZAR
+        await api.put(`/productos/${editandoProdId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        mostrarMensaje('¡Producto actualizado!', 'exito');
+      } else {
+        // CREAR
+        await api.post('/productos', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        mostrarMensaje('¡Producto publicado!', 'exito');
+      }
       
-      mostrarMensaje('¡Producto publicado!', 'exito');
-      setNombreProducto(''); setPrecioProducto(''); setImagenArchivo(null); setDescripcionProducto('');
+      cancelarEdicion();
       cargarDatos();
-    } catch (error) { mostrarMensaje('Error al crear producto.', 'error'); }
+    } catch (error) { mostrarMensaje('Error al guardar producto.', 'error'); }
+  }
+
+  const prepararEdicionProd = (p) => {
+    setEditandoProdId(p.id);
+    setNombreProducto(p.nombre);
+    setPrecioProducto(p.precio);
+    setDescripcionProducto(p.descripcion || '');
+    setCategoriaId(p.categoria_id.toString());
+    setImagenArchivo(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const cancelarEdicion = () => {
+    setEditandoProdId(null);
+    setNombreProducto(''); 
+    setPrecioProducto(''); 
+    setDescripcionProducto('');
+    setCategoriaId('');
+    setImagenArchivo(null);
   }
 
   const handleEliminarProducto = async (id) => {
@@ -118,9 +163,19 @@ function PanelAdmin() {
     window.location.href = '/login'
   }
 
-  // Clases CSS para el estilo Darkglass Elegant
+  // Función para procesar imágenes correctamente
+  const getImageUrl = (path) => {
+    if (!path) return 'https://via.placeholder.com/40';
+    if (path.startsWith('http')) return path;
+    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  };
+
+  // Clases CSS
   const inputStyle = "w-full px-5 py-3.5 rounded-2xl outline-none text-sm bg-black/40 text-white border border-white/10 focus:border-rose-600 transition-all placeholder:text-gray-600 font-medium shadow-inner";
   const cardStyle = "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-[2rem]";
+  
+  // ESTE ES EL ESTILO DEL BOTÓN QUE QUERÍAS (Gris oscuro, bordes redondeados, texto elegante)
+  const btnPrincipal = "w-full py-3.5 bg-zinc-800/80 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-zinc-700 transition-all text-white active:scale-95 shadow-lg flex justify-center items-center cursor-pointer";
 
   if (loading) return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center">
@@ -136,7 +191,6 @@ function PanelAdmin() {
         {/* HEADER DARKGLASS */}
         <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
           <div className="flex items-center gap-4">
-            {/* LOGO 1 PRINCIPAL */}
             <img src={logo1} alt="Rubi Logo" className="h-12 w-auto object-contain" />
             <div className="h-10 w-[1px] bg-white/10 hidden md:block"></div>
             <div>
@@ -167,9 +221,9 @@ function PanelAdmin() {
               <div className={`${cardStyle} p-8`}>
                 <h2 className="text-[10px] font-black uppercase text-rose-600 mb-8 tracking-[0.3em] flex items-center gap-2">
                    <span className="w-2 h-2 rounded-full bg-rose-600"></span> 
-                   Publicar Producto
+                   {editandoProdId ? 'Editando Producto' : 'Publicar Producto'}
                 </h2>
-                <form onSubmit={handleCrearProducto} className="space-y-5">
+                <form onSubmit={handleGuardarProducto} className="space-y-5">
                   <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
                     <option value="">Seleccionar Categoría...</option>
                     {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
@@ -177,13 +231,26 @@ function PanelAdmin() {
                   <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
                   <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (L 0.00)" />
                   
-                  <div className="bg-black/40 p-4 rounded-2xl border border-white/5">
-                      <p className="text-[9px] font-black text-gray-600 uppercase mb-3 tracking-widest">Fotografía de Producto</p>
-                      <input type="file" onChange={(e) => setImagenArchivo(e.target.files[0])} className="text-[10px] text-gray-500 file:bg-zinc-800 file:text-white file:border-0 file:px-4 file:py-2 file:rounded-full file:mr-4 cursor-pointer w-full" />
+                  {/* BOTÓN EXAMINAR FOTO ACTUALIZADO */}
+                  <div className="relative">
+                    <input type="file" id="file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
+                    <label htmlFor="file-prod" className={btnPrincipal}>
+                       {imagenArchivo ? '✅ FOTO LISTA' : '📂 EXAMINAR FOTO'}
+                    </label>
                   </div>
 
-                  <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Breve descripción de las características..."></textarea>
-                  <button className="w-full py-4.5 bg-rose-600 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-rose-900/20 hover:scale-[1.02] active:scale-95 transition-all">Subir al Catálogo</button>
+                  <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Breve descripción..."></textarea>
+                  
+                  {/* BOTÓN SUBIR/ACTUALIZAR ACTUALIZADO */}
+                  <button type="submit" className={btnPrincipal}>
+                    {editandoProdId ? 'Guardar Cambios' : 'Subir al Catálogo'}
+                  </button>
+
+                  {editandoProdId && (
+                    <button type="button" onClick={cancelarEdicion} className="w-full text-[10px] font-black text-gray-500 uppercase py-2 hover:text-white transition-colors">
+                      Cancelar Edición
+                    </button>
+                  )}
                 </form>
               </div>
 
@@ -191,13 +258,15 @@ function PanelAdmin() {
                 <h2 className="text-[10px] font-black uppercase text-rose-600 mb-6 tracking-[0.3em]">Nueva Categoría</h2>
                 <form onSubmit={handleCrearCategoria} className="space-y-4">
                   <input type="text" required value={nombreCategoria} onChange={(e) => setNombreCategoria(e.target.value)} className={inputStyle} placeholder="Ej: Relojes, Joyas..." />
-                  <button className="w-full py-3.5 bg-zinc-800/50 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-zinc-800 transition-colors">Crear Grupo</button>
+                  <button className={btnPrincipal}>Crear Grupo</button>
                 </form>
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: TABLA */}
-            <div className="lg:col-span-2">
+            {/* COLUMNA DERECHA: TABLAS */}
+            <div className="lg:col-span-2 space-y-8">
+              
+              {/* TABLA PRODUCTOS */}
               <div className={`${cardStyle} overflow-hidden`}>
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
                   <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/80">Listado de Inventario</h2>
@@ -209,7 +278,7 @@ function PanelAdmin() {
                       <tr>
                         <th className="p-6">Producto</th>
                         <th className="p-6">Precio</th>
-                        <th className="p-6 text-right">Acción</th>
+                        <th className="p-6 text-right">Acciones</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
@@ -217,12 +286,14 @@ function PanelAdmin() {
                         <tr key={p.id} className="hover:bg-rose-900/5 transition-colors group">
                           <td className="p-5 flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 shadow-md">
-                                <img src={p.imagen_url || 'https://via.placeholder.com/40'} className="w-full h-full object-contain" alt="" />
+                                <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-contain" alt="" />
                             </div>
                             <span className="font-bold uppercase tracking-tight text-white/90">{p.nombre}</span>
                           </td>
                           <td className="p-5 font-black text-rose-600 text-sm">{p.precio}</td>
-                          <td className="p-5 text-right">
+                          <td className="p-5 text-right space-x-2">
+                            {/* BOTÓN EDITAR */}
+                            <button onClick={() => prepararEdicionProd(p)} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all active:scale-90">✎</button>
                             <button onClick={() => handleEliminarProducto(p.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
                           </td>
                         </tr>
@@ -231,6 +302,35 @@ function PanelAdmin() {
                   </table>
                 </div>
               </div>
+
+              {/* TABLA CATEGORÍAS */}
+              <div className={`${cardStyle} overflow-hidden`}>
+                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/80">Grupos de Catálogo</h2>
+                  <span className="text-[10px] bg-zinc-800 text-gray-400 px-4 py-1.5 rounded-full font-black border border-white/5">{categorias.length} GRUPOS</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-[11px]">
+                    <thead className="bg-black/40 text-gray-500 font-black uppercase tracking-widest">
+                      <tr>
+                        <th className="p-6">Nombre de la Categoría</th>
+                        <th className="p-6 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {categorias.map(c => (
+                        <tr key={c.id} className="hover:bg-white/5 transition-colors group">
+                          <td className="p-6 font-bold uppercase tracking-widest text-white/90">{c.nombre}</td>
+                          <td className="p-6 text-right">
+                            <button onClick={() => handleEliminarCategoria(c.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
             </div>
           </div>
         ) : (
