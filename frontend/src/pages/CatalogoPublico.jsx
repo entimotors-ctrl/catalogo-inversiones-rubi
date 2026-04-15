@@ -3,25 +3,29 @@ import api from '../services/api'
 import logo1 from '../assets/logo1.png'
 import logo2 from '../assets/logo2.png'
 import logowas from '../assets/logowas.png'
-import { FaWhatsapp, FaChevronDown, FaThLarge } from 'react-icons/fa'
+import { FaWhatsapp, FaChevronDown, FaThLarge, FaTimes } from 'react-icons/fa' // Agregué FaTimes para cerrar el modal
 
 // LIBRERÍAS PARA EL CARRUSEL
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { Autoplay, Pagination, EffectFade } from 'swiper/modules'
+import { Autoplay, Pagination, EffectFade, Navigation } from 'swiper/modules' // Agregué Navigation
 
 // ESTILOS OBLIGATORIOS DE SWIPER
 import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/effect-fade'
+import 'swiper/css/navigation' // Estilo para las flechas del modal
 
 function CatalogoPublico() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
-  const [config, setConfig] = useState({ whatsapp: '' })
+  const [config, setConfig] = useState({ whatsapp: '', categoria_excluida: null })
   const [categoriaActiva, setCategoriaActiva] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [darkMode, setDarkMode] = useState(true)
   const [loading, setLoading] = useState(true)
+  
+  // NUEVO ESTADO: Para controlar el modal del producto
+  const [productoSeleccionado, setProductoSeleccionado] = useState(null)
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -49,6 +53,24 @@ function CatalogoPublico() {
     };
     fetchDatos();
   }, []);
+
+  // LÓGICA PARA EL CARRUSEL DINÁMICO (Productos aleatorios, excluyendo categoría)
+  const productosParaCarrusel = useMemo(() => {
+    if (productos.length === 0) return [];
+    
+    // Filtramos la categoría que el admin decida excluir (si existe)
+    let filtrados = productos;
+    if (config.categoria_excluida) {
+      filtrados = productos.filter(p => Number(p.categoria_id) !== Number(config.categoria_excluida));
+    }
+
+    // Mezclamos aleatoriamente (Shuffle)
+    const mezclados = [...filtrados].sort(() => 0.5 - Math.random());
+    
+    // Devolvemos hasta 20 productos aleatorios para que no se repitan rápido
+    return mezclados.slice(0, 20);
+  }, [productos, config.categoria_excluida]);
+
 
   // LÓGICA PARA MOSTRAR POR CATEGORÍAS (ESTILO NETFLIX)
   const productosPorCategoria = useMemo(() => {
@@ -80,23 +102,33 @@ function CatalogoPublico() {
     : "bg-white/70 backdrop-blur-md border border-zinc-200 shadow-lg";
 
   const ProductoCard = ({ p }) => (
-    <div className={`group flex flex-col rounded-[2.5rem] overflow-hidden border transition-all duration-300 hover:scale-[1.02] flex-shrink-0 w-[210px] md:w-full ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
-      <div className="aspect-square relative overflow-hidden bg-white p-4">
-        <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+    <div className={`group flex flex-col rounded-[2.5rem] overflow-hidden border transition-all duration-300 flex-shrink-0 w-[210px] md:w-full ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
+      
+      {/* Área clickeable para abrir el modal */}
+      <div className="cursor-pointer" onClick={() => setProductoSeleccionado(p)}>
+        <div className="aspect-square relative overflow-hidden bg-white p-4 flex items-center justify-center">
+          <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+             <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm font-bold uppercase tracking-widest">Ver Detalles</span>
+          </div>
+        </div>
+        <div className="p-5 pb-2">
+          <h3 className="font-black text-xs md:text-sm uppercase mb-1 tracking-tight line-clamp-1">{p.nombre}</h3>
+          <p className={`text-[10px] line-clamp-2 opacity-60 leading-relaxed font-medium`}>{p.descripcion}</p>
+        </div>
       </div>
-      <div className="p-5 flex flex-col flex-grow">
-        <h3 className="font-black text-xs md:text-sm uppercase mb-1 tracking-tight line-clamp-1">{p.nombre}</h3>
-        <p className={`text-[10px] mb-4 line-clamp-2 opacity-60 leading-relaxed font-medium`}>{p.descripcion}</p>
-        <div className="mt-auto">
-           <div className="bg-rose-600/10 p-2 md:p-3 rounded-xl border-l-4 border-rose-600 mb-4">
+
+      {/* Botón y Precio (Fuera del clic del modal) */}
+      <div className="p-5 pt-0 mt-auto flex flex-col">
+           <div className="bg-rose-600/10 p-2 md:p-3 rounded-xl border-l-4 border-rose-600 my-4">
               <span className="text-sm md:text-base font-black text-rose-600">L {p.precio}</span>
            </div>
            <a href={`https://wa.me/${config.whatsapp?.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por: *${p.nombre}*`} 
               target="_blank" rel="noopener noreferrer" 
+              onClick={(e) => e.stopPropagation()} // Evita que al darle a consultar se abra el modal
               className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-[9px] md:text-[10px] uppercase tracking-widest">
               <FaWhatsapp size={14} /> CONSULTAR
            </a>
-        </div>
       </div>
     </div>
   );
@@ -132,26 +164,41 @@ function CatalogoPublico() {
 
       <main className="max-w-7xl mx-auto px-4 py-4 relative z-10">
         
-        {/* 1. CARRUSEL DE ANIMACIONES (Debajo de búsqueda) */}
-        {!searchTerm && !categoriaActiva && (
-          <div className="mb-8 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/5">
+        {/* 1. CARRUSEL DE ANIMACIONES (AHORA CON PRODUCTOS REALES) */}
+        {!searchTerm && !categoriaActiva && productosParaCarrusel.length > 0 && (
+          <div className="mb-8 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/5 bg-black">
             <Swiper
               modules={[Autoplay, Pagination, EffectFade]}
               effect="fade"
-              autoplay={{ delay: 4000 }}
+              autoplay={{ delay: 3500, disableOnInteraction: false }}
               pagination={{ clickable: true }}
-              className="h-[200px] md:h-[450px]"
+              className="h-[250px] md:h-[450px] w-full"
             >
-              {[1, 2, 3].map((idx) => (
-                <SwiperSlide key={idx}>
-                  <div className="w-full h-full bg-gradient-to-br from-rose-900 via-zinc-900 to-black flex items-center justify-center relative">
-                    <img src={logo1} className="h-2/3 object-contain opacity-10 absolute" alt="" />
-                    <div className="relative text-center z-10 px-4">
-                       <h2 className="text-3xl md:text-6xl font-black italic uppercase tracking-tighter text-white drop-shadow-lg">
-                         {idx === 1 ? 'Nuevos Ingresos' : idx === 2 ? 'Calidad Premium' : 'Ofertas Especiales'}
-                       </h2>
-                       <p className="text-rose-500 font-bold text-xs md:text-xl tracking-[0.3em] uppercase mt-2">Inversiones Rubi</p>
+              {productosParaCarrusel.map((p) => (
+                <SwiperSlide key={p.id}>
+                  <div className="w-full h-full relative flex items-center bg-zinc-900 cursor-pointer" onClick={() => setProductoSeleccionado(p)}>
+                    
+                    {/* Imagen de fondo desenfocada (Efecto premium) */}
+                    <img src={p.imagen_url} className="absolute inset-0 w-full h-full object-cover opacity-20 blur-xl" alt="" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent z-10"></div>
+                    
+                    {/* Contenido del Slide */}
+                    <div className="relative z-20 flex w-full max-w-5xl mx-auto px-6 md:px-12 items-center gap-6">
+                      {/* Imagen principal */}
+                      <div className="w-1/2 md:w-1/3 flex justify-center drop-shadow-2xl">
+                         <img src={p.imagen_url} className="max-h-[180px] md:max-h-[350px] object-contain rounded-xl" alt={p.nombre} />
+                      </div>
+                      
+                      {/* Textos */}
+                      <div className="w-1/2 md:w-2/3 flex flex-col items-start">
+                         <span className="bg-rose-600 text-white text-[8px] md:text-xs font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-2 md:mb-4">Nuevo Ingreso</span>
+                         <h2 className="text-lg md:text-5xl font-black italic uppercase tracking-tighter text-white drop-shadow-lg line-clamp-2 leading-tight">
+                           {p.nombre}
+                         </h2>
+                         <p className="text-rose-400 font-bold text-xs md:text-xl tracking-widest uppercase mt-2">L {p.precio}</p>
+                      </div>
                     </div>
+
                   </div>
                 </SwiperSlide>
               ))}
@@ -167,7 +214,7 @@ function CatalogoPublico() {
                 onChange={(e) => {
                   const cat = categorias.find(c => Number(c.id) === Number(e.target.value));
                   setCategoriaActiva(cat || null);
-                  setSearchTerm(''); // Limpia búsqueda al elegir categoría
+                  setSearchTerm(''); 
                 }}
                 className={`w-full appearance-none px-6 py-4 rounded-2xl outline-none text-[11px] font-black uppercase tracking-widest border transition-all cursor-pointer shadow-xl ${darkMode ? 'bg-zinc-900 border-white/10 focus:border-rose-600 text-white' : 'bg-white border-zinc-200 text-zinc-900'}`}
               >
@@ -180,6 +227,7 @@ function CatalogoPublico() {
            </div>
         </div>
 
+        {/* LISTADOS DE PRODUCTOS */}
         {productosPorCategoria ? (
           <div className="space-y-16 md:space-y-24">
             {productosPorCategoria.map(cat => (
@@ -188,8 +236,6 @@ function CatalogoPublico() {
                   <h2 className="text-lg md:text-4xl font-black uppercase tracking-tighter italic border-l-8 border-rose-600 pl-4">
                     {cat.nombre}
                   </h2>
-                  
-                  {/* 3. BOTÓN "MÁS" (ESTILO NETFLIX) */}
                   <button 
                     onClick={() => setCategoriaActiva(cat)}
                     className="flex items-center gap-2 px-6 py-2.5 bg-rose-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all active:scale-90 shadow-xl shadow-rose-600/30"
@@ -198,7 +244,6 @@ function CatalogoPublico() {
                   </button>
                 </div>
                 
-                {/* LISTA HORIZONTAL (DESLIZA) */}
                 <div className="flex md:grid md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 overflow-x-auto no-scrollbar pb-8 px-2 snap-x">
                   {cat.items.slice(0, 10).map(p => (
                     <div key={p.id} className="snap-start">
@@ -210,7 +255,6 @@ function CatalogoPublico() {
             ))}
           </div>
         ) : (
-          /* VISTA CUANDO SE FILTRA O SE DA CLICK EN "MÁS" */
           <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
              <div className="flex items-center justify-between mb-10 px-2 border-b border-white/5 pb-6">
                 <h2 className="text-2xl md:text-5xl font-black uppercase italic border-l-8 border-rose-600 pl-5">
@@ -245,6 +289,74 @@ function CatalogoPublico() {
             </p>
         </footer>
       </main>
+
+      {/* 3. MODAL DEL PRODUCTO CON MÚLTIPLES FOTOS */}
+      {productoSeleccionado && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200">
+          
+          <div className={`relative w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl border ${darkMode ? 'bg-zinc-900 border-white/10' : 'bg-white border-zinc-200'} flex flex-col max-h-[90vh]`}>
+            
+            {/* Botón de cerrar (Flotante encima de la imagen) */}
+            <button 
+              onClick={() => setProductoSeleccionado(null)}
+              className="absolute top-4 right-4 z-[210] p-3 bg-black/50 text-white rounded-full hover:bg-rose-600 transition-colors backdrop-blur-md"
+            >
+              <FaTimes size={16} />
+            </button>
+
+            {/* Carrusel de Imágenes del Producto */}
+            <div className="bg-white relative w-full h-64 md:h-80 flex-shrink-0">
+               <Swiper
+                 modules={[Pagination, Navigation]}
+                 pagination={{ clickable: true }}
+                 navigation={true}
+                 className="w-full h-full modal-swiper" // Asegúrate de probar si necesitas ajustar flechas CSS
+               >
+                  {/* Foto Principal */}
+                  <SwiperSlide>
+                    <div className="w-full h-full flex items-center justify-center p-4">
+                      <img src={productoSeleccionado.imagen_url} alt="Principal" className="max-w-full max-h-full object-contain drop-shadow-md" />
+                    </div>
+                  </SwiperSlide>
+
+                  {/* Fotos Adicionales (Preparado para cuando actualicemos el Backend) */}
+                  {productoSeleccionado.imagenes_extra && productoSeleccionado.imagenes_extra.map((imgObj, index) => (
+                    <SwiperSlide key={index}>
+                      <div className="w-full h-full flex items-center justify-center p-4">
+                        <img src={imgObj.imagen_url} alt={`Ángulo ${index}`} className="max-w-full max-h-full object-contain drop-shadow-md" />
+                      </div>
+                    </SwiperSlide>
+                  ))}
+               </Swiper>
+            </div>
+
+            {/* Detalles del Producto */}
+            <div className="p-6 md:p-8 overflow-y-auto flex-grow no-scrollbar">
+               <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight mb-2 leading-tight">
+                 {productoSeleccionado.nombre}
+               </h2>
+               
+               <div className="bg-rose-600/10 p-3 inline-block rounded-xl border-l-4 border-rose-600 mb-6">
+                  <span className="text-lg md:text-xl font-black text-rose-600">L {productoSeleccionado.precio}</span>
+               </div>
+               
+               <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 border-b border-white/10 pb-2">Descripción del Artículo</h4>
+               <p className={`text-xs md:text-sm leading-relaxed mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                 {productoSeleccionado.descripcion || "No hay descripción detallada disponible para este producto."}
+               </p>
+
+               {/* Botón WhatsApp Fijo Abajo */}
+               <a href={`https://wa.me/${config.whatsapp?.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por este producto que vi en su catálogo:%0A*${productoSeleccionado.nombre}*%0APrecio: L ${productoSeleccionado.precio}`} 
+                  target="_blank" rel="noopener noreferrer" 
+                  className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-green-900/20 active:scale-95 text-xs md:text-sm uppercase tracking-widest">
+                  <FaWhatsapp size={20} /> ENVIAR MENSAJE AL VENDEDOR
+               </a>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

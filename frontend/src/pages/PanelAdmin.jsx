@@ -13,6 +13,10 @@ function PanelAdmin() {
   const [descripcionProducto, setDescripcionProducto] = useState('')
   const [precioProducto, setPrecioProducto] = useState('') 
   const [imagenArchivo, setImagenArchivo] = useState(null)
+  
+  // NUEVO ESTADO: Para las múltiples imágenes adicionales
+  const [imagenesAdicionales, setImagenesAdicionales] = useState([])
+  
   const [categoriaId, setCategoriaId] = useState('')
 
   // Estados de edición
@@ -24,8 +28,10 @@ function PanelAdmin() {
     instagram: '',
     tiktok: '',
     whatsapp: '50497432867',
-    google_maps: '', // Nuevo campo para la dirección
-    password_admin: ''
+    google_maps: '',
+    password_admin: '',
+    // NUEVO CAMPO: Para excluir categoría del carrusel
+    categoria_excluida: ''
   })
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
@@ -61,39 +67,7 @@ function PanelAdmin() {
     setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000)
   }
 
-  // ---- LÓGICA DE CATEGORÍAS (CON EDICIÓN) ----
-  const handleGuardarCategoria = async (e) => {
-    e.preventDefault()
-    try {
-      if (editandoCatId) {
-        await api.put(`/categorias/${editandoCatId}`, { nombre: nombreCategoria })
-        mostrarMensaje('Categoría actualizada', 'exito')
-      } else {
-        await api.post('/categorias', { nombre: nombreCategoria })
-        mostrarMensaje('Categoría creada', 'exito')
-      }
-      setNombreCategoria('')
-      setEditandoCatId(null)
-      cargarDatos()
-    } catch (error) { mostrarMensaje('Error al procesar categoría.', 'error') }
-  }
-
-  const prepararEdicionCat = (c) => {
-    setEditandoCatId(c.id)
-    setNombreCategoria(c.nombre)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const handleEliminarCategoria = async (id) => {
-    if (!window.confirm("¿Eliminar categoría? Esto podría afectar a los productos asociados.")) return;
-    try {
-      await api.delete(`/categorias/${id}`);
-      mostrarMensaje('Categoría eliminada', 'exito');
-      cargarDatos();
-    } catch (error) { mostrarMensaje('Error al eliminar.', 'error'); }
-  }
-
-  // ---- LÓGICA DE PRODUCTOS ----
+  // ---- LÓGICA DE PRODUCTOS ACTUALIZADA ----
   const handleGuardarProducto = async (e) => {
     e.preventDefault();
     if (!categoriaId) return mostrarMensaje('Selecciona una categoría', 'error');
@@ -104,10 +78,17 @@ function PanelAdmin() {
       formData.append('descripcion', descripcionProducto);
       formData.append('precio', precioProducto);
       formData.append('categoria_id', parseInt(categoriaId));
+      
       if (imagenArchivo) formData.append('imagen', imagenArchivo);
+      
+      // AGREGAR MÚLTIPLES IMÁGENES AL FORMDATA
+      if (imagenesAdicionales.length > 0) {
+        Array.from(imagenesAdicionales).forEach((file) => {
+          formData.append('imagenes_adicionales', file);
+        });
+      }
 
       if (editandoProdId) {
-        // Corrección: Usamos PUT y enviamos el ID correcto
         await api.put(`/productos/${editandoProdId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -133,6 +114,7 @@ function PanelAdmin() {
     setDescripcionProducto(p.descripcion || '');
     setCategoriaId(p.categoria_id.toString());
     setImagenArchivo(null);
+    setImagenesAdicionales([]); // Limpiamos las colas de fotos nuevas
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -143,6 +125,33 @@ function PanelAdmin() {
     setDescripcionProducto('');
     setCategoriaId('');
     setImagenArchivo(null);
+    setImagenesAdicionales([]);
+  }
+
+  // --- RESTO DE LÓGICA IGUAL (CATEGORÍAS Y LOGOUT) ---
+  const handleGuardarCategoria = async (e) => {
+    e.preventDefault()
+    try {
+      if (editandoCatId) {
+        await api.put(`/categorias/${editandoCatId}`, { nombre: nombreCategoria })
+        mostrarMensaje('Categoría actualizada', 'exito')
+      } else {
+        await api.post('/categorias', { nombre: nombreCategoria })
+        mostrarMensaje('Categoría creada', 'exito')
+      }
+      setNombreCategoria('')
+      setEditandoCatId(null)
+      cargarDatos()
+    } catch (error) { mostrarMensaje('Error al procesar categoría.', 'error') }
+  }
+
+  const handleEliminarCategoria = async (id) => {
+    if (!window.confirm("¿Eliminar categoría? Esto podría afectar a los productos asociados.")) return;
+    try {
+      await api.delete(`/categorias/${id}`);
+      mostrarMensaje('Categoría eliminada', 'exito');
+      cargarDatos();
+    } catch (error) { mostrarMensaje('Error al eliminar.', 'error'); }
   }
 
   const handleEliminarProducto = async (id) => {
@@ -175,11 +184,8 @@ function PanelAdmin() {
     return `${BASE_URL}/uploads/${path}`;
   };
 
-  // Estilos consistentes
   const inputStyle = "w-full px-5 py-3.5 rounded-2xl outline-none text-sm bg-black/40 text-white border border-white/10 focus:border-emerald-500 transition-all placeholder:text-gray-600 font-medium";
   const cardStyle = "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-[2rem]";
-  
-  // Botones Verdes (como en Ajustes)
   const btnVerde = "w-full py-3.5 bg-emerald-600/90 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-emerald-500 transition-all text-white active:scale-95 shadow-lg flex justify-center items-center cursor-pointer";
 
   if (loading) return (
@@ -217,7 +223,7 @@ function PanelAdmin() {
         {activeTab === 'inventario' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-8">
-              {/* FORM PRODUCTOS */}
+              {/* FORM PRODUCTOS ACTUALIZADO */}
               <div className={`${cardStyle} p-8`}>
                 <h2 className="text-[10px] font-black uppercase text-emerald-500 mb-8 tracking-[0.3em]">
                    {editandoProdId ? 'Actualizar Producto' : 'Publicar Producto'}
@@ -230,10 +236,21 @@ function PanelAdmin() {
                   <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
                   <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
                   
-                  <div className="relative">
+                  {/* FOTO PRINCIPAL */}
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Foto Portada (1)</label>
                     <input type="file" id="file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
                     <label htmlFor="file-prod" className={btnVerde}>
-                       {imagenArchivo ? '✅ FOTO LISTA' : '📂 ELEGIR FOTO'}
+                       {imagenArchivo ? '✅ PORTADA LISTA' : '📂 ELEGIR PORTADA'}
+                    </label>
+                  </div>
+
+                  {/* FOTOS ADICIONALES */}
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Fotos de Ángulos (Opcional)</label>
+                    <input type="file" id="files-extra" accept="image/*" multiple onChange={(e) => setImagenesAdicionales(e.target.files)} className="hidden" />
+                    <label htmlFor="files-extra" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700`}>
+                       {imagenesAdicionales.length > 0 ? `✅ ${imagenesAdicionales.length} FOTOS LISTAS` : '📸 SUBIR MÁS FOTOS'}
                     </label>
                   </div>
 
@@ -257,15 +274,12 @@ function PanelAdmin() {
                 <form onSubmit={handleGuardarCategoria} className="space-y-4">
                   <input type="text" required value={nombreCategoria} onChange={(e) => setNombreCategoria(e.target.value)} className={inputStyle} placeholder="Ej: Relojes, Joyas..." />
                   <button className={btnVerde}>{editandoCatId ? 'Actualizar' : 'Crear Grupo'}</button>
-                  {editandoCatId && (
-                    <button type="button" onClick={() => {setEditandoCatId(null); setNombreCategoria('')}} className="w-full text-[10px] font-black text-gray-500 uppercase py-2">Cancelar</button>
-                  )}
                 </form>
               </div>
             </div>
 
             <div className="lg:col-span-2 space-y-8">
-              {/* TABLA PRODUCTOS */}
+              {/* TABLAS IGUALES */}
               <div className={`${cardStyle} overflow-hidden`}>
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
                   <h2 className="text-xs font-black uppercase tracking-[0.3em]">Inventario</h2>
@@ -284,8 +298,9 @@ function PanelAdmin() {
                       {productos.map(p => (
                         <tr key={p.id} className="hover:bg-emerald-900/5 transition-colors">
                           <td className="p-5 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative">
                                 <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-contain" alt="" />
+                                {p.imagenes_extra && <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] w-4 h-4 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>}
                             </div>
                             <span className="font-bold uppercase text-white/90">{p.nombre}</span>
                           </td>
@@ -319,7 +334,6 @@ function PanelAdmin() {
                         <tr key={c.id} className="hover:bg-white/5 transition-colors">
                           <td className="p-6 font-bold uppercase tracking-widest text-white/90">{c.nombre}</td>
                           <td className="p-6 text-right space-x-2">
-                            <button onClick={() => prepararEdicionCat(c)} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all">✎</button>
                             <button onClick={() => handleEliminarCategoria(c.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all">✕</button>
                           </td>
                         </tr>
@@ -331,36 +345,40 @@ function PanelAdmin() {
             </div>
           </div>
         ) : (
-          /* PESTAÑA AJUSTES */
+          /* PESTAÑA AJUSTES ACTUALIZADA */
           <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
             <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4">
               <span className="w-10 h-10 bg-emerald-600/10 text-emerald-500 rounded-2xl flex items-center justify-center border border-emerald-600/20">⚙️</span>
               Ajustes del Sistema
             </h2>
             <form onSubmit={handleUpdateConfig} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-600 uppercase">Facebook</label>
-                  <input type="text" value={config.facebook || ''} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-600 uppercase">Instagram</label>
-                  <input type="text" value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-600 uppercase">TikTok</label>
-                  <input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-emerald-500 uppercase">WhatsApp</label>
-                  <input type="text" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} />
-                </div>
+              
+              {/* SELECTOR PARA EXCLUIR CATEGORÍA */}
+              <div className="space-y-2 pb-6 border-b border-white/5">
+                <label className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Categoría a excluir del Carrusel</label>
+                <select 
+                  value={config.categoria_excluida || ''} 
+                  onChange={e => setConfig({...config, categoria_excluida: e.target.value})} 
+                  className={inputStyle}
+                >
+                  <option value="">Ninguna (Mostrar todas)</option>
+                  {categorias.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                  ))}
+                </select>
+                <p className="text-[9px] text-gray-500 italic mt-1">Los productos de esta categoría no aparecerán en el carrusel de la página principal.</p>
               </div>
 
-              {/* NUEVO CAMPO GOOGLE MAPS */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2"><label className="text-[10px] font-black text-gray-600 uppercase">Facebook</label><input type="text" value={config.facebook || ''} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} /></div>
+                <div className="space-y-2"><label className="text-[10px] font-black text-gray-600 uppercase">Instagram</label><input type="text" value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} /></div>
+                <div className="space-y-2"><label className="text-[10px] font-black text-gray-600 uppercase">TikTok</label><input type="text" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} /></div>
+                <div className="space-y-2"><label className="text-[10px] font-black text-emerald-500 uppercase">WhatsApp</label><input type="text" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} /></div>
+              </div>
+
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-blue-500 uppercase">Link de Google Maps (Iframe o URL)</label>
-                <textarea rows="2" value={config.google_maps || ''} onChange={e => setConfig({...config, google_maps: e.target.value})} className={inputStyle} placeholder="Pega aquí el link de tu ubicación..."></textarea>
+                <label className="text-[10px] font-black text-blue-500 uppercase">Link de Google Maps</label>
+                <textarea rows="2" value={config.google_maps || ''} onChange={e => setConfig({...config, google_maps: e.target.value})} className={inputStyle} placeholder="URL de tu ubicación..."></textarea>
               </div>
 
               <div className="pt-8 border-t border-white/5 space-y-2">
@@ -368,7 +386,6 @@ function PanelAdmin() {
                 <input type="password" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} placeholder="En blanco para no cambiar" />
               </div>
 
-              {/* Botón Guardar con estilo consistente */}
               <button className={btnVerde}>Guardar Todos los Cambios</button>
             </form>
           </div>
