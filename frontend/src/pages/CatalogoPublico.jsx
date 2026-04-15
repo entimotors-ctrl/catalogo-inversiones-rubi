@@ -4,10 +4,12 @@ import logo1 from '../assets/logo1.png'
 import logo2 from '../assets/logo2.png'
 import logowas from '../assets/logowas.png'
 import { FaWhatsapp, FaChevronDown, FaThLarge } from 'react-icons/fa'
+
+// LIBRERÍAS PARA EL CARRUSEL
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Autoplay, Pagination, EffectFade } from 'swiper/modules'
 
-// Estilos de Swiper (Asegúrate de tener instalada la librería: npm install swiper)
+// ESTILOS OBLIGATORIOS DE SWIPER
 import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/effect-fade'
@@ -48,6 +50,7 @@ function CatalogoPublico() {
     fetchDatos();
   }, []);
 
+  // LÓGICA PARA MOSTRAR POR CATEGORÍAS (ESTILO NETFLIX)
   const productosPorCategoria = useMemo(() => {
     if (categoriaActiva || searchTerm) return null;
     return categorias.map(cat => ({
@@ -56,6 +59,7 @@ function CatalogoPublico() {
     })).filter(cat => cat.items.length > 0);
   }, [categorias, productos, categoriaActiva, searchTerm]);
 
+  // LÓGICA PARA BÚSQUEDA O VISTA DE UNA SOLA CATEGORÍA
   const productosFiltrados = useMemo(() => productos.filter(producto => {
     const matchCategory = !categoriaActiva || Number(producto.categoria_id) === Number(categoriaActiva.id)
     const term = searchTerm.toLowerCase()
@@ -100,11 +104,12 @@ function CatalogoPublico() {
   return (
     <div className={`min-h-screen transition-colors duration-500 overflow-x-hidden relative ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
       
+      {/* FONDO CON LOGO MARCA DE AGUA */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.09] flex items-center justify-center overflow-hidden z-0">
         <img src={logo2} className="w-[110%] max-w-7xl rotate-[-15deg] object-contain brightness-125" alt="" />
       </div>
 
-      {/* HEADER */}
+      {/* HEADER CON BUSCADOR */}
       <header className={`sticky top-0 z-[100] py-3 px-4 ${darkglassStyle}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => {setCategoriaActiva(null); setSearchTerm('');}}>
@@ -135,16 +140,17 @@ function CatalogoPublico() {
               effect="fade"
               autoplay={{ delay: 4000 }}
               pagination={{ clickable: true }}
-              className="h-[180px] md:h-[400px]"
+              className="h-[200px] md:h-[450px]"
             >
-              {/* Aquí puedes mapear imágenes de una carpeta o de config */}
               {[1, 2, 3].map((idx) => (
                 <SwiperSlide key={idx}>
-                  <div className="w-full h-full bg-gradient-to-r from-rose-900 to-zinc-900 flex items-center justify-center relative">
-                    <img src={logo1} className="h-2/3 object-contain opacity-20 absolute" alt="" />
-                    <div className="relative text-center z-10">
-                       <h2 className="text-2xl md:text-5xl font-black italic uppercase tracking-tighter text-white">Nuevos Ingresos</h2>
-                       <p className="text-rose-500 font-bold text-xs md:text-lg tracking-widest uppercase">Explora lo mejor de Rubi</p>
+                  <div className="w-full h-full bg-gradient-to-br from-rose-900 via-zinc-900 to-black flex items-center justify-center relative">
+                    <img src={logo1} className="h-2/3 object-contain opacity-10 absolute" alt="" />
+                    <div className="relative text-center z-10 px-4">
+                       <h2 className="text-3xl md:text-6xl font-black italic uppercase tracking-tighter text-white drop-shadow-lg">
+                         {idx === 1 ? 'Nuevos Ingresos' : idx === 2 ? 'Calidad Premium' : 'Ofertas Especiales'}
+                       </h2>
+                       <p className="text-rose-500 font-bold text-xs md:text-xl tracking-[0.3em] uppercase mt-2">Inversiones Rubi</p>
                     </div>
                   </div>
                 </SwiperSlide>
@@ -154,43 +160,46 @@ function CatalogoPublico() {
         )}
 
         {/* 2. DESPLEGABLE DE CATEGORÍAS */}
-        <div className="mb-8 flex items-center gap-3">
-           <div className="relative group w-full md:w-64">
+        <div className="mb-8 flex justify-center md:justify-start">
+           <div className="relative group w-full md:w-72">
               <select 
+                value={categoriaActiva?.id || ""}
                 onChange={(e) => {
-                  const cat = categorias.find(c => c.id == e.target.value);
+                  const cat = categorias.find(c => Number(c.id) === Number(e.target.value));
                   setCategoriaActiva(cat || null);
+                  setSearchTerm(''); // Limpia búsqueda al elegir categoría
                 }}
-                className={`w-full appearance-none px-6 py-3 rounded-2xl outline-none text-[10px] font-black uppercase tracking-widest border transition-all cursor-pointer ${darkMode ? 'bg-zinc-900 border-white/10 focus:border-rose-600' : 'bg-white border-zinc-200'}`}
+                className={`w-full appearance-none px-6 py-4 rounded-2xl outline-none text-[11px] font-black uppercase tracking-widest border transition-all cursor-pointer shadow-xl ${darkMode ? 'bg-zinc-900 border-white/10 focus:border-rose-600 text-white' : 'bg-white border-zinc-200 text-zinc-900'}`}
               >
-                <option value="">Todas las categorías</option>
+                <option value="">📂 Todas las categorías</option>
                 {categorias.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.nombre}</option>
                 ))}
               </select>
-              <FaChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none opacity-40" />
+              <FaChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none opacity-40 text-rose-600" />
            </div>
         </div>
 
         {productosPorCategoria ? (
-          <div className="space-y-12 md:space-y-20">
+          <div className="space-y-16 md:space-y-24">
             {productosPorCategoria.map(cat => (
-              <section key={cat.id}>
+              <section key={cat.id} className="animate-in fade-in duration-700">
                 <div className="flex justify-between items-center mb-6 px-2">
-                  <h2 className="text-base md:text-3xl font-black uppercase tracking-tighter italic border-l-8 border-rose-600 pl-4">
+                  <h2 className="text-lg md:text-4xl font-black uppercase tracking-tighter italic border-l-8 border-rose-600 pl-4">
                     {cat.nombre}
                   </h2>
                   
-                  {/* 3. BOTÓN MÁS (Netflix Style) */}
+                  {/* 3. BOTÓN "MÁS" (ESTILO NETFLIX) */}
                   <button 
                     onClick={() => setCategoriaActiva(cat)}
-                    className="flex items-center gap-2 px-5 py-2 bg-rose-600 text-white rounded-full text-[10px] font-black uppercase tracking-tighter hover:bg-rose-700 transition-all active:scale-95 shadow-lg shadow-rose-600/20"
+                    className="flex items-center gap-2 px-6 py-2.5 bg-rose-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all active:scale-90 shadow-xl shadow-rose-600/30"
                   >
                     <FaThLarge /> MÁS
                   </button>
                 </div>
                 
-                <div className="flex md:grid md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8 overflow-x-auto no-scrollbar pb-6 px-2 snap-x">
+                {/* LISTA HORIZONTAL (DESLIZA) */}
+                <div className="flex md:grid md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 overflow-x-auto no-scrollbar pb-8 px-2 snap-x">
                   {cat.items.slice(0, 10).map(p => (
                     <div key={p.id} className="snap-start">
                       <ProductoCard p={p} />
@@ -201,36 +210,38 @@ function CatalogoPublico() {
             ))}
           </div>
         ) : (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="flex items-center justify-between mb-8 px-2">
-                <h2 className="text-xl md:text-3xl font-black uppercase italic border-l-8 border-rose-600 pl-4">
-                  {categoriaActiva ? categoriaActiva.nombre : 'Resultados'}
+          /* VISTA CUANDO SE FILTRA O SE DA CLICK EN "MÁS" */
+          <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
+             <div className="flex items-center justify-between mb-10 px-2 border-b border-white/5 pb-6">
+                <h2 className="text-2xl md:text-5xl font-black uppercase italic border-l-8 border-rose-600 pl-5">
+                  {categoriaActiva ? categoriaActiva.nombre : `Buscando: ${searchTerm}`}
                 </h2>
                 <button 
                   onClick={() => {setCategoriaActiva(null); setSearchTerm('');}}
-                  className="text-[10px] font-black text-rose-600 uppercase tracking-widest bg-rose-600/10 px-4 py-2 rounded-lg"
+                  className="text-[10px] font-black text-white uppercase tracking-widest bg-zinc-800 hover:bg-rose-600 px-6 py-3 rounded-xl transition-colors shadow-lg"
                 >
-                  Regresar
+                  Volver al inicio
                 </button>
              </div>
-             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-8">
+             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10">
                {productosFiltrados.map((p) => (
                  <ProductoCard key={p.id} p={p} />
                ))}
              </div>
              {productosFiltrados.length === 0 && (
-               <div className="text-center py-20 opacity-40 font-black uppercase tracking-[0.3em]">No se encontraron productos</div>
+               <div className="text-center py-32 opacity-20 font-black uppercase tracking-[0.5em] text-xl">Sin resultados</div>
              )}
           </div>
         )}
 
-        <footer className="mt-20 py-10 border-t border-white/5 flex flex-col items-center">
-            <div className="flex flex-col items-center gap-3 group">
-                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-gray-500 group-hover:text-rose-600 transition-colors">Desarrollado por</span>
-                <img src={logowas} alt="WASystem" className="h-8 w-auto drop-shadow-md transition-transform group-hover:scale-110" />
+        {/* FOOTER */}
+        <footer className="mt-32 py-16 border-t border-white/5 flex flex-col items-center">
+            <div className="flex flex-col items-center gap-4 group">
+                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-500 group-hover:text-rose-600 transition-colors">Powered by</span>
+                <img src={logowas} alt="WASystem" className="h-10 w-auto grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110" />
             </div>
-            <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mt-8 italic text-center">
-              © 2026 Inversiones Rubi - San Esteban, Olancho
+            <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mt-10 italic text-center">
+              © 2026 Inversiones Rubi • San Esteban, Olancho
             </p>
         </footer>
       </main>
