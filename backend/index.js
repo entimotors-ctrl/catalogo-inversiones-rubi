@@ -23,18 +23,16 @@ app.use(express.json());
 
 // --- RUTAS DE CONFIGURACIÓN ---
 
-// Obtener configuración (Redes sociales, WhatsApp, Ubicación, etc)
 app.get('/api/configuracion', async (req, res) => {
     try {
         const result = await pool.query("SELECT * FROM configuracion WHERE id = 1");
         if (result.rows.length === 0) {
-            // Si no existe la fila, enviamos un objeto por defecto incluyendo ubicación
             return res.json({ 
                 whatsapp: '50497432867', 
                 facebook: '', 
                 instagram: '', 
                 tiktok: '', 
-                ubicacion: '', 
+                google_maps: '', // Alineado con el frontend
                 password_admin: 'admin123' 
             });
         }
@@ -45,27 +43,59 @@ app.get('/api/configuracion', async (req, res) => {
     }
 });
 
-// Actualizar configuración (CORREGIDO CON UBICACION)
 app.put('/api/configuracion', async (req, res) => {
     try {
-        const { facebook, instagram, tiktok, whatsapp, password_admin, ubicacion } = req.body;
+        const { facebook, instagram, tiktok, whatsapp, password_admin, google_maps } = req.body;
         
-        // El comando SQL ahora incluye el campo ubicacion ($6)
+        // Se cambió 'ubicacion' por 'google_maps' para coincidir con tu PanelAdmin
         const result = await pool.query(
             `UPDATE configuracion 
-             SET facebook=$1, instagram=$2, tiktok=$3, whatsapp=$4, password_admin=$5, ubicacion=$6 
+             SET facebook=$1, instagram=$2, tiktok=$3, whatsapp=$4, password_admin=$5, google_maps=$6 
              WHERE id=1 RETURNING *`,
-            [facebook, instagram, tiktok, whatsapp, password_admin, ubicacion]
+            [facebook, instagram, tiktok, whatsapp, password_admin, google_maps]
         );
         
         if (result.rows.length === 0) {
-            return res.status(404).json({ error: "No se encontró el registro de configuración con ID 1" });
+            return res.status(404).json({ error: "No se encontró el registro" });
         }
         
         res.json(result.rows[0]);
     } catch (err) {
         console.error("Error en PUT /configuracion:", err);
-        res.status(500).json({ error: "Error al actualizar configuración" });
+        res.status(500).json({ error: "Revisa si la columna 'google_maps' existe en Supabase" });
+    }
+});
+
+// --- RUTAS DE CATEGORÍAS ---
+
+app.get('/api/categorias', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM categorias ORDER BY nombre ASC");
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: "Error al cargar categorías" });
+    }
+});
+
+app.post('/api/categorias', async (req, res) => {
+    try {
+        const { nombre } = req.body;
+        const result = await pool.query("INSERT INTO categorias (nombre) VALUES ($1) RETURNING *", [nombre]);
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: "Error al crear categoría" });
+    }
+});
+
+// NUEVA RUTA: EDITAR CATEGORÍA
+app.put('/api/categorias/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre } = req.body;
+        const result = await pool.query("UPDATE categorias SET nombre = $1 WHERE id = $2 RETURNING *", [nombre, id]);
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: "Error al actualizar categoría" });
     }
 });
 
@@ -81,28 +111,7 @@ app.get('/api/productos', async (req, res) => {
         `);
         res.json(result.rows);
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: "Error al cargar productos" });
-    }
-});
-
-app.get('/api/categorias', async (req, res) => {
-    try {
-        const result = await pool.query("SELECT * FROM categorias ORDER BY nombre ASC");
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Error al cargar categorías" });
-    }
-});
-
-app.post('/api/categorias', async (req, res) => {
-    try {
-        const { nombre } = req.body;
-        const result = await pool.query("INSERT INTO categorias (nombre) VALUES ($1) RETURNING *", [nombre]);
-        res.json(result.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: "Error al crear categoría" });
     }
 });
 
@@ -113,16 +122,8 @@ app.post('/api/productos', upload.single('imagen'), async (req, res) => {
 
         if (req.file) {
             const fileName = `${Date.now()}_${req.file.originalname.replace(/\s+/g, '_')}`;
-            const { error } = await supabase.storage
-                .from('productos') 
-                .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
-
-            if (error) throw error;
-
-            const { data: publicUrl } = supabase.storage
-                .from('productos')
-                .getPublicUrl(fileName);
-            
+            await supabase.storage.from('productos').upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
+            const { data: publicUrl } = supabase.storage.from('productos').getPublicUrl(fileName);
             imagen_url = publicUrl.publicUrl;
         }
 
@@ -132,8 +133,38 @@ app.post('/api/productos', upload.single('imagen'), async (req, res) => {
         );
         res.json(result.rows[0]);
     } catch (err) {
-        console.error(err);
         res.status(500).json({ error: "Error al guardar producto" });
+    }
+});
+
+// *** ESTA ES LA RUTA QUE TE FALTABA Y DABA ERROR AL EDITAR ***
+app.put('/api/productos/:id', upload.single('imagen'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, descripcion, precio, categoria_id } = req.body;
+        
+        // 1. Obtener imagen actual por si no se sube una nueva
+        const productoActual = await pool.query("SELECT imagen_url FROM productos WHERE id = $1", [id]);
+        let imagen_url = productoActual.rows[0]?.imagen_url;
+
+        // 2. Si hay nueva imagen, subirla a Supabase
+        if (req.file) {
+            const fileName = `${Date.now()}_${req.file.originalname.replace(/\s+/g, '_')}`;
+            await supabase.storage.from('productos').upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
+            const { data: publicUrl } = supabase.storage.from('productos').getPublicUrl(fileName);
+            imagen_url = publicUrl.publicUrl;
+        }
+
+        const result = await pool.query(
+            `UPDATE productos 
+             SET nombre=$1, descripcion=$2, precio=$3, categoria_id=$4, imagen_url=$5 
+             WHERE id=$6 RETURNING *`,
+            [nombre, descripcion, precio, categoria_id, imagen_url, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Error al actualizar producto" });
     }
 });
 
@@ -141,27 +172,9 @@ app.delete('/api/productos/:id', async (req, res) => {
     try {
         const { id } = req.params;
         await pool.query("DELETE FROM productos WHERE id = $1", [id]);
-        res.json({ message: "Producto eliminado exitosamente" });
+        res.json({ message: "Producto eliminado" });
     } catch (err) {
-        console.error("Error al eliminar producto:", err);
-        res.status(500).json({ error: "No se pudo eliminar el producto" });
-    }
-});
-
-app.delete('/api/categorias/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const checkProductos = await pool.query("SELECT COUNT(*) FROM productos WHERE categoria_id = $1", [id]);
-        
-        if (parseInt(checkProductos.rows[0].count) > 0) {
-            return res.status(400).json({ error: "No puedes eliminar esta categoría porque aún tiene productos." });
-        }
-
-        await pool.query("DELETE FROM categorias WHERE id = $1", [id]);
-        res.json({ message: "Categoría eliminada exitosamente" });
-    } catch (err) {
-        console.error("Error al eliminar categoría:", err);
-        res.status(500).json({ error: "No se pudo eliminar la categoría" });
+        res.status(500).json({ error: "No se pudo eliminar" });
     }
 });
 
