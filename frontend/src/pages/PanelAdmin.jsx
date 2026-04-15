@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-// 1. Importamos el logo1 para el encabezado
 import logo1 from '../assets/logo1.png'
 
 function PanelAdmin() {
@@ -15,7 +14,6 @@ function PanelAdmin() {
   const [imagenArchivo, setImagenArchivo] = useState(null)
   const [categoriaId, setCategoriaId] = useState('')
 
-  // Estado para controlar si estamos creando o editando un producto
   const [editandoProdId, setEditandoProdId] = useState(null)
 
   const [config, setConfig] = useState({
@@ -29,8 +27,8 @@ function PanelAdmin() {
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
   const [loading, setLoading] = useState(true)
 
-  // URL BASE para las imágenes
-  const BASE_URL = 'https://entimotors-api-server.onrender.com';
+  // 1. URL ACTUALIZADA: Apuntando al servidor de Inversiones Rubi
+  const BASE_URL = 'https://catalogo-inversiones-rubi.onrender.com';
 
   const cargarDatos = async () => {
     try {
@@ -39,8 +37,9 @@ function PanelAdmin() {
         api.get('/productos').catch(() => ({ data: [] }))
       ])
       
-      setCategorias(catRes.data)
-      setProductos(prodRes.data)
+      // Aseguramos que los datos sean arrays
+      setCategorias(Array.isArray(catRes.data) ? catRes.data : [])
+      setProductos(Array.isArray(prodRes.data) ? prodRes.data : [])
 
       try {
         const configRes = await api.get('/configuracion')
@@ -48,10 +47,10 @@ function PanelAdmin() {
           setConfig({ ...configRes.data, password_admin: '' })
         }
       } catch (e) {
-        console.warn("La tabla de configuración no respondió.")
+        console.warn("Tabla de configuración no lista.")
       }
     } catch (error) {
-      mostrarMensaje('Error al conectar con el servidor.', 'error')
+      mostrarMensaje('Error al conectar con el servidor de Rubi.', 'error')
     } finally {
       setLoading(false)
     }
@@ -100,13 +99,11 @@ function PanelAdmin() {
       if (imagenArchivo) formData.append('imagen', imagenArchivo);
 
       if (editandoProdId) {
-        // ACTUALIZAR
         await api.put(`/productos/${editandoProdId}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         mostrarMensaje('¡Producto actualizado!', 'exito');
       } else {
-        // CREAR
         await api.post('/productos', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -163,24 +160,21 @@ function PanelAdmin() {
     window.location.href = '/login'
   }
 
-  // Función para procesar imágenes correctamente
+  // 2. FUNCIÓN DE IMAGEN MEJORADA: Soporta URLs directas de Supabase
   const getImageUrl = (path) => {
-    if (!path) return 'https://via.placeholder.com/40';
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+    if (!path) return 'https://via.placeholder.com/150?text=Sin+Imagen';
+    if (path.startsWith('http')) return path; // Si ya es una URL de Supabase
+    return `${BASE_URL}/uploads/${path}`; // Si es una ruta local del servidor
   };
 
-  // Clases CSS
   const inputStyle = "w-full px-5 py-3.5 rounded-2xl outline-none text-sm bg-black/40 text-white border border-white/10 focus:border-rose-600 transition-all placeholder:text-gray-600 font-medium shadow-inner";
   const cardStyle = "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-[2rem]";
-  
-  // ESTE ES EL ESTILO DEL BOTÓN QUE QUERÍAS (Gris oscuro, bordes redondeados, texto elegante)
   const btnPrincipal = "w-full py-3.5 bg-zinc-800/80 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-zinc-700 transition-all text-white active:scale-95 shadow-lg flex justify-center items-center cursor-pointer";
 
   if (loading) return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center">
        <div className="w-12 h-12 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-       <p className="text-rose-600 font-black tracking-widest text-xs animate-pulse uppercase">Cargando Sistema...</p>
+       <p className="text-rose-600 font-black tracking-widest text-xs animate-pulse uppercase">Cargando Inversiones Rubi...</p>
     </div>
   )
 
@@ -188,7 +182,7 @@ function PanelAdmin() {
     <div className="min-h-screen bg-zinc-950 text-white py-10 px-4 font-sans">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* HEADER DARKGLASS */}
+        {/* HEADER */}
         <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
           <div className="flex items-center gap-4">
             <img src={logo1} alt="Rubi Logo" className="h-12 w-auto object-contain" />
@@ -216,7 +210,6 @@ function PanelAdmin() {
 
         {activeTab === 'inventario' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* COLUMNA IZQUIERDA: FORMULARIOS */}
             <div className="lg:col-span-1 space-y-8">
               <div className={`${cardStyle} p-8`}>
                 <h2 className="text-[10px] font-black uppercase text-rose-600 mb-8 tracking-[0.3em] flex items-center gap-2">
@@ -231,19 +224,17 @@ function PanelAdmin() {
                   <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
                   <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio (L 0.00)" />
                   
-                  {/* BOTÓN EXAMINAR FOTO ACTUALIZADO */}
                   <div className="relative">
                     <input type="file" id="file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
                     <label htmlFor="file-prod" className={btnPrincipal}>
-                       {imagenArchivo ? '✅ FOTO LISTA' : '📂 EXAMINAR FOTO'}
+                       {imagenArchivo ? '✅ FOTO SELECCIONADA' : '📂 ELEGIR FOTO'}
                     </label>
                   </div>
 
-                  <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Breve descripción..."></textarea>
+                  <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción..."></textarea>
                   
-                  {/* BOTÓN SUBIR/ACTUALIZAR ACTUALIZADO */}
                   <button type="submit" className={btnPrincipal}>
-                    {editandoProdId ? 'Guardar Cambios' : 'Subir al Catálogo'}
+                    {editandoProdId ? 'Actualizar Producto' : 'Subir al Catálogo'}
                   </button>
 
                   {editandoProdId && (
@@ -263,9 +254,7 @@ function PanelAdmin() {
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: TABLAS */}
             <div className="lg:col-span-2 space-y-8">
-              
               {/* TABLA PRODUCTOS */}
               <div className={`${cardStyle} overflow-hidden`}>
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
@@ -292,7 +281,6 @@ function PanelAdmin() {
                           </td>
                           <td className="p-5 font-black text-rose-600 text-sm">{p.precio}</td>
                           <td className="p-5 text-right space-x-2">
-                            {/* BOTÓN EDITAR */}
                             <button onClick={() => prepararEdicionProd(p)} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all active:scale-90">✎</button>
                             <button onClick={() => handleEliminarProducto(p.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all active:scale-90">✕</button>
                           </td>
@@ -330,11 +318,10 @@ function PanelAdmin() {
                   </table>
                 </div>
               </div>
-
             </div>
           </div>
         ) : (
-          /* PESTAÑA AJUSTES (MANAGER) */
+          /* PESTAÑA AJUSTES */
           <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
             <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4 tracking-tighter">
               <span className="w-10 h-10 bg-rose-600/10 text-rose-600 rounded-2xl flex items-center justify-center not-italic border border-rose-600/20 shadow-inner">⚙️</span>
