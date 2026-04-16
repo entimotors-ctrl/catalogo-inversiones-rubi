@@ -116,8 +116,14 @@ function CatalogoPublico() {
 
   return (
     <div className={`min-h-screen transition-colors duration-500 overflow-x-hidden relative ${darkMode ? 'bg-zinc-950 text-white' : 'bg-gray-50 text-zinc-900'}`}>
-      <div className="fixed inset-0 pointer-events-none opacity-[0.09] flex items-center justify-center overflow-hidden z-0">
-        <img src={logo2} className="w-[110%] max-w-7xl rotate-[-15deg] object-contain brightness-125" alt="" />
+      
+      {/* MEJORA: Imagen de fondo emparejada y expandida */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.07] flex items-center justify-center z-0">
+        <img 
+          src={logo2} 
+          className="w-full h-full object-contain md:object-cover scale-110 md:scale-100 rotate-[-10deg] brightness-125 transition-all" 
+          alt="" 
+        />
       </div>
 
       <header className={`sticky top-0 z-[100] py-3 px-4 ${darkglassStyle}`}>
@@ -142,29 +148,30 @@ function CatalogoPublico() {
 
       <main className="max-w-7xl mx-auto px-4 py-4 relative z-10">
         {!searchTerm && !categoriaActiva && productosParaCarrusel.length > 0 && (
-          <div className="mb-8 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/5 bg-black">
+          /* MEJORA: Altura de franja reducida en PC */
+          <div className="mb-8 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-white/5 bg-black">
             <Swiper
               modules={[Autoplay, Pagination, EffectFade]}
               effect="fade"
               autoplay={{ delay: 3500, disableOnInteraction: false }}
               pagination={{ clickable: true }}
-              className="h-[250px] md:h-[450px] w-full"
+              className="h-[250px] md:h-[350px] w-full"
             >
               {productosParaCarrusel.map((p) => (
                 <SwiperSlide key={p.id}>
                   <div className="w-full h-full relative flex items-center bg-zinc-900 cursor-pointer" onClick={() => setProductoSeleccionado(p)}>
                     <img src={p.imagen_url} className="absolute inset-0 w-full h-full object-cover opacity-20 blur-xl" alt="" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent z-10"></div>
-                    <div className="relative z-20 flex w-full max-w-5xl mx-auto px-6 md:px-12 items-center gap-6 h-full">
-                      <div className="w-1/2 md:w-1/3 h-full flex items-center justify-center drop-shadow-2xl p-4">
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10"></div>
+                    <div className="relative z-20 flex w-full max-w-5xl mx-auto px-6 md:px-12 items-center gap-4 md:gap-10 h-full">
+                      <div className="w-1/2 md:w-1/3 h-full flex items-center justify-center drop-shadow-2xl p-2 md:p-6">
                          <img src={p.imagen_url} className="max-h-full max-w-full object-contain rounded-xl" alt={p.nombre} />
                       </div>
                       <div className="w-1/2 md:w-2/3 flex flex-col items-start">
-                         <span className="bg-rose-600 text-white text-[8px] md:text-xs font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-2 md:mb-4">Nuevo Ingreso</span>
-                         <h2 className="text-sm md:text-5xl font-black italic uppercase tracking-tighter text-white drop-shadow-lg line-clamp-2 leading-tight">
+                         <span className="bg-rose-600 text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-2">Nuevo Ingreso</span>
+                         <h2 className="text-sm md:text-4xl font-black italic uppercase tracking-tighter text-white drop-shadow-lg line-clamp-2 leading-tight">
                            {p.nombre}
                          </h2>
-                         <p className="text-rose-400 font-bold text-xs md:text-xl tracking-widest uppercase mt-2">L {p.precio}</p>
+                         <p className="text-rose-400 font-bold text-xs md:text-lg tracking-widest uppercase mt-1 md:mt-2">L {p.precio}</p>
                       </div>
                     </div>
                   </div>
@@ -232,7 +239,6 @@ function CatalogoPublico() {
                   Volver al inicio
                 </button>
              </div>
-             {/* AQUÍ LA MEJORA PARA MÓVIL: grid-cols-2 */}
              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 px-2">
                {productosFiltrados.map((p) => (
                  <ProductoCard key={p.id} p={p} />
@@ -309,4 +315,4 @@ function CatalogoPublico() {
   )
 }
 
-export default CatalogoPublico
+export default CatalogoPublico;
