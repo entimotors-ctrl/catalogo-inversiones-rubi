@@ -75,11 +75,11 @@ body {
 }
 
 /* ============================================
-   CARRUSEL ADAPTATIVO (NUEVO)
+   CARRUSEL ADAPTATIVO
    ============================================ */
 .carousel-item {
   display: flex;
-  flex-direction: column; /* Apilado en móvil */
+  flex-direction: column; 
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
@@ -90,7 +90,7 @@ body {
 
 @media (min-width: 768px) {
   .carousel-item {
-    flex-direction: row; /* Horizontal en PC */
+    flex-direction: row; 
     min-height: 450px;
     padding: 3rem;
     gap: 3rem;
@@ -101,7 +101,7 @@ body {
   position: relative;
   width: 100%;
   max-width: 300px;
-  aspect-ratio: 16 / 9; /* Mantiene proporción horizontal */
+  aspect-ratio: 16 / 9;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,7 +114,7 @@ body {
 .carousel-img-wrapper img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* La imagen nunca se corta */
+  object-fit: contain;
   transition: transform 0.5s ease;
 }
 
@@ -122,6 +122,62 @@ body {
   .carousel-img-wrapper {
     max-width: 450px;
     aspect-ratio: auto;
+  }
+}
+
+/* ============================================
+   PANEL ADMIN: OPTIMIZACIÓN MÓVIL (NUEVO)
+   ============================================ */
+@media (max-width: 768px) {
+  /* Transformar tabla en tarjetas */
+  .admin-table thead { display: none; }
+  .admin-table, .admin-table tbody, .admin-table tr, .admin-table td {
+    display: block;
+    width: 100%;
+  }
+  .admin-table tr {
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 1.2rem;
+    padding: 1.2rem;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .admin-table td {
+    text-align: center;
+    padding: 0.4rem 0;
+    border: none !important;
+  }
+  /* Miniatura visible */
+  .admin-table td:first-child img {
+    width: 80px !important;
+    height: 80px !important;
+    border-radius: 15px;
+    margin: 0 auto;
+    object-fit: cover;
+  }
+  /* Precio resaltado */
+  .admin-table td:nth-child(3) {
+    color: var(--color-accent);
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+  /* Acciones amigables al tacto */
+  .admin-table td:last-child {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+  .admin-table td button {
+    flex: 1;
+    padding: 0.8rem !important;
+  }
+  /* Inputs sin zoom molesto en móvil */
+  .admin-form-card input, .admin-form-card select, .admin-form-card textarea {
+    font-size: 16px !important;
+    padding: 0.9rem !important;
   }
 }
 
