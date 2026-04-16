@@ -15,9 +15,7 @@ function PanelAdmin() {
   const [imagenesAdicionales, setImagenesAdicionales] = useState([])
   const [categoriaId, setCategoriaId] = useState('')
 
-  // NUEVO ESTADO: Para gestionar las fotos que YA existen en el servidor al editar
   const [fotosExistentes, setFotosExistentes] = useState([])
-
   const [nombreCategoria, setNombreCategoria] = useState('')
   const [editandoProdId, setEditandoProdId] = useState(null)
   const [editandoCatId, setEditandoCatId] = useState(null)
@@ -53,54 +51,39 @@ function PanelAdmin() {
     setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
   }
 
-  // ELIMINAR FOTO INDIVIDUAL (Para la galería de edición)
   const handleEliminarFotoExtra = async (fotoId) => {
     if(!window.confirm("¿Eliminar esta foto de la galería?")) return;
     try {
-      // Necesitarás crear esta ruta en tu index.js (backend) o usar una genérica
       await api.delete(`/productos/foto/${fotoId}`);
       setFotosExistentes(fotosExistentes.filter(f => f.id !== fotoId));
       mostrarMensaje("Foto eliminada", "exito");
-      cargarDatos(); // Recargar para actualizar el contador en la tabla
-    } catch (error) {
-      mostrarMensaje("Error al eliminar foto", "error");
-    }
+      cargarDatos();
+    } catch (error) { mostrarMensaje("Error al eliminar foto", "error"); }
   }
 
   const handleGuardarProducto = async (e) => {
     e.preventDefault();
     if (!categoriaId) return mostrarMensaje('Selecciona una categoría', 'error');
-    
     try {
       const formData = new FormData();
       formData.append('nombre', nombreProducto);
       formData.append('descripcion', descripcionProducto);
       formData.append('precio', precioProducto);
       formData.append('categoria_id', parseInt(categoriaId));
-      
       if (imagenArchivo) formData.append('imagen', imagenArchivo);
       if (imagenesAdicionales.length > 0) {
-        Array.from(imagenesAdicionales).forEach((file) => {
-          formData.append('imagenes_adicionales', file);
-        });
+        Array.from(imagenesAdicionales).forEach((file) => { formData.append('imagenes_adicionales', file); });
       }
-
       if (editandoProdId) {
-        await api.put(`/productos/${editandoProdId}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.put(`/productos/${editandoProdId}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
         mostrarMensaje('Producto actualizado', 'exito');
       } else {
-        await api.post('/productos', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await api.post('/productos', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
         mostrarMensaje('Producto publicado', 'exito');
       }
       cancelarEdicion();
       cargarDatos();
-    } catch (error) { 
-      mostrarMensaje('Error al guardar.', 'error'); 
-    }
+    } catch (error) { mostrarMensaje('Error al guardar.', 'error'); }
   }
 
   const prepararEdicionProd = (p) => {
@@ -111,7 +94,6 @@ function PanelAdmin() {
     setCategoriaId(p.categoria_id.toString());
     setImagenArchivo(null);
     setImagenesAdicionales([]);
-    // Guardamos las fotos que ya tiene el producto para mostrarlas
     setFotosExistentes(p.imagenes_extra || []); 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -127,7 +109,6 @@ function PanelAdmin() {
     setFotosExistentes([]);
   }
 
-  // ... (Funciones de Categorías, Config y Logout se mantienen igual que tu código original)
   const handleGuardarCategoria = async (e) => {
     e.preventDefault()
     try {
@@ -144,8 +125,17 @@ function PanelAdmin() {
     } catch (error) { mostrarMensaje('Error al procesar categoría.', 'error') }
   }
 
+  // NUEVA FUNCIÓN: Preparar edición de categoría
+  const prepararEdicionCat = (c) => {
+    setEditandoCatId(c.id);
+    setNombreCategoria(c.nombre);
+    // Hacemos scroll suave al formulario de categorías
+    const formCat = document.getElementById('form-categoria');
+    formCat?.scrollIntoView({ behavior: 'smooth' });
+  }
+
   const handleEliminarCategoria = async (id) => {
-    if (!window.confirm("¿Eliminar categoría?")) return;
+    if (!window.confirm("¿Eliminar categoría? Los productos podrían quedar sin grupo.")) return;
     try { await api.delete(`/categorias/${id}`); cargarDatos(); } catch (error) { mostrarMensaje('Error.', 'error'); }
   }
 
@@ -156,6 +146,13 @@ function PanelAdmin() {
 
   const handleUpdateConfig = async (e) => {
     e.preventDefault()
+    // VALIDACIÓN DE CONTRASEÑA
+    if (config.password_admin.trim() !== "") {
+      if (!window.confirm("Has escrito una nueva contraseña. ¿Estás seguro de que quieres cambiarla?")) {
+        return; // Cancela si el usuario no confirma
+      }
+    }
+
     try {
       await api.put('/configuracion', config)
       mostrarMensaje('Configuración actualizada', 'exito')
@@ -207,11 +204,11 @@ function PanelAdmin() {
         {activeTab === 'inventario' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-8">
+              {/* FORM PRODUCTOS */}
               <div className={`${cardStyle} p-8`}>
                 <h2 className="text-[10px] font-black uppercase text-emerald-500 mb-8 tracking-[0.3em]">
                    {editandoProdId ? 'Actualizar Producto' : 'Publicar Producto'}
                 </h2>
-                
                 <form onSubmit={handleGuardarProducto} className="space-y-5">
                   <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
                     <option value="">Seleccionar Categoría...</option>
@@ -219,17 +216,11 @@ function PanelAdmin() {
                   </select>
                   <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
                   <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
-                  
-                  {/* FOTO PORTADA */}
                   <div className="space-y-2">
                     <label className="text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Foto Portada (1)</label>
                     <input type="file" id="file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
-                    <label htmlFor="file-prod" className={btnVerde}>
-                       {imagenArchivo ? '✅ PORTADA LISTA' : '📂 ELEGIR PORTADA'}
-                    </label>
+                    <label htmlFor="file-prod" className={btnVerde}>{imagenArchivo ? '✅ PORTADA LISTA' : '📂 ELEGIR PORTADA'}</label>
                   </div>
-
-                  {/* GALERÍA DE EDICIÓN (Solo visible al editar) */}
                   {editandoProdId && fotosExistentes.length > 0 && (
                     <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
                       <label className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Fotos actuales en galería</label>
@@ -237,48 +228,36 @@ function PanelAdmin() {
                         {fotosExistentes.map((foto) => (
                           <div key={foto.id} className="relative aspect-square bg-white rounded-lg overflow-hidden group">
                             <img src={getImageUrl(foto.imagen_url)} className="w-full h-full object-cover" alt="" />
-                            <button 
-                              type="button"
-                              onClick={() => handleEliminarFotoExtra(foto.id)}
-                              className="absolute inset-0 bg-rose-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold"
-                            >
-                              ✕
-                            </button>
+                            <button type="button" onClick={() => handleEliminarFotoExtra(foto.id)} className="absolute inset-0 bg-rose-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold">✕</button>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-
-                  {/* FOTOS ADICIONALES */}
                   <div className="space-y-2">
                     <label className="text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Nuevas Fotos de Ángulos</label>
                     <input type="file" id="files-extra" accept="image/*" multiple onChange={(e) => setImagenesAdicionales(e.target.files)} className="hidden" />
-                    <label htmlFor="files-extra" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700`}>
-                       {imagenesAdicionales.length > 0 ? `✅ ${imagenesAdicionales.length} FOTOS LISTAS` : '📸 AGREGAR MÁS FOTOS'}
-                    </label>
+                    <label htmlFor="files-extra" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700`}>{imagenesAdicionales.length > 0 ? `✅ ${imagenesAdicionales.length} FOTOS LISTAS` : '📸 AGREGAR MÁS FOTOS'}</label>
                   </div>
-
                   <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción..."></textarea>
-                  
-                  <button type="submit" className={btnVerde}>
-                    {editandoProdId ? 'Guardar Cambios' : 'Subir al Catálogo'}
-                  </button>
-
+                  <button type="submit" className={btnVerde}>{editandoProdId ? 'Guardar Cambios' : 'Subir al Catálogo'}</button>
                   {editandoProdId && (
                     <button type="button" onClick={cancelarEdicion} className="w-full text-[10px] font-black text-gray-500 uppercase py-2">Cancelar Edición</button>
                   )}
                 </form>
               </div>
 
-              {/* FORM CATEGORÍAS */}
-              <div className={`${cardStyle} p-8`}>
+              {/* FORM CATEGORÍAS (CON ID PARA SCROLL) */}
+              <div id="form-categoria" className={`${cardStyle} p-8`}>
                 <h2 className="text-[10px] font-black uppercase text-emerald-500 mb-6 tracking-[0.3em]">
                   {editandoCatId ? 'Editar Categoría' : 'Nueva Categoría'}
                 </h2>
                 <form onSubmit={handleGuardarCategoria} className="space-y-4">
                   <input type="text" required value={nombreCategoria} onChange={(e) => setNombreCategoria(e.target.value)} className={inputStyle} placeholder="Ej: Relojes, Joyas..." />
-                  <button className={btnVerde}>{editandoCatId ? 'Actualizar' : 'Crear Grupo'}</button>
+                  <button className={btnVerde}>{editandoCatId ? 'Actualizar Nombre' : 'Crear Grupo'}</button>
+                  {editandoCatId && (
+                    <button type="button" onClick={() => {setEditandoCatId(null); setNombreCategoria('');}} className="w-full text-[10px] font-black text-gray-500 uppercase py-2">Cancelar</button>
+                  )}
                 </form>
               </div>
             </div>
@@ -306,9 +285,7 @@ function PanelAdmin() {
                             <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative">
                                 <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-contain" alt="" />
                                 {p.imagenes_extra && p.imagenes_extra.length > 0 && (
-                                  <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] w-4 h-4 flex items-center justify-center rounded-bl-lg font-bold">
-                                    +{p.imagenes_extra.length}
-                                  </div>
+                                  <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] w-4 h-4 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>
                                 )}
                             </div>
                             <span className="font-bold uppercase text-white/90">{p.nombre}</span>
@@ -325,7 +302,7 @@ function PanelAdmin() {
                 </div>
               </div>
 
-              {/* TABLA CATEGORÍAS */}
+              {/* TABLA CATEGORÍAS (CON BOTÓN EDITAR) */}
               <div className={`${cardStyle} overflow-hidden`}>
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
                   <h2 className="text-xs font-black uppercase tracking-[0.3em]">Categorías</h2>
@@ -340,6 +317,7 @@ function PanelAdmin() {
                         <tr key={c.id} className="hover:bg-white/5 transition-colors">
                           <td className="p-6 font-bold uppercase tracking-widest text-white/90">{c.nombre}</td>
                           <td className="p-6 text-right space-x-2">
+                            <button onClick={() => prepararEdicionCat(c)} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all">✎</button>
                             <button onClick={() => handleEliminarCategoria(c.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all">✕</button>
                           </td>
                         </tr>
@@ -368,7 +346,10 @@ function PanelAdmin() {
                 <input type="text" placeholder="WhatsApp" value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value})} className={inputStyle} />
               </div>
               <textarea placeholder="Maps" value={config.google_maps || ''} onChange={e => setConfig({...config, google_maps: e.target.value})} className={inputStyle}></textarea>
-              <input type="password" placeholder="Nueva Contraseña" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} />
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Cambiar Contraseña</label>
+                <input type="password" placeholder="Nueva Contraseña" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} />
+              </div>
               <button className={btnVerde}>Guardar Cambios</button>
             </form>
           </div>
