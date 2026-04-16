@@ -46,7 +46,7 @@ body {
 .font-dancing { font-family: 'Dancing Script', cursive; }
 
 /* ============================================
-   MARCA DE AGUA FLOTANTE (VERTICAL & COMPLETA)
+   MARCA DE AGUA FLOTANTE (CENTRAL, RECTA Y BRILLANTE)
    ============================================ */
 .watermark-container {
   position: fixed;
@@ -57,30 +57,33 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 0; /* Eliminado padding para máxima expansión */
 }
 
 .watermark-logo {
-  /* Ajuste para que se vea completo y vertical en cualquier dispositivo */
-  width: auto;
-  height: auto;
-  max-width: 90%;
-  max-height: 85vh;
+  /* Expansión optimizada para PC y móvil */
+  width: 100%;
+  height: 100%;
+  max-width: 100vw; /* Se expande al ancho total de la pantalla */
+  max-height: 100vh; /* Se expande al alto total de la pantalla */
   
-  /* Brillo y Opacidad aumentados */
-  opacity: 0.12; 
-  filter: grayscale(1) brightness(1.5);
+  /* Brillo subido un 4% adicional (de 1.5 a 1.56) y opacidad ajustada */
+  opacity: 0.14; 
+  filter: grayscale(1) brightness(1.56);
   
-  /* Asegura que no se corte */
+  /* Ajuste para que la imagen se vea completa y centrada sin cortarse */
   object-fit: contain;
   
-  transform: rotate(-5deg);
+  /* Imagen enderezada (sin rotación) */
+  transform: rotate(0deg); 
+  
+  /* Animación sutil de escala sin rotar para mantenerla derecha */
   animation: float-watermark 20s ease-in-out infinite;
 }
 
 @keyframes float-watermark {
-  0%, 100% { transform: rotate(-5deg) scale(1); }
-  50% { transform: rotate(-3deg) scale(1.03); }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
 }
 
 /* ============================================
