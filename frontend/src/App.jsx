@@ -15,7 +15,7 @@ function RutaProtegida({ children }) {
   return children
 }
 
-// 1. Creamos este componente para decidir si mostrar o no las Redes Flotantes
+// 1. Componente para decidir si mostrar o no las Redes Flotantes
 function NavegacionGlobal() {
   const location = useLocation();
   
@@ -34,7 +34,8 @@ function NavegacionGlobal() {
 function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-zinc-950">
+      {/* Añadimos overflow-x-hidden para evitar desplazamientos laterales en móviles */}
+      <div className="min-h-screen bg-zinc-950 overflow-x-hidden">
         <Routes>
           <Route path="/" element={<CatalogoPublico />} />
           <Route
@@ -50,7 +51,7 @@ function App() {
           <Route path="/login" element={<Login />} />
         </Routes>
 
-        {/* 2. Este componente ahora controla la visibilidad inteligentemente */}
+        {/* Control de visibilidad de redes sociales */}
         <NavegacionGlobal /> 
       </div>
     </BrowserRouter>
