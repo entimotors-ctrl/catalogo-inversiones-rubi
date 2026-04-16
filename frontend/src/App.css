@@ -24,7 +24,6 @@ body {
   font-family: 'Roboto', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
-  /* Asegura que el fondo cubra todo el cuerpo */
   background-attachment: fixed;
 }
 
@@ -47,12 +46,12 @@ body {
 .font-dancing { font-family: 'Dancing Script', cursive; }
 
 /* ============================================
-   MARCA DE AGUA FLOTANTE (WATERMARK) MEJORADA
+   MARCA DE AGUA FLOTANTE (WATERMARK)
    ============================================ */
 .watermark-container {
   position: fixed;
   inset: 0;
-  z-index: 0; /* Detrás de todo pero encima del fondo */
+  z-index: 0;
   pointer-events: none;
   overflow: hidden;
   display: flex;
@@ -61,8 +60,8 @@ body {
 }
 
 .watermark-logo {
-  width: 90%; /* Más grande en móvil */
-  max-width: 800px; /* Tamaño controlado en PC */
+  width: 90%;
+  max-width: 800px;
   opacity: 0.05; 
   filter: grayscale(1) brightness(1.2);
   transform: rotate(-10deg);
@@ -76,7 +75,58 @@ body {
 }
 
 /* ============================================
-   TEMAS (OSCURO Y CLARO) - COBERTURA TOTAL
+   CARRUSEL ADAPTATIVO (NUEVO)
+   ============================================ */
+.carousel-item {
+  display: flex;
+  flex-direction: column; /* Apilado en móvil */
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  min-height: 350px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .carousel-item {
+    flex-direction: row; /* Horizontal en PC */
+    min-height: 450px;
+    padding: 3rem;
+    gap: 3rem;
+  }
+}
+
+.carousel-img-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 16 / 9; /* Mantiene proporción horizontal */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+}
+
+.carousel-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* La imagen nunca se corta */
+  transition: transform 0.5s ease;
+}
+
+@media (min-width: 768px) {
+  .carousel-img-wrapper {
+    max-width: 450px;
+    aspect-ratio: auto;
+  }
+}
+
+/* ============================================
+   TEMAS (OSCURO Y CLARO)
    ============================================ */
 .bg-glassblack-theme {
   background-color: #050505;
@@ -90,7 +140,7 @@ body {
 }
 
 .bg-light-theme {
-  background-color: #ffffff; /* Blanco puro para más claridad */
+  background-color: #ffffff;
   background-image: 
     radial-gradient(circle at 15% 25%, rgba(225, 29, 72, 0.04) 0%, transparent 50%);
   background-attachment: fixed;
@@ -99,7 +149,6 @@ body {
   min-height: 100vh;
 }
 
-/* Paneles de vidrio */
 .glass-panel {
   background: rgba(18, 18, 20, 0.7);
   backdrop-filter: blur(20px);
@@ -112,39 +161,11 @@ body {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(225, 29, 72, 0.15);
-  box-shadow: 0 8px 32px rgba(225, 29, 72, 0.05);
 }
 
 /* ============================================
-   TARJETAS Y BUSCADOR
+   BOTÓN GUARDAR PREMIUM
    ============================================ */
-.product-card {
-  transition: var(--transition);
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-.product-card:hover { transform: translateY(-8px); }
-
-.img-container {
-  overflow: hidden;
-  background: white;
-}
-
-.img-container img { transition: transform 0.6s ease; }
-.product-card:hover .img-container img { transform: scale(1.1); }
-
-/* ============================================
-   ESTILOS DE SCROLLBAR
-   ============================================ */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 10px;
-}
-
-/* Botón Guardar Premium */
 .btn-save-premium {
   width: 100%;
   padding: 1.4rem !important;
@@ -165,5 +186,14 @@ body {
 .btn-save-premium:hover {
   transform: translateY(-4px) scale(1.02);
   box-shadow: 0 20px 45px rgba(22, 163, 74, 0.4) !important;
-  filter: brightness(1.1);
+}
+
+/* ============================================
+   ESTILOS DE SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 10px;
 }
