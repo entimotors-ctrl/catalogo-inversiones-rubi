@@ -256,7 +256,7 @@ function CatalogoPublico() {
                 <img src={logowas} alt="WASystem" className="h-10 w-auto grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110" />
             </div>
             <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mt-10 italic text-center">
-              © 2026 Inversiones Rubi • San Esteban, Olancho
+              © 2026 Inversiones Rubi • San Esteban, Olancho | SIRVIENDO DESDE 1987.
             </p>
         </footer>
       </main>
