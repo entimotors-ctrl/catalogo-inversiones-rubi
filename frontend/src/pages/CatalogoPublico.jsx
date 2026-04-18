@@ -123,6 +123,7 @@ function CatalogoPublico() {
           src={logo2} 
           className="w-full h-full object-contain md:object-cover scale-110 md:scale-100 rotate-[-10deg] brightness-125 transition-all" 
           alt="" 
+          loading="lazy"
         />
       </div>
 
