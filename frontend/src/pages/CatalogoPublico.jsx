@@ -90,7 +90,7 @@ function CatalogoPublico() {
     <div className={`group flex flex-col rounded-[2.5rem] overflow-hidden border transition-all duration-300 h-full ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
       <div className="cursor-pointer" onClick={() => setProductoSeleccionado(p)}>
         <div className="aspect-square relative overflow-hidden bg-white p-2 md:p-4 flex items-center justify-center">
-          <img src={p.imagen_url} alt={p.nombre} className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+          <img src={p.imagen_url} alt={p.nombre} loading="lazy" className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
              <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm font-bold uppercase tracking-widest">Ver Detalles</span>
           </div>
@@ -160,11 +160,11 @@ function CatalogoPublico() {
               {productosParaCarrusel.map((p) => (
                 <SwiperSlide key={p.id}>
                   <div className="w-full h-full relative flex items-center bg-zinc-900 cursor-pointer" onClick={() => setProductoSeleccionado(p)}>
-                    <img src={p.imagen_url} className="absolute inset-0 w-full h-full object-cover opacity-20 blur-xl" alt="" />
+                    <img src={p.imagen_url} className="absolute inset-0 w-full h-full object-cover opacity-20 blur-xl" alt="" loading="lazy" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10"></div>
                     <div className="relative z-20 flex w-full max-w-5xl mx-auto px-6 md:px-12 items-center gap-4 md:gap-10 h-full">
                       <div className="w-1/2 md:w-1/3 h-full flex items-center justify-center drop-shadow-2xl p-2 md:p-6">
-                         <img src={p.imagen_url} className="max-h-full max-w-full object-contain rounded-xl" alt={p.nombre} />
+                         <img src={p.imagen_url} className="max-h-full max-w-full object-contain rounded-xl" alt={p.nombre} loading="lazy" />
                       </div>
                       <div className="w-1/2 md:w-2/3 flex flex-col items-start">
                          <span className="bg-rose-600 text-white text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full mb-2">Nuevo Ingreso</span>
@@ -253,7 +253,7 @@ function CatalogoPublico() {
         <footer className="mt-32 py-16 border-t border-white/5 flex flex-col items-center">
             <div className="flex flex-col items-center gap-4 group">
                 <span className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-500 group-hover:text-rose-600 transition-colors">Powered by</span>
-                <img src={logowas} alt="WASystem" className="h-10 w-auto grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110" />
+                <img src={logowas} alt="WASystem" className="h-10 w-auto grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110" loading="lazy" />
             </div>
             <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mt-10 italic text-center">
               © 2026 Inversiones Rubi • San Esteban, Olancho | SIRVIENDO DESDE 1987.
@@ -279,13 +279,13 @@ function CatalogoPublico() {
                >
                   <SwiperSlide>
                     <div className="w-full h-full flex items-center justify-center p-4">
-                      <img src={productoSeleccionado.imagen_url} alt="Principal" className="max-w-full max-h-full object-contain drop-shadow-md" />
+                      <img src={productoSeleccionado.imagen_url} alt="Principal" className="max-w-full max-h-full object-contain drop-shadow-md" loading="lazy" />
                     </div>
                   </SwiperSlide>
                   {productoSeleccionado.imagenes_extra && productoSeleccionado.imagenes_extra.map((imgObj, index) => (
                     <SwiperSlide key={index}>
                       <div className="w-full h-full flex items-center justify-center p-4">
-                        <img src={imgObj.imagen_url} alt={`Ángulo ${index}`} className="max-w-full max-h-full object-contain drop-shadow-md" />
+                        <img src={imgObj.imagen_url} alt={`Ángulo ${index}`} className="max-w-full max-h-full object-contain drop-shadow-md" loading="lazy" />
                       </div>
                     </SwiperSlide>
                   ))}

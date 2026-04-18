@@ -283,7 +283,7 @@ function PanelAdmin() {
                         <tr key={p.id} className="hover:bg-emerald-900/5 transition-colors">
                           <td className="p-5 flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative">
-                                <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-contain" alt="" />
+                                <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-contain" alt="" loading="lazy" />
                                 {p.imagenes_extra && p.imagenes_extra.length > 0 && (
                                   <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] w-4 h-4 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>
                                 )}
