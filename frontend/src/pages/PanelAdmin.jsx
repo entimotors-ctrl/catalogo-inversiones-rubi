@@ -271,29 +271,38 @@ function PanelAdmin() {
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-[11px]">
-                    <thead className="bg-black/40 text-gray-500 font-black uppercase tracking-widest">
+                    <thead className="hidden md:table-header-group bg-black/40 text-gray-500 font-black uppercase tracking-widest">
                       <tr>
                         <th className="p-6">Producto</th>
                         <th className="p-6">Precio</th>
                         <th className="p-6 text-right">Acciones</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="flex flex-col md:table w-full md:w-auto gap-4 md:gap-0 divide-y md:divide-y divide-white/5">
                       {productos.map(p => (
-                        <tr key={p.id} className="hover:bg-emerald-900/5 transition-colors">
-                          <td className="p-5 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative">
-                                <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-contain" alt="" loading="lazy" />
-                                {p.imagenes_extra && p.imagenes_extra.length > 0 && (
-                                  <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] w-4 h-4 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>
-                                )}
+                        <tr key={p.id} className="flex flex-col md:table-row p-5 md:p-0 gap-4 md:gap-0 bg-zinc-800/40 md:bg-transparent rounded-xl md:rounded-none border border-white/5 md:border-0 hover:bg-emerald-900/5 transition-colors">
+                          <td className="flex flex-col md:table-cell md:p-5 md:flex md:items-center md:gap-4 gap-3">
+                            <span className="text-[9px] md:hidden font-black text-gray-500 uppercase">Producto</span>
+                            <div className="flex items-center gap-4">
+                              <div className="w-20 h-20 md:w-12 md:h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative flex-shrink-0">
+                                  <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-cover" alt="" loading="lazy" />
+                                  {p.imagenes_extra && p.imagenes_extra.length > 0 && (
+                                    <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] w-5 h-5 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>
+                                  )}
+                              </div>
+                              <span className="font-bold uppercase text-white/90 text-sm md:text-[11px]">{p.nombre}</span>
                             </div>
-                            <span className="font-bold uppercase text-white/90">{p.nombre}</span>
                           </td>
-                          <td className="p-5 font-black text-emerald-500 text-sm">{p.precio}</td>
-                          <td className="p-5 text-right space-x-2">
-                            <button onClick={() => prepararEdicionProd(p)} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all">✎</button>
-                            <button onClick={() => handleEliminarProducto(p.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all">✕</button>
+                          <td className="flex justify-between md:table-cell md:p-5 items-center md:items-center">
+                            <span className="text-[9px] md:hidden font-black text-gray-500 uppercase">Precio</span>
+                            <span className="font-black text-emerald-500 text-sm md:text-sm">{p.precio}</span>
+                          </td>
+                          <td className="flex flex-col md:table-cell md:p-5 md:text-right gap-3">
+                            <span className="text-[9px] md:hidden font-black text-gray-500 uppercase">Acciones</span>
+                            <div className="flex gap-2 md:space-x-2 w-full md:w-auto md:justify-end">
+                              <button onClick={() => prepararEdicionProd(p)} className="flex-1 md:flex-none bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all font-bold">✎ Editar</button>
+                              <button onClick={() => handleEliminarProducto(p.id)} className="flex-1 md:flex-none bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all font-bold">✕ Borrar</button>
+                            </div>
                           </td>
                         </tr>
                       ))}
