@@ -27,6 +27,7 @@ function PanelAdmin() {
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
   const [loading, setLoading] = useState(true)
+  const [categoriaAbierta, setCategoriaAbierta] = useState(null)
 
   const BASE_URL = 'https://catalogo-inversiones-rubi.onrender.com';
 
@@ -269,45 +270,59 @@ function PanelAdmin() {
                   <h2 className="text-xs font-black uppercase tracking-[0.3em]">Inventario</h2>
                   <span className="text-[10px] bg-emerald-600/20 text-emerald-500 px-4 py-1.5 rounded-full font-black border border-emerald-600/20">{productos.length} ÍTEMS</span>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[11px]">
-                    <thead className="hidden md:table-header-group bg-black/40 text-gray-500 font-black uppercase tracking-widest">
-                      <tr>
-                        <th className="p-6">Producto</th>
-                        <th className="p-6">Precio</th>
-                        <th className="p-6 text-right">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody className="flex flex-col md:table w-full md:w-auto gap-4 md:gap-0 divide-y md:divide-y divide-white/5">
-                      {productos.map(p => (
-                        <tr key={p.id} className="flex flex-col md:table-row p-5 md:p-0 gap-4 md:gap-0 bg-zinc-800/40 md:bg-transparent rounded-xl md:rounded-none border border-white/5 md:border-0 hover:bg-emerald-900/5 transition-colors">
-                          <td className="flex flex-col md:table-cell md:p-5 md:flex md:items-center md:gap-4 gap-3">
-                            <span className="text-[9px] md:hidden font-black text-gray-500 uppercase">Producto</span>
-                            <div className="flex items-center gap-4">
-                              <div className="w-20 h-20 md:w-12 md:h-12 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative flex-shrink-0">
-                                  <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-cover" alt="" loading="lazy" />
-                                  {p.imagenes_extra && p.imagenes_extra.length > 0 && (
-                                    <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] w-5 h-5 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>
-                                  )}
+                <div className="space-y-4 p-4">
+                  {categorias.map(cat => {
+                    const productosDelCategoria = productos.filter(p => Number(p.categoria_id) === Number(cat.id));
+                    const estaAbierto = categoriaAbierta === cat.id;
+                    return (
+                      <div key={cat.id} className="overflow-hidden rounded-xl border border-white/5">
+                        {/* ENCABEZADO DEL ACORDEÓN */}
+                        <button
+                          onClick={() => setCategoriaAbierta(estaAbierto ? null : cat.id)}
+                          className="w-full flex items-center justify-between p-5 md:p-6 bg-zinc-900/80 hover:bg-zinc-900 transition-colors border-l-4 border-rose-600"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`text-lg md:text-xl transition-transform duration-300 ${estaAbierto ? 'rotate-180' : ''}`}>▼</span>
+                            <span className="font-black uppercase text-white/90 text-sm md:text-base tracking-tight">
+                              {cat.nombre} <span className="text-rose-500 font-bold">({productosDelCategoria.length})</span>
+                            </span>
+                          </div>
+                          {productosDelCategoria.length === 0 && (
+                            <span className="text-[9px] text-gray-500 font-bold">SIN PRODUCTOS</span>
+                          )}
+                        </button>
+
+                        {/* CONTENIDO DEL ACORDEÓN */}
+                        {estaAbierto && productosDelCategoria.length > 0 && (
+                          <div className="space-y-3 p-4 md:p-6 bg-black/40 border-t border-white/5">
+                            {productosDelCategoria.map(p => (
+                              <div key={p.id} className="flex flex-col md:flex-row md:items-center gap-4 md:gap-5 p-4 bg-zinc-800/40 rounded-xl border border-white/5 hover:bg-emerald-900/5 transition-colors">
+                                {/* IMAGEN */}
+                                <div className="w-20 h-20 md:w-14 md:h-14 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative flex-shrink-0">
+                                    <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-cover" alt="" loading="lazy" />
+                                    {p.imagenes_extra && p.imagenes_extra.length > 0 && (
+                                      <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] w-5 h-5 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>
+                                    )}
+                                </div>
+
+                                {/* NOMBRE Y PRECIO */}
+                                <div className="flex-1 flex flex-col gap-2">
+                                  <span className="font-bold uppercase text-white/90 text-sm md:text-[13px]">{p.nombre}</span>
+                                  <span className="font-black text-rose-500 text-base md:text-sm">L {p.precio}</span>
+                                </div>
+
+                                {/* BOTONES */}
+                                <div className="flex gap-2 w-full md:w-auto">
+                                  <button onClick={() => prepararEdicionProd(p)} className="flex-1 md:flex-none bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all font-bold text-sm md:text-xs">✎ Editar</button>
+                                  <button onClick={() => handleEliminarProducto(p.id)} className="flex-1 md:flex-none bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all font-bold text-sm md:text-xs">✕ Borrar</button>
+                                </div>
                               </div>
-                              <span className="font-bold uppercase text-white/90 text-sm md:text-[11px]">{p.nombre}</span>
-                            </div>
-                          </td>
-                          <td className="flex justify-between md:table-cell md:p-5 items-center md:items-center">
-                            <span className="text-[9px] md:hidden font-black text-gray-500 uppercase">Precio</span>
-                            <span className="font-black text-emerald-500 text-sm md:text-sm">{p.precio}</span>
-                          </td>
-                          <td className="flex flex-col md:table-cell md:p-5 md:text-right gap-3">
-                            <span className="text-[9px] md:hidden font-black text-gray-500 uppercase">Acciones</span>
-                            <div className="flex gap-2 md:space-x-2 w-full md:w-auto md:justify-end">
-                              <button onClick={() => prepararEdicionProd(p)} className="flex-1 md:flex-none bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all font-bold">✎ Editar</button>
-                              <button onClick={() => handleEliminarProducto(p.id)} className="flex-1 md:flex-none bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all font-bold">✕ Borrar</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
