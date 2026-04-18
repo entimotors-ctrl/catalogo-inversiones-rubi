@@ -3,7 +3,7 @@ import api from '../services/api'
 import logo1 from '../assets/logo1.png'
 
 function PanelAdmin() {
-  const [activeTab, setActiveTab] = useState('inventario')
+  const [vistaActiva, setVistaActiva] = useState('inventario')
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
   
@@ -190,8 +190,8 @@ function PanelAdmin() {
             <h1 className="text-xl font-black uppercase italic">Panel <span className="text-emerald-500">Admin</span></h1>
           </div>
           <div className="flex bg-black/60 p-1.5 rounded-2xl gap-2 border border-white/5">
-            <button onClick={() => setActiveTab('inventario')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'inventario' ? 'bg-emerald-600 text-white' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
-            <button onClick={() => setActiveTab('manager')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeTab === 'manager' ? 'bg-emerald-600 text-white' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
+            <button onClick={() => setVistaActiva('inventario')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'inventario' ? 'bg-emerald-600 text-white' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
+            <button onClick={() => setVistaActiva('ajustes')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'ajustes' ? 'bg-emerald-600 text-white' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
           </div>
           <button onClick={handleLogout} className="text-gray-600 hover:text-rose-500 font-black text-[10px] uppercase">Cerrar Sesión ✕</button>
         </div>
@@ -202,7 +202,7 @@ function PanelAdmin() {
           </div>
         )}
 
-        {activeTab === 'inventario' ? (
+        {vistaActiva === 'inventario' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-8">
               {/* FORM PRODUCTOS */}
@@ -352,7 +352,9 @@ function PanelAdmin() {
               </div>
             </div>
           </div>
-        ) : (
+        )}
+
+        {vistaActiva === 'ajustes' && (
           <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
             <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4">⚙️ Ajustes</h2>
             <form onSubmit={handleUpdateConfig} className="space-y-6">
