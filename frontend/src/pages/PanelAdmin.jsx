@@ -4,6 +4,7 @@ import logo1 from '../assets/logo1.png'
 
 function PanelAdmin() {
   const [vistaActiva, setVistaActiva] = useState('inventario')
+  const [subVistaInventario, setSubVistaInventario] = useState('productos')
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
   
@@ -184,16 +185,18 @@ function PanelAdmin() {
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* HEADER */}
-        <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
-          <div className="flex items-center gap-4">
-            <img src={logo1} alt="Logo" className="h-12 w-auto" />
-            <h1 className="text-xl font-black uppercase italic">Panel <span className="text-rose-500">Admin</span></h1>
+        <div className={`${cardStyle} p-4 md:p-6 flex flex-col gap-4`}>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <img src={logo1} alt="Logo" className="h-10 md:h-12 w-auto" />
+              <h1 className="text-lg md:text-xl font-black uppercase italic">Panel <span className="text-rose-500">Admin</span></h1>
+            </div>
+            <button onClick={handleLogout} className="text-gray-600 hover:text-rose-500 font-black text-[9px] md:text-[10px] uppercase self-start sm:self-auto">Cerrar Sesión ✕</button>
           </div>
-          <div className="flex bg-black/60 p-1.5 rounded-2xl gap-2 border border-white/5">
-            <button onClick={() => setVistaActiva('inventario')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'inventario' ? 'bg-rose-600 text-white' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
-            <button onClick={() => setVistaActiva('ajustes')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'ajustes' ? 'bg-rose-600 text-white' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
+          <div className="flex flex-wrap bg-black/60 p-1.5 rounded-2xl gap-2 border border-white/5 w-fit">
+            <button onClick={() => setVistaActiva('inventario')} className={`px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[9px] md:text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'inventario' ? 'bg-rose-600 text-white' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
+            <button onClick={() => setVistaActiva('ajustes')} className={`px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[9px] md:text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'ajustes' ? 'bg-rose-600 text-white' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
           </div>
-          <button onClick={handleLogout} className="text-gray-600 hover:text-rose-500 font-black text-[10px] uppercase">Cerrar Sesión ✕</button>
         </div>
 
         {mensaje.texto && (
@@ -203,14 +206,23 @@ function PanelAdmin() {
         )}
 
         {vistaActiva === 'inventario' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 space-y-8">
-              {/* FORM PRODUCTOS */}
-              <div className={`${cardStyle} p-8`}>
-                <h2 className="text-[10px] font-black uppercase text-rose-500 mb-8 tracking-[0.3em]">
+          <div className="flex flex-wrap bg-black/60 p-1.5 rounded-2xl gap-2 border border-white/5 w-fit">
+            <button onClick={() => setSubVistaInventario('productos')} className={`px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[9px] md:text-[10px] font-black tracking-widest transition-all ${subVistaInventario === 'productos' ? 'bg-rose-600 text-white' : 'text-gray-500 hover:text-white'}`}>PRODUCTOS</button>
+            <button onClick={() => setSubVistaInventario('categorias')} className={`px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[9px] md:text-[10px] font-black tracking-widest transition-all ${subVistaInventario === 'categorias' ? 'bg-rose-600 text-white' : 'text-gray-500 hover:text-white'}`}>CATEGORÍAS</button>
+          </div>
+        )}
+
+        {vistaActiva === 'inventario' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {subVistaInventario === 'productos' && (
+              <>
+                <div className="col-span-1 md:col-span-2 lg:col-span-1 space-y-6 md:space-y-8">
+                  {/* FORM PRODUCTOS */}
+                  <div className={`${cardStyle} p-5 md:p-8`}>
+                <h2 className="text-[9px] md:text-[10px] font-black uppercase text-rose-500 mb-6 md:mb-8 tracking-[0.3em]">
                    {editandoProdId ? 'Actualizar Producto' : 'Publicar Producto'}
                 </h2>
-                <form onSubmit={handleGuardarProducto} className="space-y-5">
+                <form onSubmit={handleGuardarProducto} className="space-y-4 md:space-y-5">
                   <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
                     <option value="">Seleccionar Categoría...</option>
                     {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
@@ -218,14 +230,14 @@ function PanelAdmin() {
                   <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
                   <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Foto Portada (1)</label>
+                    <label className="text-[8px] md:text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Foto Portada (1)</label>
                     <input type="file" id="file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
                     <label htmlFor="file-prod" className={btnVerde}>{imagenArchivo ? '✅ PORTADA LISTA' : '📂 ELEGIR PORTADA'}</label>
                   </div>
                   {editandoProdId && fotosExistentes.length > 0 && (
-                    <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
-                      <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Fotos actuales en galería</label>
-                      <div className="grid grid-cols-4 gap-2">
+                    <div className="p-3 md:p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
+                      <label className="text-[8px] md:text-[9px] font-black text-rose-500 uppercase tracking-widest">Fotos actuales en galería</label>
+                      <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
                         {fotosExistentes.map((foto) => (
                           <div key={foto.id} className="relative aspect-square bg-white rounded-lg overflow-hidden group">
                             <img src={getImageUrl(foto.imagen_url)} className="w-full h-full object-cover" alt="" />
@@ -236,14 +248,14 @@ function PanelAdmin() {
                     </div>
                   )}
                   <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Nuevas Fotos de Ángulos</label>
+                    <label className="text-[8px] md:text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Nuevas Fotos de Ángulos</label>
                     <input type="file" id="files-extra" accept="image/*" multiple onChange={(e) => setImagenesAdicionales(e.target.files)} className="hidden" />
                     <label htmlFor="files-extra" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700`}>{imagenesAdicionales.length > 0 ? `✅ ${imagenesAdicionales.length} FOTOS LISTAS` : '📸 AGREGAR MÁS FOTOS'}</label>
                   </div>
                   <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción..."></textarea>
                   <button type="submit" className={btnVerde}>{editandoProdId ? 'Guardar Cambios' : 'Subir al Catálogo'}</button>
                   {editandoProdId && (
-                    <button type="button" onClick={cancelarEdicion} className="w-full text-[10px] font-black text-gray-500 uppercase py-2">Cancelar Edición</button>
+                    <button type="button" onClick={cancelarEdicion} className="w-full text-[9px] md:text-[10px] font-black text-gray-500 uppercase py-2">Cancelar Edición</button>
                   )}
                 </form>
               </div>
@@ -263,12 +275,12 @@ function PanelAdmin() {
               </div>
             </div>
 
-            {/* TABLAS */}
-            <div className="lg:col-span-2 space-y-8">
+            {/* TABLAS - INVENTARIO (ACORDEÓN) */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-2 space-y-6 md:space-y-8">
               <div className={`${cardStyle} overflow-hidden`}>
-                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em]">Inventario</h2>
-                  <span className="text-[10px] bg-rose-600/20 text-rose-500 px-4 py-1.5 rounded-full font-black border border-rose-600/20">{productos.length} ÍTEMS</span>
+                <div className="p-4 md:p-8 border-b border-white/5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-black/20">
+                  <h2 className="text-xs md:text-sm font-black uppercase tracking-[0.3em]">Inventario</h2>
+                  <span className="text-[9px] md:text-[10px] bg-rose-600/20 text-rose-500 px-3 md:px-4 py-1 md:py-1.5 rounded-full font-black border border-rose-600/20 w-fit">{productos.length} ÍTEMS</span>
                 </div>
                 <div className="space-y-4 p-4">
                   {categorias.map(cat => {
@@ -279,26 +291,26 @@ function PanelAdmin() {
                         {/* ENCABEZADO DEL ACORDEÓN */}
                         <button
                           onClick={() => setCategoriaAbierta(estaAbierto ? null : cat.id)}
-                          className="w-full flex items-center justify-between p-5 md:p-6 bg-zinc-900/80 hover:bg-zinc-900 transition-colors border-l-4 border-rose-600"
+                          className="w-full flex items-center justify-between p-3 md:p-5 lg:p-6 bg-zinc-900/80 hover:bg-zinc-900 transition-colors border-l-4 border-rose-600"
                         >
-                          <div className="flex items-center gap-3">
-                            <span className={`text-lg md:text-xl transition-transform duration-300 ${estaAbierto ? 'rotate-180' : ''}`}>▼</span>
-                            <span className="font-black uppercase text-white/90 text-sm md:text-base tracking-tight">
+                          <div className="flex items-center gap-2 md:gap-3">
+                            <span className={`text-base md:text-lg lg:text-xl transition-transform duration-300 ${estaAbierto ? 'rotate-180' : ''}`}>▼</span>
+                            <span className="font-black uppercase text-white/90 text-xs md:text-sm lg:text-base tracking-tight">
                               {cat.nombre} <span className="text-rose-500 font-bold">({productosDelCategoria.length})</span>
                             </span>
                           </div>
                           {productosDelCategoria.length === 0 && (
-                            <span className="text-[9px] text-gray-500 font-bold">SIN PRODUCTOS</span>
+                            <span className="text-[7px] md:text-[9px] text-gray-500 font-bold">SIN PRODUCTOS</span>
                           )}
                         </button>
 
                         {/* CONTENIDO DEL ACORDEÓN */}
                         {estaAbierto && productosDelCategoria.length > 0 && (
-                          <div className="space-y-3 p-4 md:p-6 bg-black/40 border-t border-white/5">
+                          <div className="space-y-2 md:space-y-3 p-3 md:p-6 bg-black/40 border-t border-white/5">
                             {productosDelCategoria.map(p => (
-                              <div key={p.id} className="flex flex-col md:flex-row md:items-center gap-4 md:gap-5 p-4 bg-zinc-800/40 rounded-xl border border-white/5 hover:bg-rose-900/5 transition-colors">
+                              <div key={p.id} className="flex flex-col md:flex-row md:items-center gap-3 md:gap-5 p-3 md:p-4 bg-zinc-800/40 rounded-xl border border-white/5 hover:bg-rose-900/5 transition-colors">
                                 {/* IMAGEN */}
-                                <div className="w-20 h-20 md:w-14 md:h-14 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative flex-shrink-0">
+                                <div className="w-16 h-16 md:w-14 md:h-14 lg:w-16 lg:h-16 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative flex-shrink-0">
                                     <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-cover" alt="" loading="lazy" />
                                     {p.imagenes_extra && p.imagenes_extra.length > 0 && (
                                       <div className="absolute top-0 right-0 bg-rose-600 text-white text-[7px] w-5 h-5 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>
@@ -306,15 +318,15 @@ function PanelAdmin() {
                                 </div>
 
                                 {/* NOMBRE Y PRECIO */}
-                                <div className="flex-1 flex flex-col gap-2">
-                                  <span className="font-bold uppercase text-white/90 text-sm md:text-[13px]">{p.nombre}</span>
-                                  <span className="font-black text-rose-500 text-base md:text-sm">L {p.precio}</span>
+                                <div className="flex-1 flex flex-col gap-1 md:gap-2">
+                                  <span className="font-bold uppercase text-white/90 text-xs md:text-sm lg:text-base">{p.nombre}</span>
+                                  <span className="font-black text-rose-500 text-sm md:text-base">L {p.precio}</span>
                                 </div>
 
                                 {/* BOTONES */}
                                 <div className="flex gap-2 w-full md:w-auto">
-                                  <button onClick={() => prepararEdicionProd(p)} className="flex-1 md:flex-none bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all font-bold text-sm md:text-xs">✎ Editar</button>
-                                  <button onClick={() => handleEliminarProducto(p.id)} className="flex-1 md:flex-none bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all font-bold text-sm md:text-xs">✕ Borrar</button>
+                                  <button onClick={() => prepararEdicionProd(p)} className="flex-1 md:flex-none bg-blue-600/10 text-blue-500 p-2 md:p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all font-bold text-[9px] md:text-xs">✎ Editar</button>
+                                  <button onClick={() => handleEliminarProducto(p.id)} className="flex-1 md:flex-none bg-rose-600/10 text-rose-500 p-2 md:p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all font-bold text-[9px] md:text-xs">✕ Borrar</button>
                                 </div>
                               </div>
                             ))}
@@ -325,47 +337,71 @@ function PanelAdmin() {
                   })}
                 </div>
               </div>
-
-              {/* TABLA CATEGORÍAS (CON BOTÓN EDITAR) */}
-              <div className={`${cardStyle} overflow-hidden`}>
-                <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em]">Categorías</h2>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[11px]">
-                    <thead className="bg-black/40 text-gray-500 font-black uppercase tracking-widest">
-                      <tr><th className="p-6">Nombre</th><th className="p-6 text-right">Acciones</th></tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {categorias.map(c => (
-                        <tr key={c.id} className="hover:bg-white/5 transition-colors">
-                          <td className="p-6 font-bold uppercase tracking-widest text-white/90">{c.nombre}</td>
-                          <td className="p-6 text-right space-x-2">
-                            <button onClick={() => prepararEdicionCat(c)} className="bg-blue-600/10 text-blue-500 p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all">✎</button>
-                            <button onClick={() => handleEliminarCategoria(c.id)} className="bg-rose-600/10 text-rose-500 p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all">✕</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
             </div>
+              </>
+            )}
+
+            {subVistaInventario === 'categorias' && (
+              <>
+                <div className="col-span-1 md:col-span-2 lg:col-span-1 space-y-6 md:space-y-8">
+                  {/* FORM CATEGORÍAS */}
+                  <div id="form-categoria" className={`${cardStyle} p-5 md:p-8`}>
+                    <h2 className="text-[9px] md:text-[10px] font-black uppercase text-rose-500 mb-4 md:mb-6 tracking-[0.3em]">
+                      {editandoCatId ? 'Editar Categoría' : 'Nueva Categoría'}
+                    </h2>
+                    <form onSubmit={handleGuardarCategoria} className="space-y-3 md:space-y-4">
+                      <input type="text" required value={nombreCategoria} onChange={(e) => setNombreCategoria(e.target.value)} className={inputStyle} placeholder="Ej: Relojes, Joyas..." />
+                      <button className={btnVerde}>{editandoCatId ? 'Actualizar Nombre' : 'Crear Grupo'}</button>
+                      {editandoCatId && (
+                        <button type="button" onClick={() => {setEditandoCatId(null); setNombreCategoria('');}} className="w-full text-[9px] md:text-[10px] font-black text-gray-500 uppercase py-2">Cancelar</button>
+                      )}
+                    </form>
+                  </div>
+                </div>
+
+                {/* TABLA CATEGORÍAS */}
+                <div className="col-span-1 md:col-span-2 lg:col-span-2 space-y-6 md:space-y-8">
+                  <div className={`${cardStyle} overflow-hidden`}>
+                    <div className="p-4 md:p-8 border-b border-white/5 bg-black/20">
+                      <h2 className="text-xs md:text-sm font-black uppercase tracking-[0.3em]">Categorías</h2>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-[10px] md:text-[11px]">
+                        <thead className="bg-black/40 text-gray-500 font-black uppercase tracking-widest">
+                          <tr><th className="p-3 md:p-6">Nombre</th><th className="p-3 md:p-6 text-right">Acciones</th></tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {categorias.map(c => (
+                            <tr key={c.id} className="hover:bg-white/5 transition-colors">
+                              <td className="p-3 md:p-6 font-bold uppercase tracking-widest text-white/90">{c.nombre}</td>
+                              <td className="p-3 md:p-6 text-right space-x-1 md:space-x-2">
+                                <button onClick={() => prepararEdicionCat(c)} className="bg-blue-600/10 text-blue-500 p-1.5 md:p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all text-sm md:text-base">✎</button>
+                                <button onClick={() => handleEliminarCategoria(c.id)} className="bg-rose-600/10 text-rose-500 p-1.5 md:p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all text-sm md:text-base">✕</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {vistaActiva === 'ajustes' && (
-          <div className={`max-w-2xl mx-auto p-10 ${cardStyle}`}>
-            <h2 className="text-xl font-black uppercase italic mb-10 flex items-center gap-4">⚙️ Ajustes</h2>
+          <div className={`max-w-2xl mx-auto p-5 md:p-10 ${cardStyle}`}>
+            <h2 className="text-lg md:text-xl font-black uppercase italic mb-6 md:mb-10 flex items-center gap-4">⚙️ Ajustes</h2>
             <form onSubmit={handleUpdateConfig} className="space-y-6">
               <div className="space-y-2 pb-6 border-b border-white/5">
-                <label className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Excluir del Carrusel</label>
+                <label className="text-[9px] md:text-[10px] font-black text-rose-500 uppercase tracking-widest">Excluir del Carrusel</label>
                 <select value={config.categoria_excluida || ''} onChange={e => setConfig({...config, categoria_excluida: e.target.value})} className={inputStyle}>
                   <option value="">Ninguna</option>
                   {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
                 </select>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <input type="text" placeholder="Facebook" value={config.facebook || ''} onChange={e => setConfig({...config, facebook: e.target.value})} className={inputStyle} />
                 <input type="text" placeholder="Instagram" value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} className={inputStyle} />
                 <input type="text" placeholder="TikTok" value={config.tiktok || ''} onChange={e => setConfig({...config, tiktok: e.target.value})} className={inputStyle} />
@@ -373,7 +409,7 @@ function PanelAdmin() {
               </div>
               <textarea placeholder="Maps" value={config.google_maps || ''} onChange={e => setConfig({...config, google_maps: e.target.value})} className={inputStyle}></textarea>
               <div className="space-y-1">
-                <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Cambiar Contraseña</label>
+                <label className="text-[9px] md:text-[10px] font-black text-gray-500 uppercase ml-2">Cambiar Contraseña</label>
                 <input type="password" placeholder="Nueva Contraseña" value={config.password_admin || ''} onChange={e => setConfig({...config, password_admin: e.target.value})} className={inputStyle} />
               </div>
               <button className={btnVerde}>Guardar Cambios</button>
