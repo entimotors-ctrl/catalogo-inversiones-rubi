@@ -156,7 +156,7 @@ function CatalogoPublico() {
               effect="fade"
               autoplay={{ delay: 3500, disableOnInteraction: false }}
               pagination={{ clickable: true }}
-              className="h-[250px] md:h-[350px] w-full"
+              className="h-[230px] md:h-[322px] w-full"
             >
               {productosParaCarrusel.map((p) => (
                 <SwiperSlide key={p.id}>
