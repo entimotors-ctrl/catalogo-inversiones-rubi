@@ -175,9 +175,9 @@ function PanelAdmin() {
 
   const inputStyle = "w-full px-5 py-3.5 rounded-2xl outline-none text-sm bg-black/40 text-white border border-white/10 focus:border-emerald-500 transition-all font-medium";
   const cardStyle = "bg-zinc-900/60 backdrop-blur-xl border border-white/5 shadow-2xl rounded-[2rem]";
-  const btnVerde = "w-full py-3.5 bg-emerald-600/90 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-emerald-500 transition-all text-white active:scale-95 cursor-pointer flex justify-center items-center";
+  const btnVerde = "w-full py-3.5 bg-rose-600 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-white/5 hover:bg-rose-700 transition-all text-white active:scale-95 cursor-pointer flex justify-center items-center";
 
-  if (loading) return <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center"><div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mb-4"></div></div>
+  if (loading) return <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center"><div className="w-12 h-12 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mb-4"></div></div>
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white py-10 px-4">
@@ -187,17 +187,17 @@ function PanelAdmin() {
         <div className={`${cardStyle} p-6 flex flex-col md:flex-row justify-between items-center gap-6`}>
           <div className="flex items-center gap-4">
             <img src={logo1} alt="Logo" className="h-12 w-auto" />
-            <h1 className="text-xl font-black uppercase italic">Panel <span className="text-emerald-500">Admin</span></h1>
+            <h1 className="text-xl font-black uppercase italic">Panel <span className="text-rose-500">Admin</span></h1>
           </div>
           <div className="flex bg-black/60 p-1.5 rounded-2xl gap-2 border border-white/5">
-            <button onClick={() => setVistaActiva('inventario')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'inventario' ? 'bg-emerald-600 text-white' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
-            <button onClick={() => setVistaActiva('ajustes')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'ajustes' ? 'bg-emerald-600 text-white' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
+            <button onClick={() => setVistaActiva('inventario')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'inventario' ? 'bg-rose-600 text-white' : 'text-gray-500 hover:text-white'}`}>INVENTARIO</button>
+            <button onClick={() => setVistaActiva('ajustes')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest transition-all ${vistaActiva === 'ajustes' ? 'bg-rose-600 text-white' : 'text-gray-500 hover:text-white'}`}>AJUSTES</button>
           </div>
           <button onClick={handleLogout} className="text-gray-600 hover:text-rose-500 font-black text-[10px] uppercase">Cerrar Sesión ✕</button>
         </div>
 
         {mensaje.texto && (
-          <div className={`p-4 rounded-2xl font-bold text-center text-xs border animate-pulse ${mensaje.tipo === 'error' ? 'bg-rose-900/30 border-rose-500 text-rose-500' : 'bg-emerald-900/30 border-emerald-500 text-emerald-500'}`}>
+          <div className={`p-4 rounded-2xl font-bold text-center text-xs border animate-pulse ${mensaje.tipo === 'error' ? 'bg-rose-900/30 border-rose-500 text-rose-500' : 'bg-rose-900/30 border-rose-500 text-rose-500'}`}>
             {mensaje.texto.toUpperCase()}
           </div>
         )}
@@ -207,7 +207,7 @@ function PanelAdmin() {
             <div className="lg:col-span-1 space-y-8">
               {/* FORM PRODUCTOS */}
               <div className={`${cardStyle} p-8`}>
-                <h2 className="text-[10px] font-black uppercase text-emerald-500 mb-8 tracking-[0.3em]">
+                <h2 className="text-[10px] font-black uppercase text-rose-500 mb-8 tracking-[0.3em]">
                    {editandoProdId ? 'Actualizar Producto' : 'Publicar Producto'}
                 </h2>
                 <form onSubmit={handleGuardarProducto} className="space-y-5">
@@ -224,7 +224,7 @@ function PanelAdmin() {
                   </div>
                   {editandoProdId && fotosExistentes.length > 0 && (
                     <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
-                      <label className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Fotos actuales en galería</label>
+                      <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Fotos actuales en galería</label>
                       <div className="grid grid-cols-4 gap-2">
                         {fotosExistentes.map((foto) => (
                           <div key={foto.id} className="relative aspect-square bg-white rounded-lg overflow-hidden group">
@@ -250,7 +250,7 @@ function PanelAdmin() {
 
               {/* FORM CATEGORÍAS (CON ID PARA SCROLL) */}
               <div id="form-categoria" className={`${cardStyle} p-8`}>
-                <h2 className="text-[10px] font-black uppercase text-emerald-500 mb-6 tracking-[0.3em]">
+                <h2 className="text-[10px] font-black uppercase text-rose-500 mb-6 tracking-[0.3em]">
                   {editandoCatId ? 'Editar Categoría' : 'Nueva Categoría'}
                 </h2>
                 <form onSubmit={handleGuardarCategoria} className="space-y-4">
@@ -268,7 +268,7 @@ function PanelAdmin() {
               <div className={`${cardStyle} overflow-hidden`}>
                 <div className="p-8 border-b border-white/5 flex justify-between items-center bg-black/20">
                   <h2 className="text-xs font-black uppercase tracking-[0.3em]">Inventario</h2>
-                  <span className="text-[10px] bg-emerald-600/20 text-emerald-500 px-4 py-1.5 rounded-full font-black border border-emerald-600/20">{productos.length} ÍTEMS</span>
+                  <span className="text-[10px] bg-rose-600/20 text-rose-500 px-4 py-1.5 rounded-full font-black border border-rose-600/20">{productos.length} ÍTEMS</span>
                 </div>
                 <div className="space-y-4 p-4">
                   {categorias.map(cat => {
@@ -296,12 +296,12 @@ function PanelAdmin() {
                         {estaAbierto && productosDelCategoria.length > 0 && (
                           <div className="space-y-3 p-4 md:p-6 bg-black/40 border-t border-white/5">
                             {productosDelCategoria.map(p => (
-                              <div key={p.id} className="flex flex-col md:flex-row md:items-center gap-4 md:gap-5 p-4 bg-zinc-800/40 rounded-xl border border-white/5 hover:bg-emerald-900/5 transition-colors">
+                              <div key={p.id} className="flex flex-col md:flex-row md:items-center gap-4 md:gap-5 p-4 bg-zinc-800/40 rounded-xl border border-white/5 hover:bg-rose-900/5 transition-colors">
                                 {/* IMAGEN */}
                                 <div className="w-20 h-20 md:w-14 md:h-14 rounded-xl overflow-hidden bg-white p-1 border border-zinc-100 relative flex-shrink-0">
                                     <img src={getImageUrl(p.imagen_url)} className="w-full h-full object-cover" alt="" loading="lazy" />
                                     {p.imagenes_extra && p.imagenes_extra.length > 0 && (
-                                      <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[7px] w-5 h-5 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>
+                                      <div className="absolute top-0 right-0 bg-rose-600 text-white text-[7px] w-5 h-5 flex items-center justify-center rounded-bl-lg font-bold">+{p.imagenes_extra.length}</div>
                                     )}
                                 </div>
 
