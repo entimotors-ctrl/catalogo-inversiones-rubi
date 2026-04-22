@@ -28,7 +28,7 @@ const RedesFlotantes = () => {
   if (!config) return null;
 
   // Estilos con animaciones suave
-  const estiloIcono = "w-10 h-10 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center text-white text-lg md:text-2xl transition-all hover:scale-125 active:scale-95 opacity-80 hover:opacity-100 animate-bounce hover:animate-none";
+  const estiloIcono = "w-10 h-10 md:w-14 md:h-14 rounded-full shadow-2xl flex items-center justify-center text-white text-lg md:text-2xl transition-all duration-300 hover:scale-110 hover:-translate-y-1 hover:shadow-xl hover:brightness-110 active:scale-95 opacity-80 hover:opacity-100";
 
   return (
     <>

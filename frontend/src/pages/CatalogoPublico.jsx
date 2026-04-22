@@ -90,7 +90,7 @@ function CatalogoPublico() {
     <div className={`group flex flex-col rounded-[2.5rem] overflow-hidden border transition-all duration-300 h-full ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
       <div className="cursor-pointer" onClick={() => setProductoSeleccionado(p)}>
         <div className="aspect-square relative overflow-hidden bg-white p-2 md:p-4 flex items-center justify-center">
-          <img src={p.imagen_url} alt={p.nombre} loading="lazy" className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+          <img src={p.imagen_url} alt={p.nombre} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
              <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm font-bold uppercase tracking-widest">Ver Detalles</span>
           </div>
@@ -218,7 +218,7 @@ function CatalogoPublico() {
                   </button>
                 </div>
                 <div className="flex md:grid md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 overflow-x-auto no-scrollbar pb-8 px-2 snap-x">
-                  {cat.items.slice(0, 10).map(p => (
+                  {cat.items.slice(0, 5).map(p => (
                     <div key={p.id} className="snap-start min-w-[180px] md:min-w-0">
                       <ProductoCard p={p} />
                     </div>
