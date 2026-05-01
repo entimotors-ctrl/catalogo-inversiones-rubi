@@ -67,11 +67,23 @@ function CatalogoPublico() {
     })).filter(cat => cat.items.length > 0);
   }, [categorias, productos, categoriaActiva, searchTerm]);
 
-  const productosFiltrados = useMemo(() => productos.filter(producto => {
-    const matchCategory = !categoriaActiva || categoriaActiva.id === 'todos' || Number(producto.categoria_id) === Number(categoriaActiva.id)
+  const productosFiltrados = useMemo(() => {
     const term = searchTerm.toLowerCase()
-    return matchCategory && (producto.nombre.toLowerCase().includes(term) || (producto.descripcion?.toLowerCase().includes(term)))
-  }).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')), [productos, categoriaActiva, searchTerm])
+    const filtrados = productos.filter(producto => {
+      const matchCategory = !categoriaActiva || categoriaActiva.id === 'todos' || Number(producto.categoria_id) === Number(categoriaActiva.id)
+      return matchCategory && (producto.nombre.toLowerCase().includes(term) || (producto.descripcion?.toLowerCase().includes(term)))
+    })
+    const expandidos = filtrados.flatMap(producto => {
+      const tarjetas = [producto]
+      if (producto.imagenes_extra && producto.imagenes_extra.length > 0) {
+        producto.imagenes_extra.forEach((imgObj, idx) => {
+          tarjetas.push({ ...producto, imagen_url: imgObj.imagen_url, _extra_key: `${producto.id}_extra_${idx}` })
+        })
+      }
+      return tarjetas
+    })
+    return expandidos.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+  }, [productos, categoriaActiva, searchTerm])
 
   if (loading) {
     return (
@@ -247,7 +259,7 @@ function CatalogoPublico() {
              </div>
              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 px-2">
                {productosFiltrados.map((p) => (
-                 <ProductoCard key={p.id} p={p} />
+                 <ProductoCard key={p._extra_key || p.id} p={p} />
                ))}
              </div>
              {productosFiltrados.length === 0 && (
