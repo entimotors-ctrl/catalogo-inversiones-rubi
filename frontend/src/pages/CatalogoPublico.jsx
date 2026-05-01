@@ -68,7 +68,7 @@ function CatalogoPublico() {
   }, [categorias, productos, categoriaActiva, searchTerm]);
 
   const productosFiltrados = useMemo(() => productos.filter(producto => {
-    const matchCategory = !categoriaActiva || Number(producto.categoria_id) === Number(categoriaActiva.id)
+    const matchCategory = !categoriaActiva || categoriaActiva.id === 'todos' || Number(producto.categoria_id) === Number(categoriaActiva.id)
     const term = searchTerm.toLowerCase()
     return matchCategory && (producto.nombre.toLowerCase().includes(term) || (producto.descripcion?.toLowerCase().includes(term)))
   }), [productos, categoriaActiva, searchTerm])
@@ -187,13 +187,18 @@ function CatalogoPublico() {
               <select 
                 value={categoriaActiva?.id || ""}
                 onChange={(e) => {
-                  const cat = categorias.find(c => Number(c.id) === Number(e.target.value));
-                  setCategoriaActiva(cat || null);
-                  setSearchTerm(''); 
+                  if (e.target.value === 'todos') {
+                    setCategoriaActiva({ id: 'todos', nombre: 'Todos los productos' });
+                  } else {
+                    const cat = categorias.find(c => Number(c.id) === Number(e.target.value));
+                    setCategoriaActiva(cat || null);
+                  }
+                  setSearchTerm('');
                 }}
                 className={`w-full appearance-none px-6 py-4 rounded-2xl outline-none text-[11px] font-black uppercase tracking-widest border transition-all cursor-pointer shadow-xl ${darkMode ? 'bg-zinc-900 border-white/10 focus:border-rose-600 text-white' : 'bg-white border-zinc-200 text-zinc-900'}`}
               >
                 <option value="">📂 Todas las categorías</option>
+                <option value="todos">📦 Todos los productos</option>
                 {categorias.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.nombre}</option>
                 ))}
