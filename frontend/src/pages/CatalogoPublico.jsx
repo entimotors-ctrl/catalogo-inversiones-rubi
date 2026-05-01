@@ -71,7 +71,7 @@ function CatalogoPublico() {
     const matchCategory = !categoriaActiva || categoriaActiva.id === 'todos' || Number(producto.categoria_id) === Number(categoriaActiva.id)
     const term = searchTerm.toLowerCase()
     return matchCategory && (producto.nombre.toLowerCase().includes(term) || (producto.descripcion?.toLowerCase().includes(term)))
-  }), [productos, categoriaActiva, searchTerm])
+  }).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')), [productos, categoriaActiva, searchTerm])
 
   if (loading) {
     return (
