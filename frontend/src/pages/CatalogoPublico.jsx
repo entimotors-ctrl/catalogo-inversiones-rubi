@@ -59,13 +59,7 @@ function CatalogoPublico() {
     return [...filtrados].sort(() => 0.5 - Math.random()).slice(0, 20);
   }, [productos, config.categoria_excluida]);
 
-  const productosPorCategoria = useMemo(() => {
-    if (categoriaActiva || searchTerm) return null;
-    return categorias.map(cat => ({
-      ...cat,
-      items: productos.filter(p => Number(p.categoria_id) === Number(cat.id))
-    })).filter(cat => cat.items.length > 0);
-  }, [categorias, productos, categoriaActiva, searchTerm]);
+  const productosPorCategoria = null;
 
   const productosFiltrados = useMemo(() => {
     const term = searchTerm.toLowerCase()
@@ -248,14 +242,16 @@ function CatalogoPublico() {
           <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
              <div className="flex items-center justify-between mb-10 px-2 border-b border-white/5 pb-6">
                 <h2 className="text-xl md:text-5xl font-black uppercase italic border-l-8 border-rose-600 pl-5">
-                  {categoriaActiva ? categoriaActiva.nombre : `Buscando: ${searchTerm}`}
+                  {categoriaActiva ? categoriaActiva.nombre : searchTerm ? `Buscando: ${searchTerm}` : 'Todos los productos'}
                 </h2>
-                <button 
-                  onClick={() => {setCategoriaActiva(null); setSearchTerm('');}}
-                  className="text-[10px] font-black text-white uppercase tracking-widest bg-zinc-800 hover:bg-rose-600 px-6 py-3 rounded-xl transition-colors shadow-lg"
-                >
-                  Volver al inicio
-                </button>
+                {(categoriaActiva || searchTerm) && (
+                  <button 
+                    onClick={() => {setCategoriaActiva(null); setSearchTerm('');}}
+                    className="text-[10px] font-black text-white uppercase tracking-widest bg-zinc-800 hover:bg-rose-600 px-6 py-3 rounded-xl transition-colors shadow-lg"
+                  >
+                    Volver al inicio
+                  </button>
+                )}
              </div>
              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 px-2">
                {productosFiltrados.map((p) => (
