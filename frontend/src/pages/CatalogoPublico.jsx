@@ -19,7 +19,7 @@ function CatalogoPublico() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
   const [config, setConfig] = useState({ whatsapp: '', categoria_excluida: null })
-  const [categoriaActiva, setCategoriaActiva] = useState(null)
+  const [categoriaActiva, setCategoriaActiva] = useState({ id: 'todos', nombre: 'Todos los productos' })
   const [searchTerm, setSearchTerm] = useState('')
   const [darkMode, setDarkMode] = useState(true)
   const [loading, setLoading] = useState(true)
@@ -135,7 +135,7 @@ function CatalogoPublico() {
 
       <header className={`sticky top-0 z-[100] py-3 px-4 ${darkglassStyle}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => {setCategoriaActiva(null); setSearchTerm('');}}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => {setCategoriaActiva({ id: 'todos', nombre: 'Todos los productos' }); setSearchTerm('');}}>
              <img src={logo1} alt="Inversiones Rubi" className="h-10 md:h-14 w-auto object-contain drop-shadow-2xl" />
           </div>
           <div className="flex-1 max-w-xl relative">
@@ -154,7 +154,7 @@ function CatalogoPublico() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-4 relative z-10">
-        {!searchTerm && !categoriaActiva && productosParaCarrusel.length > 0 && (
+        {!searchTerm && (!categoriaActiva || categoriaActiva.id === 'todos') && productosParaCarrusel.length > 0 && (
           /* MEJORA: Altura de franja reducida en PC */
           <div className="mb-8 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-white/5 bg-black">
             <Swiper
@@ -244,9 +244,9 @@ function CatalogoPublico() {
                 <h2 className="text-xl md:text-5xl font-black uppercase italic border-l-8 border-rose-600 pl-5">
                   {categoriaActiva ? categoriaActiva.nombre : searchTerm ? `Buscando: ${searchTerm}` : 'Todos los productos'}
                 </h2>
-                {(categoriaActiva || searchTerm) && (
+                {(searchTerm || (categoriaActiva && categoriaActiva.id !== 'todos')) && (
                   <button 
-                    onClick={() => {setCategoriaActiva(null); setSearchTerm('');}}
+                    onClick={() => {setCategoriaActiva({ id: 'todos', nombre: 'Todos los productos' }); setSearchTerm('');}}
                     className="text-[10px] font-black text-white uppercase tracking-widest bg-zinc-800 hover:bg-rose-600 px-6 py-3 rounded-xl transition-colors shadow-lg"
                   >
                     Volver al inicio
