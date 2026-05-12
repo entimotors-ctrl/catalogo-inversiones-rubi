@@ -253,11 +253,38 @@ function CatalogoPublico() {
                   </button>
                 )}
              </div>
-             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 px-2">
-               {productosFiltrados.map((p) => (
-                 <ProductoCard key={p._extra_key || p.id} p={p} />
-               ))}
-             </div>
+             {(!searchTerm && (!categoriaActiva || categoriaActiva.id === 'todos')) ? (
+               // Vista con separadores de letra
+               <div className="px-2 space-y-10">
+                 {Object.entries(
+                   productosFiltrados.reduce((grupos, p) => {
+                     const letra = p.nombre.charAt(0).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                     if (!grupos[letra]) grupos[letra] = []
+                     grupos[letra].push(p)
+                     return grupos
+                   }, {})
+                 ).sort(([a], [b]) => a.localeCompare(b, 'es')).map(([letra, items]) => (
+                   <div key={letra}>
+                     <div className="flex items-center gap-4 mb-5">
+                       <span className={`text-4xl md:text-6xl font-black italic leading-none ${darkMode ? 'text-white/10' : 'text-zinc-200'}`}>{letra}</span>
+                       <div className={`flex-1 h-px ${darkMode ? 'bg-white/5' : 'bg-zinc-200'}`}></div>
+                     </div>
+                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10">
+                       {items.map((p) => (
+                         <ProductoCard key={p._extra_key || p.id} p={p} />
+                       ))}
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             ) : (
+               // Vista sin separadores (búsqueda o categoría específica)
+               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 px-2">
+                 {productosFiltrados.map((p) => (
+                   <ProductoCard key={p._extra_key || p.id} p={p} />
+                 ))}
+               </div>
+             )}
              {productosFiltrados.length === 0 && (
                <div className="text-center py-32 opacity-20 font-black uppercase tracking-[0.5em] text-xl">Sin resultados</div>
              )}
