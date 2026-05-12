@@ -31,6 +31,8 @@ function PanelAdmin() {
   const [categoriaAbierta, setCategoriaAbierta] = useState(null)
   const [dragModalAbierto, setDragModalAbierto] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
+  const [dragFotos, setDragFotos] = useState([])
+  const [portadaIndex, setPortadaIndex] = useState(0)
 
   const BASE_URL = 'https://catalogo-inversiones-rubi.onrender.com';
 
@@ -112,6 +114,8 @@ function PanelAdmin() {
     setImagenesAdicionales([]);
     setFotosExistentes([]);
     setDragModalAbierto(false);
+    setDragFotos([]);
+    setPortadaIndex(0);
   }
 
   const handleDragOver = (e) => {
@@ -126,12 +130,20 @@ function PanelAdmin() {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      cancelarEdicion();
-      setImagenArchivo(file);
-      setDragModalAbierto(true);
-    }
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length === 0) return;
+    cancelarEdicion();
+    setDragFotos(files);
+    setPortadaIndex(0);
+    setImagenArchivo(files[0]);
+    setImagenesAdicionales(files.slice(1));
+    setDragModalAbierto(true);
+  }
+
+  const seleccionarPortada = (index) => {
+    setPortadaIndex(index);
+    setImagenArchivo(dragFotos[index]);
+    setImagenesAdicionales(dragFotos.filter((_, i) => i !== index));
   }
 
   const handleGuardarCategoria = async (e) => {
@@ -248,11 +260,35 @@ function PanelAdmin() {
                           ✕
                         </button>
                         <h2 className="text-[9px] md:text-[10px] font-black uppercase text-rose-500 mb-6 tracking-[0.3em]">📸 Nuevo Producto</h2>
-                        {imagenArchivo && (
-                          <div className="mb-4 w-full aspect-square max-h-40 bg-white rounded-2xl overflow-hidden flex items-center justify-center p-2">
-                            <img src={URL.createObjectURL(imagenArchivo)} alt="Preview" className="max-h-full max-w-full object-contain" />
+
+                        {/* MINIATURAS CON SELECCIÓN DE PORTADA */}
+                        {dragFotos.length > 0 && (
+                          <div className="mb-5 space-y-2">
+                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Toca una foto para usarla como portada</p>
+                            <div className="grid grid-cols-4 gap-2">
+                              {dragFotos.map((foto, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => seleccionarPortada(idx)}
+                                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                                    portadaIndex === idx
+                                      ? 'border-rose-500 scale-105 shadow-lg shadow-rose-500/30'
+                                      : 'border-white/10 opacity-60 hover:opacity-90'
+                                  }`}
+                                >
+                                  <img src={URL.createObjectURL(foto)} alt={`foto-${idx}`} className="w-full h-full object-cover" />
+                                  {portadaIndex === idx && (
+                                    <div className="absolute inset-0 bg-rose-600/20 flex items-end justify-center pb-1">
+                                      <span className="text-[7px] font-black text-white bg-rose-600 px-2 py-0.5 rounded-full uppercase">Portada</span>
+                                    </div>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         )}
+
                         <form onSubmit={handleGuardarProducto} className="space-y-4">
                           <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
                             <option value="">Seleccionar Categoría...</option>
@@ -260,16 +296,6 @@ function PanelAdmin() {
                           </select>
                           <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
                           <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
-                          <div className="space-y-2">
-                            <label className="text-[8px] font-black text-gray-500 uppercase ml-2 tracking-widest">Foto Portada</label>
-                            <input type="file" id="drag-file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
-                            <label htmlFor="drag-file-prod" className={btnVerde}>{imagenArchivo ? '✅ PORTADA LISTA' : '📂 CAMBIAR PORTADA'}</label>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-[8px] font-black text-gray-500 uppercase ml-2 tracking-widest">Fotos adicionales</label>
-                            <input type="file" id="drag-files-extra" accept="image/*" multiple onChange={(e) => setImagenesAdicionales(e.target.files)} className="hidden" />
-                            <label htmlFor="drag-files-extra" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700`}>{imagenesAdicionales.length > 0 ? `✅ ${imagenesAdicionales.length} FOTOS` : '📸 AGREGAR MÁS FOTOS'}</label>
-                          </div>
                           <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción..."></textarea>
                           <button type="submit" className={btnVerde}>Subir al Catálogo</button>
                           <button type="button" onClick={cancelarEdicion} className="w-full text-[9px] font-black text-gray-500 uppercase py-2">Cancelar</button>
