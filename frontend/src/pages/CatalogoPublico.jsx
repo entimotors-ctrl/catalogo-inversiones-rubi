@@ -103,7 +103,7 @@ function CatalogoPublico() {
         </div>
         <div className="p-4 md:p-5 pb-2">
           <h3 className="font-black text-[11px] md:text-sm uppercase mb-1 tracking-tight line-clamp-1">{p.nombre}</h3>
-          <p className={`text-[10px] line-clamp-2 opacity-60 leading-relaxed font-medium`}>{p.descripcion}</p>
+          {p.descripcion && <p className={`text-[10px] line-clamp-2 opacity-60 leading-relaxed font-medium`}>{p.descripcion}</p>}
         </div>
       </div>
       <div className="p-4 md:p-5 pt-0 mt-auto flex flex-col">
@@ -312,10 +312,14 @@ function CatalogoPublico() {
                <div className="bg-rose-600/10 p-3 inline-block rounded-xl border-l-4 border-rose-600 mb-6">
                   <span className="text-lg md:text-xl font-black text-rose-600">L {productoSeleccionado.precio}</span>
                </div>
-               <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 border-b border-white/10 pb-2">Descripción del Artículo</h4>
-               <p className={`text-xs md:text-sm leading-relaxed mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                 {productoSeleccionado.descripcion || "No hay descripción detallada disponible para este producto."}
-               </p>
+               {productoSeleccionado.descripcion && (
+                 <>
+                   <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2 border-b border-white/10 pb-2">Descripción del Artículo</h4>
+                   <p className={`text-xs md:text-sm leading-relaxed mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                     {productoSeleccionado.descripcion}
+                   </p>
+                 </>
+               )}
                <a href={`https://wa.me/${config.whatsapp?.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por este producto que vi en su catálogo:%0A*${productoSeleccionado.nombre}*%0APrecio: L ${productoSeleccionado.precio}`} 
                   target="_blank" rel="noopener noreferrer" 
                   className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-green-900/20 active:scale-95 text-xs md:text-sm uppercase tracking-widest">
