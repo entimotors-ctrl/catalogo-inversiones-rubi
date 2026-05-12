@@ -93,28 +93,28 @@ function CatalogoPublico() {
     : "bg-white/70 backdrop-blur-md border border-zinc-200 shadow-lg";
 
   const ProductoCard = ({ p }) => (
-    <div className={`group flex flex-col rounded-[2.5rem] overflow-hidden border transition-all duration-300 h-full ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
+    <div className={`group flex flex-col rounded-2xl md:rounded-[2.5rem] overflow-hidden border transition-all duration-300 h-full ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
       <div className="cursor-pointer" onClick={() => setProductoSeleccionado(p)}>
-        <div className="aspect-square relative overflow-hidden bg-white p-2 md:p-4 flex items-center justify-center">
+        <div className="aspect-square relative overflow-hidden bg-white p-1 md:p-4 flex items-center justify-center">
           <img src={p.imagen_url} alt={p.nombre} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
              <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm font-bold uppercase tracking-widest">Ver Detalles</span>
           </div>
         </div>
-        <div className="p-4 md:p-5 pb-2">
-          <h3 className="font-black text-[11px] md:text-sm uppercase mb-1 tracking-tight line-clamp-1">{p.nombre}</h3>
-          {p.descripcion && <p className={`text-[10px] line-clamp-2 opacity-60 leading-relaxed font-medium`}>{p.descripcion}</p>}
+        <div className="p-2 md:p-5 pb-1 md:pb-2">
+          <h3 className="font-black text-[9px] md:text-sm uppercase mb-0.5 md:mb-1 tracking-tight line-clamp-2">{p.nombre}</h3>
+          {p.descripcion && <p className={`text-[8px] md:text-[10px] line-clamp-2 opacity-60 leading-relaxed font-medium hidden md:block`}>{p.descripcion}</p>}
         </div>
       </div>
-      <div className="p-4 md:p-5 pt-0 mt-auto flex flex-col">
-           <div className="bg-rose-600/10 p-2 md:p-3 rounded-xl border-l-4 border-rose-600 my-3 md:my-4">
-              <span className="text-xs md:text-base font-black text-rose-600">L {p.precio}</span>
+      <div className="p-2 md:p-5 pt-0 mt-auto flex flex-col">
+           <div className="bg-rose-600/10 p-1.5 md:p-3 rounded-lg md:rounded-xl border-l-4 border-rose-600 my-1.5 md:my-4">
+              <span className="text-[10px] md:text-base font-black text-rose-600">L {p.precio}</span>
            </div>
            <a href={`https://wa.me/${config.whatsapp?.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por: *${p.nombre}*`} 
               target="_blank" rel="noopener noreferrer" 
               onClick={(e) => e.stopPropagation()}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-[9px] md:text-[10px] uppercase tracking-widest">
-              <FaWhatsapp size={14} /> CONSULTAR
+              className="w-full py-2 md:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg md:rounded-xl font-black flex items-center justify-center gap-1 md:gap-2 transition-all shadow-lg active:scale-95 text-[8px] md:text-[10px] uppercase tracking-widest">
+              <FaWhatsapp size={10} className="md:hidden" /><FaWhatsapp size={14} className="hidden md:block" /> <span className="hidden md:inline">CONSULTAR</span><span className="md:hidden">WA</span>
            </a>
       </div>
     </div>
@@ -253,33 +253,67 @@ function CatalogoPublico() {
                   </button>
                 )}
              </div>
-             {(!searchTerm && (!categoriaActiva || categoriaActiva.id === 'todos')) ? (
-               // Vista con separadores de letra
-               <div className="px-2 space-y-10">
-                 {Object.entries(
-                   productosFiltrados.reduce((grupos, p) => {
-                     const letra = p.nombre.charAt(0).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                     if (!grupos[letra]) grupos[letra] = []
-                     grupos[letra].push(p)
-                     return grupos
-                   }, {})
-                 ).sort(([a], [b]) => a.localeCompare(b, 'es')).map(([letra, items]) => (
-                   <div key={letra}>
-                     <div className="flex items-center gap-4 mb-5">
-                       <span className={`text-4xl md:text-6xl font-black italic leading-none ${darkMode ? 'text-white/10' : 'text-zinc-200'}`}>{letra}</span>
-                       <div className={`flex-1 h-px ${darkMode ? 'bg-white/5' : 'bg-zinc-200'}`}></div>
-                     </div>
-                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10">
-                       {items.map((p) => (
-                         <ProductoCard key={p._extra_key || p.id} p={p} />
-                       ))}
-                     </div>
+             {(!searchTerm && (!categoriaActiva || categoriaActiva.id === 'todos')) ? (() => {
+               const grupos = Object.entries(
+                 productosFiltrados.reduce((acc, p) => {
+                   const letra = p.nombre.charAt(0).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                   if (!acc[letra]) acc[letra] = []
+                   acc[letra].push(p)
+                   return acc
+                 }, {})
+               ).sort(([a], [b]) => a.localeCompare(b, 'es'))
+               const letras = grupos.map(([l]) => l)
+               return (
+                 <div className="relative">
+                   {/* BARRA DE LETRAS LATERAL */}
+                   <div
+                     className="fixed right-1 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-0 md:hidden select-none"
+                     onTouchMove={(e) => {
+                       e.preventDefault()
+                       const touch = e.touches[0]
+                       const el = document.elementFromPoint(touch.clientX, touch.clientY)
+                       const letra = el?.dataset?.letra
+                       if (letra) {
+                         const target = document.getElementById(`letra-${letra}`)
+                         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                       }
+                     }}
+                   >
+                     {letras.map(l => (
+                       <button
+                         key={l}
+                         data-letra={l}
+                         onTouchStart={() => {
+                           const target = document.getElementById(`letra-${l}`)
+                           if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                         }}
+                         className={`w-5 h-5 flex items-center justify-center text-[9px] font-black rounded-full transition-colors ${darkMode ? 'text-white/40 active:text-rose-500' : 'text-zinc-400 active:text-rose-500'}`}
+                       >
+                         {l}
+                       </button>
+                     ))}
                    </div>
-                 ))}
-               </div>
-             ) : (
+                   {/* GRUPOS CON SEPARADORES */}
+                   <div className="px-2 space-y-10 pr-6 md:pr-2">
+                     {grupos.map(([letra, items]) => (
+                       <div key={letra} id={`letra-${letra}`}>
+                         <div className="flex items-center gap-4 mb-5">
+                           <span className={`text-4xl md:text-6xl font-black italic leading-none ${darkMode ? 'text-white/10' : 'text-zinc-200'}`}>{letra}</span>
+                           <div className={`flex-1 h-px ${darkMode ? 'bg-white/5' : 'bg-zinc-200'}`}></div>
+                         </div>
+                         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10">
+                           {items.map((p) => (
+                             <ProductoCard key={p._extra_key || p.id} p={p} />
+                           ))}
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               )
+             })() : (
                // Vista sin separadores (búsqueda o categoría específica)
-               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 px-2">
+               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10 px-2">
                  {productosFiltrados.map((p) => (
                    <ProductoCard key={p._extra_key || p.id} p={p} />
                  ))}
