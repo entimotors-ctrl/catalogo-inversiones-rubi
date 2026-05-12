@@ -159,6 +159,16 @@ function PanelAdmin() {
     setImagenesAdicionales(nuevasFotos.filter((_, i) => i !== nuevoIndex));
   }
 
+  const agregarMasDragFotos = (e) => {
+    const nuevas = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+    if (nuevas.length === 0) return;
+    const todas = [...dragFotos, ...nuevas];
+    setDragFotos(todas);
+    setImagenArchivo(todas[portadaIndex]);
+    setImagenesAdicionales(todas.filter((_, i) => i !== portadaIndex));
+    e.target.value = '';
+  }
+
   const handleGuardarCategoria = async (e) => {
     e.preventDefault()
     try {
@@ -306,6 +316,13 @@ function PanelAdmin() {
                                   </button>
                                 </div>
                               ))}
+                              {/* BOTÓN AGREGAR MÁS FOTOS */}
+                              <div className="relative aspect-square">
+                                <input type="file" id="drag-agregar-mas" accept="image/*" multiple onChange={agregarMasDragFotos} className="hidden" />
+                                <label htmlFor="drag-agregar-mas" className="flex w-full h-full items-center justify-center rounded-xl border-2 border-dashed border-white/20 hover:border-rose-500 text-white/40 hover:text-rose-500 transition-all cursor-pointer text-2xl font-black">
+                                  +
+                                </label>
+                              </div>
                             </div>
                           </div>
                         )}
