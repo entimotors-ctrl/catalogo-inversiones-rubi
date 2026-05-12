@@ -24,6 +24,7 @@ function CatalogoPublico() {
   const [darkMode, setDarkMode] = useState(true)
   const [loading, setLoading] = useState(true)
   const [productoSeleccionado, setProductoSeleccionado] = useState(null)
+  const [imagenActivaModal, setImagenActivaModal] = useState(null)
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -94,7 +95,7 @@ function CatalogoPublico() {
 
   const ProductoCard = ({ p }) => (
     <div className={`group flex flex-col rounded-2xl md:rounded-[2.5rem] overflow-hidden border transition-all duration-300 h-full ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
-      <div className="cursor-pointer" onClick={() => setProductoSeleccionado(p)}>
+      <div className="cursor-pointer" onClick={() => { setProductoSeleccionado(p); setImagenActivaModal(p.imagen_url); }}>
         <div className="aspect-square relative overflow-hidden bg-white p-1 md:p-4 flex items-center justify-center">
           <img src={p.imagen_url} alt={p.nombre} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
@@ -110,7 +111,7 @@ function CatalogoPublico() {
            <div className="bg-rose-600/10 p-1.5 md:p-3 rounded-lg md:rounded-xl border-l-4 border-rose-600 my-1.5 md:my-4">
               <span className="text-[10px] md:text-base font-black text-rose-600">L {p.precio}</span>
            </div>
-           <a href={`https://wa.me/${config.whatsapp?.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por: *${p.nombre}*`} 
+           <a href={`https://wa.me/${config.whatsapp?.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por: *${p.nombre}*%0APrecio: L ${p.precio}%0A${encodeURIComponent(p.imagen_url)}`} 
               target="_blank" rel="noopener noreferrer" 
               onClick={(e) => e.stopPropagation()}
               className="w-full py-2 md:py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg md:rounded-xl font-black flex items-center justify-center gap-1 md:gap-2 transition-all shadow-lg active:scale-95 text-[8px] md:text-[10px] uppercase tracking-widest">
@@ -166,7 +167,7 @@ function CatalogoPublico() {
             >
               {productosParaCarrusel.map((p) => (
                 <SwiperSlide key={p.id}>
-                  <div className="w-full h-full relative flex items-center bg-zinc-900 cursor-pointer" onClick={() => setProductoSeleccionado(p)}>
+                  <div className="w-full h-full relative flex items-center bg-zinc-900 cursor-pointer" onClick={() => { setProductoSeleccionado(p); setImagenActivaModal(p.imagen_url); }}>
                     <img src={p.imagen_url} className="absolute inset-0 w-full h-full object-cover opacity-20 blur-xl" alt="" loading="lazy" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10"></div>
                     <div className="relative z-20 flex w-full max-w-5xl mx-auto px-6 md:px-12 items-center gap-4 md:gap-10 h-full">
@@ -350,6 +351,10 @@ function CatalogoPublico() {
                  modules={[Pagination, Navigation]}
                  pagination={{ clickable: true }}
                  navigation={true}
+                 onSlideChange={(swiper) => {
+                   const todasLasImagenes = [productoSeleccionado.imagen_url, ...(productoSeleccionado.imagenes_extra?.map(i => i.imagen_url) || [])]
+                   setImagenActivaModal(todasLasImagenes[swiper.activeIndex] || productoSeleccionado.imagen_url)
+                 }}
                  className="w-full h-full modal-swiper"
                >
                   <SwiperSlide>
@@ -381,7 +386,7 @@ function CatalogoPublico() {
                    </p>
                  </>
                )}
-               <a href={`https://wa.me/${config.whatsapp?.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por este producto que vi en su catálogo:%0A*${productoSeleccionado.nombre}*%0APrecio: L ${productoSeleccionado.precio}`} 
+               <a href={`https://wa.me/${config.whatsapp?.replace(/\D/g, '')}?text=Hola Inversiones Rubi, consulto por este producto que vi en su catálogo:%0A*${productoSeleccionado.nombre}*%0APrecio: L ${productoSeleccionado.precio}%0A${encodeURIComponent(imagenActivaModal || productoSeleccionado.imagen_url)}`} 
                   target="_blank" rel="noopener noreferrer" 
                   className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-green-900/20 active:scale-95 text-xs md:text-sm uppercase tracking-widest">
                   <FaWhatsapp size={20} /> ENVIAR MENSAJE AL VENDEDOR
