@@ -29,6 +29,8 @@ function PanelAdmin() {
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' })
   const [loading, setLoading] = useState(true)
   const [categoriaAbierta, setCategoriaAbierta] = useState(null)
+  const [dragModalAbierto, setDragModalAbierto] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const BASE_URL = 'https://catalogo-inversiones-rubi.onrender.com';
 
@@ -109,6 +111,27 @@ function PanelAdmin() {
     setImagenArchivo(null);
     setImagenesAdicionales([]);
     setFotosExistentes([]);
+    setDragModalAbierto(false);
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      cancelarEdicion();
+      setImagenArchivo(file);
+      setDragModalAbierto(true);
+    }
   }
 
   const handleGuardarCategoria = async (e) => {
@@ -217,8 +240,57 @@ function PanelAdmin() {
             {subVistaInventario === 'productos' && (
               <>
                 <div className="col-span-1 md:col-span-2 lg:col-span-1 space-y-6 md:space-y-8">
+                  {/* MODAL DRAG & DROP */}
+                  {dragModalAbierto && (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+                      <div className={`${cardStyle} w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 md:p-8 relative`}>
+                        <button onClick={cancelarEdicion} className="absolute top-4 right-4 p-2 bg-zinc-800 hover:bg-rose-600 text-white rounded-full transition-colors">
+                          ✕
+                        </button>
+                        <h2 className="text-[9px] md:text-[10px] font-black uppercase text-rose-500 mb-6 tracking-[0.3em]">📸 Nuevo Producto</h2>
+                        {imagenArchivo && (
+                          <div className="mb-4 w-full aspect-square max-h-40 bg-white rounded-2xl overflow-hidden flex items-center justify-center p-2">
+                            <img src={URL.createObjectURL(imagenArchivo)} alt="Preview" className="max-h-full max-w-full object-contain" />
+                          </div>
+                        )}
+                        <form onSubmit={handleGuardarProducto} className="space-y-4">
+                          <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
+                            <option value="">Seleccionar Categoría...</option>
+                            {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+                          </select>
+                          <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
+                          <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
+                          <div className="space-y-2">
+                            <label className="text-[8px] font-black text-gray-500 uppercase ml-2 tracking-widest">Foto Portada</label>
+                            <input type="file" id="drag-file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
+                            <label htmlFor="drag-file-prod" className={btnVerde}>{imagenArchivo ? '✅ PORTADA LISTA' : '📂 CAMBIAR PORTADA'}</label>
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-[8px] font-black text-gray-500 uppercase ml-2 tracking-widest">Fotos adicionales</label>
+                            <input type="file" id="drag-files-extra" accept="image/*" multiple onChange={(e) => setImagenesAdicionales(e.target.files)} className="hidden" />
+                            <label htmlFor="drag-files-extra" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700`}>{imagenesAdicionales.length > 0 ? `✅ ${imagenesAdicionales.length} FOTOS` : '📸 AGREGAR MÁS FOTOS'}</label>
+                          </div>
+                          <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción..."></textarea>
+                          <button type="submit" className={btnVerde}>Subir al Catálogo</button>
+                          <button type="button" onClick={cancelarEdicion} className="w-full text-[9px] font-black text-gray-500 uppercase py-2">Cancelar</button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+
                   {/* FORM PRODUCTOS */}
-                  <div className={`${cardStyle} p-5 md:p-8`}>
+                  <div
+                    className={`${cardStyle} p-5 md:p-8 transition-all duration-200 relative ${isDragOver ? 'border-rose-500 ring-2 ring-rose-500/40 scale-[1.01]' : ''}`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
+                    {isDragOver && (
+                      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 rounded-[2rem] pointer-events-none">
+                        <span className="text-4xl mb-2">📸</span>
+                        <p className="text-rose-500 font-black uppercase tracking-widest text-sm">Suelta la foto aquí</p>
+                      </div>
+                    )}
                 <h2 className="text-[9px] md:text-[10px] font-black uppercase text-rose-500 mb-6 md:mb-8 tracking-[0.3em]">
                    {editandoProdId ? 'Actualizar Producto' : 'Publicar Producto'}
                 </h2>
