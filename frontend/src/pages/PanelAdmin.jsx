@@ -273,7 +273,7 @@ function PanelAdmin() {
               <button onClick={() => setSubVistaInventario('categorias')} className={`px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[9px] md:text-[10px] font-black tracking-widest transition-all ${subVistaInventario === 'categorias' ? 'bg-rose-600 text-white' : 'text-gray-500 hover:text-white'}`}>CATEGORÍAS</button>
             </div>
             <span className="text-[9px] md:text-[10px] bg-rose-600/20 text-rose-400 px-3 py-1.5 rounded-full font-black border border-rose-600/20">
-              {productos.reduce((total, p) => total + 1 + (p.imagenes_extra?.length || 0), 0)} TARJETAS EN CATÁLOGO
+              {productos.reduce((total, p) => total + 1 + (p.imagenes_extra?.length || 0), 0)} PRODUCTOS
             </span>
           </div>
         )}
