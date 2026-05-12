@@ -33,6 +33,7 @@ function PanelAdmin() {
   const [isDragOver, setIsDragOver] = useState(false)
   const [dragFotos, setDragFotos] = useState([])
   const [portadaIndex, setPortadaIndex] = useState(0)
+  const [portadaActualUrl, setPortadaActualUrl] = useState(null)
 
   const BASE_URL = 'https://catalogo-inversiones-rubi.onrender.com';
 
@@ -100,7 +101,8 @@ function PanelAdmin() {
     setCategoriaId(p.categoria_id.toString());
     setImagenArchivo(null);
     setImagenesAdicionales([]);
-    setFotosExistentes(p.imagenes_extra || []); 
+    setFotosExistentes(p.imagenes_extra || []);
+    setPortadaActualUrl(p.imagen_url || null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -116,6 +118,7 @@ function PanelAdmin() {
     setDragModalAbierto(false);
     setDragFotos([]);
     setPortadaIndex(0);
+    setPortadaActualUrl(null);
   }
 
   const handleDragOver = (e) => {
@@ -367,8 +370,21 @@ function PanelAdmin() {
                   <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
                   <div className="space-y-2">
                     <label className="text-[8px] md:text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Foto Portada (1)</label>
+                    {editandoProdId && portadaActualUrl && !imagenArchivo && (
+                      <div className="relative w-full aspect-square max-h-36 bg-white rounded-2xl overflow-hidden flex items-center justify-center p-2 border-2 border-rose-500/40">
+                        <img src={getImageUrl(portadaActualUrl)} alt="Portada actual" className="max-h-full max-w-full object-contain" />
+                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[7px] font-black text-white bg-rose-600 px-2 py-0.5 rounded-full uppercase">Portada actual</span>
+                      </div>
+                    )}
+                    {imagenArchivo && (
+                      <div className="relative w-full aspect-square max-h-36 bg-white rounded-2xl overflow-hidden flex items-center justify-center p-2 border-2 border-green-500/50">
+                        <img src={URL.createObjectURL(imagenArchivo)} alt="Nueva portada" className="max-h-full max-w-full object-contain" />
+                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[7px] font-black text-white bg-green-600 px-2 py-0.5 rounded-full uppercase">Nueva portada</span>
+                        <button type="button" onClick={() => setImagenArchivo(null)} className="absolute top-2 right-2 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[9px] font-black">✕</button>
+                      </div>
+                    )}
                     <input type="file" id="file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
-                    <label htmlFor="file-prod" className={btnVerde}>{imagenArchivo ? '✅ PORTADA LISTA' : '📂 ELEGIR PORTADA'}</label>
+                    <label htmlFor="file-prod" className={btnVerde}>{imagenArchivo ? '✅ PORTADA LISTA' : editandoProdId ? '🔄 CAMBIAR PORTADA' : '📂 ELEGIR PORTADA'}</label>
                   </div>
                   {editandoProdId && fotosExistentes.length > 0 && (
                     <div className="p-3 md:p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
