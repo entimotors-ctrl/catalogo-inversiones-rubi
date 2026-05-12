@@ -146,6 +146,19 @@ function PanelAdmin() {
     setImagenesAdicionales(dragFotos.filter((_, i) => i !== index));
   }
 
+  const eliminarDragFoto = (index) => {
+    const nuevasFotos = dragFotos.filter((_, i) => i !== index);
+    if (nuevasFotos.length === 0) {
+      cancelarEdicion();
+      return;
+    }
+    const nuevoIndex = portadaIndex >= nuevasFotos.length ? 0 : portadaIndex === index ? 0 : portadaIndex > index ? portadaIndex - 1 : portadaIndex;
+    setDragFotos(nuevasFotos);
+    setPortadaIndex(nuevoIndex);
+    setImagenArchivo(nuevasFotos[nuevoIndex]);
+    setImagenesAdicionales(nuevasFotos.filter((_, i) => i !== nuevoIndex));
+  }
+
   const handleGuardarCategoria = async (e) => {
     e.preventDefault()
     try {
@@ -267,23 +280,31 @@ function PanelAdmin() {
                             <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1">Toca una foto para usarla como portada</p>
                             <div className="grid grid-cols-4 gap-2">
                               {dragFotos.map((foto, idx) => (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => seleccionarPortada(idx)}
-                                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                                    portadaIndex === idx
-                                      ? 'border-rose-500 scale-105 shadow-lg shadow-rose-500/30'
-                                      : 'border-white/10 opacity-60 hover:opacity-90'
-                                  }`}
-                                >
-                                  <img src={URL.createObjectURL(foto)} alt={`foto-${idx}`} className="w-full h-full object-cover" />
-                                  {portadaIndex === idx && (
-                                    <div className="absolute inset-0 bg-rose-600/20 flex items-end justify-center pb-1">
-                                      <span className="text-[7px] font-black text-white bg-rose-600 px-2 py-0.5 rounded-full uppercase">Portada</span>
-                                    </div>
-                                  )}
-                                </button>
+                                <div key={idx} className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={() => seleccionarPortada(idx)}
+                                    className={`relative w-full aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                                      portadaIndex === idx
+                                        ? 'border-rose-500 scale-105 shadow-lg shadow-rose-500/30'
+                                        : 'border-white/10 opacity-60 hover:opacity-90'
+                                    }`}
+                                  >
+                                    <img src={URL.createObjectURL(foto)} alt={`foto-${idx}`} className="w-full h-full object-cover" />
+                                    {portadaIndex === idx && (
+                                      <div className="absolute inset-0 bg-rose-600/20 flex items-end justify-center pb-1">
+                                        <span className="text-[7px] font-black text-white bg-rose-600 px-2 py-0.5 rounded-full uppercase">Portada</span>
+                                      </div>
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => eliminarDragFoto(idx)}
+                                    className="absolute -top-1.5 -right-1.5 z-10 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center text-[9px] font-black shadow-md transition-colors"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
                               ))}
                             </div>
                           </div>
