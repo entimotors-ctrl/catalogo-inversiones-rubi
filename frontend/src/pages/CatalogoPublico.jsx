@@ -21,6 +21,7 @@ function CatalogoPublico() {
   const [config, setConfig] = useState({ whatsapp: '', categoria_excluida: null })
   const [categoriaActiva, setCategoriaActiva] = useState({ id: 'todos', nombre: 'Todos los productos' })
   const [searchTerm, setSearchTerm] = useState('')
+  const [paginaActual, setPaginaActual] = useState(1)
   const [darkMode, setDarkMode] = useState(true)
   const [loading, setLoading] = useState(true)
   const [productoSeleccionado, setProductoSeleccionado] = useState(null)
@@ -61,6 +62,11 @@ function CatalogoPublico() {
   }, [productos, config.categoria_excluida]);
 
   const productosPorCategoria = null;
+  const PRODUCTOS_POR_PAGINA = 35
+
+  useEffect(() => {
+    setPaginaActual(1)
+  }, [searchTerm, categoriaActiva])
 
   const productosFiltrados = useMemo(() => {
     const term = searchTerm.toLowerCase()
@@ -79,6 +85,77 @@ function CatalogoPublico() {
     })
     return expandidos.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
   }, [productos, categoriaActiva, searchTerm])
+
+  const totalPaginas = Math.max(1, Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA))
+
+  const productosPaginados = useMemo(() => {
+    const start = (paginaActual - 1) * PRODUCTOS_POR_PAGINA
+    return productosFiltrados.slice(start, start + PRODUCTOS_POR_PAGINA)
+  }, [productosFiltrados, paginaActual])
+
+  const gruposPorLetra = useMemo(() => {
+    const grupos = Object.entries(
+      productosPaginados.reduce((acc, p) => {
+        const letra = p.nombre.charAt(0).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        if (!acc[letra]) acc[letra] = []
+        acc[letra].push(p)
+        return acc
+      }, {})
+    ).sort(([a], [b]) => a.localeCompare(b, 'es'))
+    return grupos
+  }, [productosPaginados])
+
+  const paginasVisibles = useMemo(() => {
+    const delta = 2
+    const paginas = []
+    const inicio = Math.max(1, paginaActual - delta)
+    const fin = Math.min(totalPaginas, paginaActual + delta)
+
+    if (inicio > 1) paginas.push(1)
+    if (inicio > 2) paginas.push('...')
+    for (let page = inicio; page <= fin; page += 1) paginas.push(page)
+    if (fin < totalPaginas - 1) paginas.push('...')
+    if (fin < totalPaginas) paginas.push(totalPaginas)
+
+    return paginas
+  }, [paginaActual, totalPaginas])
+
+  const renderPaginacion = () => (
+    <div className="flex flex-wrap items-center justify-center gap-2 py-6">
+      <button
+        type="button"
+        disabled={paginaActual === 1}
+        onClick={() => setPaginaActual(prev => Math.max(1, prev - 1))}
+        className="px-4 py-2 rounded-full border transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-white/10 bg-zinc-900 text-white hover:bg-rose-600"
+      >
+        Anterior
+      </button>
+
+      {paginasVisibles.map((page, index) => (
+        typeof page === 'number' ? (
+          <button
+            key={page}
+            type="button"
+            onClick={() => setPaginaActual(page)}
+            className={`min-w-[38px] px-3 py-2 rounded-full border transition-colors ${page === paginaActual ? 'bg-rose-600 text-white border-rose-600' : 'border-white/10 bg-zinc-900 text-white hover:bg-zinc-800'}`}
+          >
+            {page}
+          </button>
+        ) : (
+          <span key={`elipsis-${index}`} className="px-3 py-2 text-white/50">...</span>
+        )
+      ))}
+
+      <button
+        type="button"
+        disabled={paginaActual === totalPaginas}
+        onClick={() => setPaginaActual(prev => Math.min(totalPaginas, prev + 1))}
+        className="px-4 py-2 rounded-full border transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-white/10 bg-zinc-900 text-white hover:bg-rose-600"
+      >
+        Siguiente
+      </button>
+    </div>
+  )
 
   if (loading) {
     return (
@@ -254,75 +331,65 @@ function CatalogoPublico() {
                   </button>
                 )}
              </div>
-             {(!searchTerm && (!categoriaActiva || categoriaActiva.id === 'todos')) ? (() => {
-               const grupos = Object.entries(
-                 productosFiltrados.reduce((acc, p) => {
-                   const letra = p.nombre.charAt(0).toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                   if (!acc[letra]) acc[letra] = []
-                   acc[letra].push(p)
-                   return acc
-                 }, {})
-               ).sort(([a], [b]) => a.localeCompare(b, 'es'))
-               const letras = grupos.map(([l]) => l)
-               return (
-                 <div className="relative">
-                   {/* BARRA DE LETRAS LATERAL */}
-                   <div
-                     className="fixed right-1 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-0 md:hidden select-none"
-                     onTouchMove={(e) => {
-                       e.preventDefault()
-                       const touch = e.touches[0]
-                       const el = document.elementFromPoint(touch.clientX, touch.clientY)
-                       const letra = el?.dataset?.letra
-                       if (letra) {
-                         const target = document.getElementById(`letra-${letra}`)
+             {(!searchTerm && (!categoriaActiva || categoriaActiva.id === 'todos')) ? (
+               <div className="relative">
+                 {/* BARRA DE LETRAS LATERAL */}
+                 <div
+                   className="fixed right-1 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-0 md:hidden select-none"
+                   onTouchMove={(e) => {
+                     e.preventDefault()
+                     const touch = e.touches[0]
+                     const el = document.elementFromPoint(touch.clientX, touch.clientY)
+                     const letra = el?.dataset?.letra
+                     if (letra) {
+                       const target = document.getElementById(`letra-${letra}`)
+                       if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                     }
+                   }}
+                 >
+                   {gruposPorLetra.map(([l]) => (
+                     <button
+                       key={l}
+                       data-letra={l}
+                       onTouchStart={() => {
+                         const target = document.getElementById(`letra-${l}`)
                          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                       }
-                     }}
-                   >
-                     {letras.map(l => (
-                       <button
-                         key={l}
-                         data-letra={l}
-                         onTouchStart={() => {
-                           const target = document.getElementById(`letra-${l}`)
-                           if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                         }}
-                         className={`w-5 h-5 flex items-center justify-center text-[9px] font-black rounded-full transition-colors ${darkMode ? 'text-white/40 active:text-rose-500' : 'text-zinc-400 active:text-rose-500'}`}
-                       >
-                         {l}
-                       </button>
-                     ))}
-                   </div>
-                   {/* GRUPOS CON SEPARADORES */}
-                   <div className="px-2 space-y-10 pr-6 md:pr-2">
-                     {grupos.map(([letra, items]) => (
-                       <div key={letra} id={`letra-${letra}`}>
-                         <div className="flex items-center gap-4 mb-5">
-                           <span className={`text-4xl md:text-6xl font-black italic leading-none ${darkMode ? 'text-white/10' : 'text-zinc-200'}`}>{letra}</span>
-                           <div className={`flex-1 h-px ${darkMode ? 'bg-white/5' : 'bg-zinc-200'}`}></div>
-                         </div>
-                         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10">
-                           {items.map((p) => (
-                             <ProductoCard key={p._extra_key || p.id} p={p} />
-                           ))}
-                         </div>
-                       </div>
-                     ))}
-                   </div>
+                       }}
+                       className={`w-5 h-5 flex items-center justify-center text-[9px] font-black rounded-full transition-colors ${darkMode ? 'text-white/40 active:text-rose-500' : 'text-zinc-400 active:text-rose-500'}`}
+                     >
+                       {l}
+                     </button>
+                   ))}
                  </div>
-               )
-             })() : (
+                 {/* GRUPOS CON SEPARADORES */}
+                 <div className="px-2 space-y-10 pr-6 md:pr-2">
+                   {gruposPorLetra.map(([letra, items]) => (
+                     <div key={letra} id={`letra-${letra}`}>
+                       <div className="flex items-center gap-4 mb-5">
+                         <span className={`text-4xl md:text-6xl font-black italic leading-none ${darkMode ? 'text-white/10' : 'text-zinc-200'}`}>{letra}</span>
+                         <div className={`flex-1 h-px ${darkMode ? 'bg-white/5' : 'bg-zinc-200'}`}></div>
+                       </div>
+                       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10">
+                         {items.map((p) => (
+                           <ProductoCard key={p._extra_key || p.id} p={p} />
+                         ))}
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+             ) : (
                // Vista sin separadores (búsqueda o categoría específica)
                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10 px-2">
-                 {productosFiltrados.map((p) => (
+                 {productosPaginados.map((p) => (
                    <ProductoCard key={p._extra_key || p.id} p={p} />
                  ))}
                </div>
              )}
-             {productosFiltrados.length === 0 && (
+             {(productosFiltrados.length === 0) && (
                <div className="text-center py-32 opacity-20 font-black uppercase tracking-[0.5em] text-xl">Sin resultados</div>
              )}
+             {productosFiltrados.length > 0 && totalPaginas > 1 && renderPaginacion()}
           </div>
         )}
 
