@@ -2,6 +2,39 @@ import { useState, useEffect } from 'react'
 import api from '../services/api'
 import logo1 from '../assets/logo1.png'
 
+const CONECTORES = new Set(['para', 'con', 'del', 'las', 'los', 'una', 'uno', 'este', 'esta', 'the', 'and', 'for', 'sin']);
+
+// Sugiere una categoría para un nombre de producto NUEVO evaluando cada
+// palabra por separado contra el inventario ya existente: si alguna palabra
+// concentra sus coincidencias claramente en una sola categoría, la sugiere.
+// No usa IA ni servicios externos, solo el inventario propio (reutilizado
+// tanto por el formulario normal como por la Carga Masiva).
+function sugerirCategoria(nombreProducto, productos) {
+  const palabras = nombreProducto.trim().toLowerCase().split(/\s+/)
+    .filter(w => w.length >= 4 && !CONECTORES.has(w));
+  if (palabras.length === 0) return null;
+
+  let mejorSugerencia = null;
+  palabras.forEach(palabra => {
+    const coincidencias = productos.filter(p => p.nombre.toLowerCase().includes(palabra));
+    if (coincidencias.length < 2) return; // evita adivinar con un solo parecido
+
+    const conteo = {};
+    coincidencias.forEach(p => { conteo[p.categoria_id] = (conteo[p.categoria_id] || 0) + 1; });
+    const [catId, votos] = Object.entries(conteo).sort((a, b) => b[1] - a[1])[0];
+    const confianza = votos / coincidencias.length;
+
+    const esMejor = !mejorSugerencia
+      || confianza > mejorSugerencia.confianza
+      || (confianza === mejorSugerencia.confianza && coincidencias.length > mejorSugerencia.total);
+    if (esMejor) {
+      mejorSugerencia = { catId, confianza, total: coincidencias.length };
+    }
+  });
+
+  return mejorSugerencia && mejorSugerencia.confianza >= 0.6 ? mejorSugerencia.catId : null;
+}
+
 function PanelAdmin() {
   const [vistaActiva, setVistaActiva] = useState('inventario')
   const [subVistaInventario, setSubVistaInventario] = useState('productos')
@@ -34,6 +67,13 @@ function PanelAdmin() {
   const [dragFotos, setDragFotos] = useState([])
   const [portadaIndex, setPortadaIndex] = useState(0)
   const [portadaActualUrl, setPortadaActualUrl] = useState(null)
+  const [categoriaSugerida, setCategoriaSugerida] = useState(false)
+
+  // Carga Masiva: varias fotos = varios productos distintos (uno por foto)
+  const [cargaMasivaAbierta, setCargaMasivaAbierta] = useState(false)
+  const [filasMasivas, setFilasMasivas] = useState([])
+  const [publicandoMasivo, setPublicandoMasivo] = useState(false)
+  const [isDragOverMasivo, setIsDragOverMasivo] = useState(false)
 
   const BASE_URL = 'https://catalogo-inversiones-rubi.onrender.com';
 
@@ -53,6 +93,18 @@ function PanelAdmin() {
 
   useEffect(() => { cargarDatos() }, [])
 
+  // Sugerencia automática de categoría para el formulario principal: mientras
+  // se escribe el nombre de un producto NUEVO (sin categoría elegida
+  // todavía), usa el inventario ya cargado para autocompletarla.
+  useEffect(() => {
+    if (editandoProdId || categoriaId) return; // edición o ya hay categoría: no tocar
+    const sugerida = sugerirCategoria(nombreProducto, productos);
+    if (sugerida) {
+      setCategoriaId(sugerida);
+      setCategoriaSugerida(true);
+    }
+  }, [nombreProducto, categoriaId, editandoProdId, productos]);
+
   const mostrarMensaje = (texto, tipo) => {
     setMensaje({ texto, tipo });
     setTimeout(() => setMensaje({ texto: '', tipo: '' }), 4000);
@@ -68,6 +120,148 @@ function PanelAdmin() {
     } catch (error) { mostrarMensaje("Error al eliminar foto", "error"); }
   }
 
+  // Mueve una foto de la galería un puesto antes o después, y guarda
+  // el nuevo orden en el backend (para que el catálogo público lo respete).
+  const moverFotoExtra = async (index, direccion) => {
+    const destino = index + direccion;
+    if (destino < 0 || destino >= fotosExistentes.length) return;
+
+    const nuevasFotos = [...fotosExistentes];
+    [nuevasFotos[index], nuevasFotos[destino]] = [nuevasFotos[destino], nuevasFotos[index]];
+    setFotosExistentes(nuevasFotos);
+
+    try {
+      await api.put(`/productos/${editandoProdId}/imagenes/orden`, {
+        orden: nuevasFotos.map(f => f.id),
+      });
+    } catch (error) {
+      mostrarMensaje("Error al guardar el nuevo orden", "error");
+    }
+  }
+
+  // Convierte una foto de la galería en la portada del producto,
+  // intercambiando su lugar con la portada actual.
+  const hacerPortada = async (foto) => {
+    try {
+      await api.put(`/productos/${editandoProdId}/portada`, { fotoId: foto.id });
+      setFotosExistentes(fotosExistentes.map(f =>
+        f.id === foto.id ? { ...f, imagen_url: portadaActualUrl } : f
+      ));
+      setPortadaActualUrl(foto.imagen_url);
+      mostrarMensaje("Portada actualizada", "exito");
+      cargarDatos();
+    } catch (error) {
+      mostrarMensaje("Error al cambiar la portada", "error");
+    }
+  }
+
+  // --- CARGA MASIVA: varias fotos = varios productos (uno por foto) ---
+
+  const abrirCargaMasiva = () => {
+    setFilasMasivas([]);
+    setCargaMasivaAbierta(true);
+  }
+
+  const cerrarCargaMasiva = () => {
+    filasMasivas.forEach(f => URL.revokeObjectURL(f.previewUrl));
+    setFilasMasivas([]);
+    setCargaMasivaAbierta(false);
+  }
+
+  const agregarFotosMasivas = (fileList) => {
+    const nuevas = Array.from(fileList)
+      .filter(f => f.type.startsWith('image/'))
+      .map(file => ({
+        id: crypto.randomUUID(),
+        file,
+        previewUrl: URL.createObjectURL(file),
+        nombre: '',
+        precio: '',
+        categoriaId: '',
+        categoriaSugerida: false,
+        estado: 'pendiente', // pendiente | subiendo | hecho | error
+        errorMsg: '',
+      }));
+    setFilasMasivas(prev => [...prev, ...nuevas]);
+  }
+
+  const handleDragOverMasivo = (e) => {
+    e.preventDefault();
+    setIsDragOverMasivo(true);
+  }
+
+  const handleDragLeaveMasivo = () => {
+    setIsDragOverMasivo(false);
+  }
+
+  const handleDropMasivo = (e) => {
+    e.preventDefault();
+    setIsDragOverMasivo(false);
+    agregarFotosMasivas(e.dataTransfer.files);
+  }
+
+  const actualizarFilaMasiva = (id, campos) => {
+    setFilasMasivas(prev => prev.map(f => {
+      if (f.id !== id) return f;
+      const actualizada = { ...f, ...campos };
+      // Autosugerir categoría al escribir el nombre, igual que en el formulario normal.
+      if ('nombre' in campos && !f.categoriaId) {
+        const sugerida = sugerirCategoria(campos.nombre, productos);
+        if (sugerida) {
+          actualizada.categoriaId = sugerida;
+          actualizada.categoriaSugerida = true;
+        }
+      }
+      if ('categoriaId' in campos) {
+        actualizada.categoriaSugerida = false; // el admin la cambió a mano
+      }
+      return actualizada;
+    }));
+  }
+
+  const quitarFilaMasiva = (id) => {
+    setFilasMasivas(prev => {
+      const fila = prev.find(f => f.id === id);
+      if (fila) URL.revokeObjectURL(fila.previewUrl);
+      return prev.filter(f => f.id !== id);
+    });
+  }
+
+  const publicarTodoMasivo = async () => {
+    setPublicandoMasivo(true);
+    let exitos = 0;
+    let fallos = 0;
+
+    // Se sube de a una para no saturar la base de datos (pool limitado) ni Supabase Storage.
+    for (const fila of filasMasivas) {
+      if (!fila.nombre.trim() || !fila.precio || !fila.categoriaId) {
+        setFilasMasivas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'error', errorMsg: 'Faltan datos (nombre, precio o categoría)' } : f));
+        fallos++;
+        continue;
+      }
+
+      setFilasMasivas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'subiendo' } : f));
+      try {
+        const formData = new FormData();
+        formData.append('nombre', fila.nombre);
+        formData.append('descripcion', '');
+        formData.append('precio', fila.precio);
+        formData.append('categoria_id', parseInt(fila.categoriaId));
+        formData.append('imagen', fila.file);
+        await api.post('/productos', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        setFilasMasivas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'hecho' } : f));
+        exitos++;
+      } catch (error) {
+        setFilasMasivas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'error', errorMsg: 'Error al subir' } : f));
+        fallos++;
+      }
+    }
+
+    setPublicandoMasivo(false);
+    mostrarMensaje(`Carga masiva: ${exitos} publicados, ${fallos} con error`, fallos > 0 ? 'error' : 'exito');
+    cargarDatos();
+  }
+
   const handleGuardarProducto = async (e) => {
     e.preventDefault();
     if (!categoriaId) return mostrarMensaje('Selecciona una categoría', 'error');
@@ -77,7 +271,12 @@ function PanelAdmin() {
       formData.append('descripcion', descripcionProducto);
       formData.append('precio', precioProducto);
       formData.append('categoria_id', parseInt(categoriaId));
-      if (imagenArchivo) formData.append('imagen', imagenArchivo);
+      if (imagenArchivo) {
+        formData.append('imagen', imagenArchivo);
+      } else if (!editandoProdId && portadaActualUrl) {
+        // Duplicar producto: reutiliza la imagen del producto original sin resubirla.
+        formData.append('imagen_url', portadaActualUrl);
+      }
       if (imagenesAdicionales.length > 0) {
         Array.from(imagenesAdicionales).forEach((file) => { formData.append('imagenes_adicionales', file); });
       }
@@ -103,13 +302,28 @@ function PanelAdmin() {
     setImagenesAdicionales([]);
     setFotosExistentes(p.imagenes_extra || []);
     setPortadaActualUrl(p.imagen_url || null);
+    setCategoriaSugerida(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const prepararDuplicado = (p) => {
+    setEditandoProdId(null); // es un producto NUEVO, no una edición
+    setNombreProducto(p.nombre + ' (copia)');
+    setPrecioProducto(p.precio);
+    setDescripcionProducto(p.descripcion || '');
+    setCategoriaId(p.categoria_id.toString());
+    setImagenArchivo(null);
+    setImagenesAdicionales([]);
+    setFotosExistentes([]); // no se duplica la galería de ángulos, solo la portada
+    setPortadaActualUrl(p.imagen_url || null);
+    setCategoriaSugerida(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   const cancelarEdicion = () => {
     setEditandoProdId(null);
-    setNombreProducto(''); 
-    setPrecioProducto(''); 
+    setNombreProducto('');
+    setPrecioProducto('');
     setDescripcionProducto('');
     setCategoriaId('');
     setImagenArchivo(null);
@@ -119,6 +333,7 @@ function PanelAdmin() {
     setDragFotos([]);
     setPortadaIndex(0);
     setPortadaActualUrl(null);
+    setCategoriaSugerida(false);
   }
 
   const handleDragOver = (e) => {
@@ -226,6 +441,7 @@ function PanelAdmin() {
 
   const handleLogout = () => {
     localStorage.removeItem('auth')
+    localStorage.removeItem('adminKey')
     window.location.href = '/login'
   }
 
@@ -275,6 +491,11 @@ function PanelAdmin() {
             <span className="text-[9px] md:text-[10px] bg-rose-600/20 text-rose-400 px-3 py-1.5 rounded-full font-black border border-rose-600/20">
               {productos.reduce((total, p) => total + 1 + (p.imagenes_extra?.length || 0), 0)} PRODUCTOS
             </span>
+            {subVistaInventario === 'productos' && (
+              <button onClick={abrirCargaMasiva} className="px-4 md:px-6 py-2 md:py-2.5 rounded-xl text-[9px] md:text-[10px] font-black tracking-widest bg-amber-600/20 text-amber-500 border border-amber-600/20 hover:bg-amber-600 hover:text-white transition-all">
+                📦 CARGA MASIVA
+              </button>
+            )}
           </div>
         )}
 
@@ -336,12 +557,17 @@ function PanelAdmin() {
                         )}
 
                         <form onSubmit={handleGuardarProducto} className="space-y-4">
-                          <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
-                            <option value="">Seleccionar Categoría...</option>
-                            {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
-                          </select>
+                          <div className="space-y-1">
+                            <select required value={categoriaId} onChange={(e) => { setCategoriaId(e.target.value); setCategoriaSugerida(false); }} className={inputStyle}>
+                              <option value="">Seleccionar Categoría...</option>
+                              {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+                            </select>
+                            {categoriaSugerida && (
+                              <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest ml-2">💡 Categoría sugerida según productos parecidos — verificá que sea correcta</p>
+                            )}
+                          </div>
                           <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
-                          <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
+                          <input type="number" step="0.01" min="0" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
                           <textarea rows="3" value={descripcionProducto} onChange={(e) => setDescripcionProducto(e.target.value)} className={inputStyle} placeholder="Descripción..."></textarea>
                           <button type="submit" className={btnVerde}>Subir al Catálogo</button>
                           <button type="button" onClick={cancelarEdicion} className="w-full text-[9px] font-black text-gray-500 uppercase py-2">Cancelar</button>
@@ -364,21 +590,26 @@ function PanelAdmin() {
                       </div>
                     )}
                 <h2 className="text-[9px] md:text-[10px] font-black uppercase text-rose-500 mb-6 md:mb-8 tracking-[0.3em]">
-                   {editandoProdId ? 'Actualizar Producto' : 'Publicar Producto'}
+                   {editandoProdId ? 'Actualizar Producto' : portadaActualUrl ? 'Publicar Copia del Producto' : 'Publicar Producto'}
                 </h2>
                 <form onSubmit={handleGuardarProducto} className="space-y-4 md:space-y-5">
-                  <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className={inputStyle}>
-                    <option value="">Seleccionar Categoría...</option>
-                    {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
-                  </select>
+                  <div className="space-y-1">
+                    <select required value={categoriaId} onChange={(e) => { setCategoriaId(e.target.value); setCategoriaSugerida(false); }} className={inputStyle}>
+                      <option value="">Seleccionar Categoría...</option>
+                      {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+                    </select>
+                    {categoriaSugerida && (
+                      <p className="text-[8px] md:text-[9px] font-black text-amber-500 uppercase tracking-widest ml-2">💡 Categoría sugerida según productos parecidos — verificá que sea correcta</p>
+                    )}
+                  </div>
                   <input type="text" required value={nombreProducto} onChange={(e) => setNombreProducto(e.target.value)} className={inputStyle} placeholder="Nombre del artículo" />
-                  <input type="text" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
+                  <input type="number" step="0.01" min="0" required value={precioProducto} onChange={(e) => setPrecioProducto(e.target.value)} className={inputStyle} placeholder="Precio" />
                   <div className="space-y-2">
                     <label className="text-[8px] md:text-[9px] font-black text-gray-500 uppercase ml-2 tracking-widest">Foto Portada (1)</label>
-                    {editandoProdId && portadaActualUrl && !imagenArchivo && (
+                    {portadaActualUrl && !imagenArchivo && (
                       <div className="relative w-full aspect-square max-h-36 bg-white rounded-2xl overflow-hidden flex items-center justify-center p-2 border-2 border-rose-500/40">
                         <img src={getImageUrl(portadaActualUrl)} alt="Portada actual" className="max-h-full max-w-full object-contain" />
-                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[7px] font-black text-white bg-rose-600 px-2 py-0.5 rounded-full uppercase">Portada actual</span>
+                        <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[7px] font-black text-white bg-rose-600 px-2 py-0.5 rounded-full uppercase">{editandoProdId ? 'Portada actual' : 'Portada duplicada'}</span>
                       </div>
                     )}
                     {imagenArchivo && (
@@ -389,16 +620,23 @@ function PanelAdmin() {
                       </div>
                     )}
                     <input type="file" id="file-prod" accept="image/*" onChange={(e) => setImagenArchivo(e.target.files[0])} className="hidden" />
-                    <label htmlFor="file-prod" className={btnVerde}>{imagenArchivo ? '✅ PORTADA LISTA' : editandoProdId ? '🔄 CAMBIAR PORTADA' : '📂 ELEGIR PORTADA'}</label>
+                    <label htmlFor="file-prod" className={btnVerde}>{imagenArchivo ? '✅ PORTADA LISTA' : portadaActualUrl ? '🔄 CAMBIAR PORTADA' : '📂 ELEGIR PORTADA'}</label>
                   </div>
                   {editandoProdId && fotosExistentes.length > 0 && (
                     <div className="p-3 md:p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
-                      <label className="text-[8px] md:text-[9px] font-black text-rose-500 uppercase tracking-widest">Fotos actuales en galería</label>
+                      <label className="text-[8px] md:text-[9px] font-black text-rose-500 uppercase tracking-widest">Fotos actuales en galería (usá ◀ ▶ para reordenar, ⭐ para hacerla portada)</label>
                       <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                        {fotosExistentes.map((foto) => (
-                          <div key={foto.id} className="relative aspect-square bg-white rounded-lg overflow-hidden group">
-                            <img src={getImageUrl(foto.imagen_url)} className="w-full h-full object-cover" alt="" />
-                            <button type="button" onClick={() => handleEliminarFotoExtra(foto.id)} className="absolute inset-0 bg-rose-600/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold">✕</button>
+                        {fotosExistentes.map((foto, index) => (
+                          <div key={foto.id} className="space-y-1">
+                            <div className="relative aspect-square bg-white rounded-lg overflow-hidden">
+                              <img src={getImageUrl(foto.imagen_url)} className="w-full h-full object-cover" alt="" />
+                            </div>
+                            <div className="flex items-center justify-between gap-0.5 bg-zinc-900 rounded-lg p-0.5">
+                              <button type="button" disabled={index === 0} onClick={() => moverFotoExtra(index, -1)} className="flex-1 py-1 text-[10px] text-white/70 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed">◀</button>
+                              <button type="button" onClick={() => hacerPortada(foto)} title="Hacer portada" className="flex-1 py-1 text-[10px] text-amber-500 hover:text-amber-400">⭐</button>
+                              <button type="button" disabled={index === fotosExistentes.length - 1} onClick={() => moverFotoExtra(index, 1)} className="flex-1 py-1 text-[10px] text-white/70 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed">▶</button>
+                              <button type="button" onClick={() => handleEliminarFotoExtra(foto.id)} title="Eliminar" className="flex-1 py-1 text-[10px] text-rose-500 hover:text-rose-400">✕</button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -483,6 +721,7 @@ function PanelAdmin() {
                                 {/* BOTONES */}
                                 <div className="flex gap-2 w-full md:w-auto">
                                   <button onClick={() => prepararEdicionProd(p)} className="flex-1 md:flex-none bg-blue-600/10 text-blue-500 p-2 md:p-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all font-bold text-[9px] md:text-xs">✎ Editar</button>
+                                  <button onClick={() => prepararDuplicado(p)} className="flex-1 md:flex-none bg-amber-600/10 text-amber-500 p-2 md:p-2.5 rounded-xl hover:bg-amber-600 hover:text-white transition-all font-bold text-[9px] md:text-xs">⎘ Duplicar</button>
                                   <button onClick={() => handleEliminarProducto(p.id)} className="flex-1 md:flex-none bg-rose-600/10 text-rose-500 p-2 md:p-2.5 rounded-xl hover:bg-rose-600 hover:text-white transition-all font-bold text-[9px] md:text-xs">✕ Borrar</button>
                                 </div>
                               </div>
@@ -571,6 +810,78 @@ function PanelAdmin() {
               </div>
               <button className={btnVerde}>Guardar Cambios</button>
             </form>
+          </div>
+        )}
+
+        {/* MODAL: CARGA MASIVA (varias fotos = varios productos) */}
+        {cargaMasivaAbierta && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <div
+              className={`${cardStyle} w-full max-w-4xl max-h-[90vh] overflow-y-auto p-5 md:p-8 relative transition-all ${isDragOverMasivo ? 'border-amber-500 ring-2 ring-amber-500/40' : ''}`}
+              onDragOver={handleDragOverMasivo}
+              onDragLeave={handleDragLeaveMasivo}
+              onDrop={handleDropMasivo}
+            >
+              {isDragOverMasivo && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 rounded-[2rem] pointer-events-none">
+                  <span className="text-4xl mb-2">📸</span>
+                  <p className="text-amber-500 font-black uppercase tracking-widest text-sm">Soltá las fotos aquí</p>
+                </div>
+              )}
+              <button onClick={cerrarCargaMasiva} className="absolute top-4 right-4 p-2 bg-zinc-800 hover:bg-rose-600 text-white rounded-full transition-colors">✕</button>
+              <h2 className="text-[9px] md:text-[10px] font-black uppercase text-amber-500 mb-2 tracking-[0.3em]">📦 Carga Masiva</h2>
+              <p className="text-[10px] text-gray-400 mb-6">Cada foto se convierte en un producto distinto. Completá nombre y precio de cada uno — la categoría se sugiere sola cuando se puede. Podés arrastrar y soltar las fotos directamente acá.</p>
+
+              {filasMasivas.length === 0 ? (
+                <div>
+                  <input type="file" id="carga-masiva-input" accept="image/*" multiple onChange={(e) => agregarFotosMasivas(e.target.files)} className="hidden" />
+                  <label htmlFor="carga-masiva-input" className="flex flex-col items-center justify-center gap-3 py-16 border-2 border-dashed border-white/20 hover:border-amber-500 rounded-2xl cursor-pointer text-white/40 hover:text-amber-500 transition-all">
+                    <span className="text-4xl">📸</span>
+                    <span className="font-black uppercase tracking-widest text-xs">Elegí o arrastrá todas las fotos</span>
+                  </label>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    {filasMasivas.map((fila) => (
+                      <div key={fila.id} className={`flex flex-col sm:flex-row gap-3 p-3 rounded-xl border ${fila.estado === 'hecho' ? 'border-green-600/40 bg-green-900/10' : fila.estado === 'error' ? 'border-rose-600/40 bg-rose-900/10' : 'border-white/5 bg-black/30'}`}>
+                        <div className="w-full sm:w-28 h-40 sm:h-28 flex-shrink-0 bg-white rounded-lg overflow-hidden flex items-center justify-center p-1.5">
+                          <img src={fila.previewUrl} alt="" className="max-w-full max-h-full object-contain" />
+                        </div>
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <input type="text" placeholder="Nombre" value={fila.nombre} disabled={fila.estado === 'subiendo' || fila.estado === 'hecho'}
+                            onChange={(e) => actualizarFilaMasiva(fila.id, { nombre: e.target.value })} className={`${inputStyle} !py-2`} />
+                          <input type="number" step="0.01" min="0" placeholder="Precio" value={fila.precio} disabled={fila.estado === 'subiendo' || fila.estado === 'hecho'}
+                            onChange={(e) => actualizarFilaMasiva(fila.id, { precio: e.target.value })} className={`${inputStyle} !py-2`} />
+                          <div className="space-y-0.5">
+                            <select value={fila.categoriaId} disabled={fila.estado === 'subiendo' || fila.estado === 'hecho'}
+                              onChange={(e) => actualizarFilaMasiva(fila.id, { categoriaId: e.target.value })} className={`${inputStyle} !py-2`}>
+                              <option value="">Categoría...</option>
+                              {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+                            </select>
+                            {fila.categoriaSugerida && <p className="text-[7px] font-black text-amber-500 uppercase ml-1">💡 sugerida</p>}
+                          </div>
+                        </div>
+                        <div className="flex sm:flex-col items-center justify-center gap-2 sm:w-20 flex-shrink-0">
+                          {fila.estado === 'pendiente' && <button type="button" onClick={() => quitarFilaMasiva(fila.id)} className="text-rose-500 hover:text-rose-400 text-xs font-bold">✕ Quitar</button>}
+                          {fila.estado === 'subiendo' && <span className="text-[9px] font-black text-amber-500 uppercase">Subiendo...</span>}
+                          {fila.estado === 'hecho' && <span className="text-[9px] font-black text-green-500 uppercase">✅ Listo</span>}
+                          {fila.estado === 'error' && <span className="text-[9px] font-black text-rose-500 uppercase" title={fila.errorMsg}>❌ Error</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <input type="file" id="carga-masiva-agregar-mas" accept="image/*" multiple onChange={(e) => agregarFotosMasivas(e.target.files)} className="hidden" />
+                    <label htmlFor="carga-masiva-agregar-mas" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700 cursor-pointer`}>📸 Agregar más fotos</label>
+                    <button type="button" disabled={publicandoMasivo} onClick={publicarTodoMasivo} className={`${btnVerde} disabled:opacity-50`}>
+                      {publicandoMasivo ? 'Publicando...' : `🚀 Publicar Todos (${filasMasivas.length})`}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
