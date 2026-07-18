@@ -5,16 +5,6 @@ const pool = require('./db');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
 
-// Importar rutas del asistente
-const assistantRoutes = require('./routes/assistant');
-const { processMessage } = require('./assistant/assistantEngine');
-const { formatPrecio } = require('./assistant/responseBuilder');
-const { sendWhatsAppMessage, sendWhatsAppImage } = require('./services/whatsappService');
-
-// Máximo de imágenes de producto a enviar por mensaje de WhatsApp,
-// para no saturar el chat del cliente cuando hay muchos resultados.
-const MAX_WHATSAPP_IMAGES = 5;
-
 const supabase = createClient(
     process.env.SUPABASE_URL, 
     process.env.SUPABASE_KEY
@@ -31,9 +21,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-// --- RUTAS DEL ASISTENTE VIRTUAL ---
-app.use('/api/assistant', assistantRoutes);
 
 // Exige el header "x-admin-key" (entregado al iniciar sesión en el panel)
 // para cualquier ruta que cree, modifique o borre datos del catálogo.
@@ -315,72 +302,6 @@ app.put('/api/productos/:id/portada', requireAdminKey, async (req, res) => {
         console.error(err);
         res.status(500).json({ error: "Error al cambiar la portada" });
     }
-});
-
-// --- WEBHOOK DE WHATSAPP ---
-
-app.get('/webhook', (req, res) => {
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
-    const expectedToken = process.env.WEBHOOK_VERIFY_TOKEN;
-
-    if (mode === 'subscribe' && token === expectedToken) {
-        return res.status(200).send(challenge);
-    }
-
-    return res.sendStatus(403);
-});
-
-app.post('/webhook', async (req, res) => {
-    const body = req.body;
-
-    if (body.object === 'whatsapp_business_account') {
-        const entry = body.entry?.[0];
-        const changes = entry?.changes?.[0];
-        const value = changes?.value;
-        const messages = value?.messages || [];
-        const firstMessage = messages[0];
-
-        if (firstMessage?.type === 'text' && firstMessage?.text?.body) {
-            const messageBody = firstMessage.text.body;
-            const sender = firstMessage.from;
-            console.log('Webhook mensaje recibido:', { messageBody, sender });
-
-            try {
-                // Se procesa con el motor del asistente usando el número del
-                // remitente como userId, para que cada cliente de WhatsApp
-                // tenga su propio contexto de conversación (contextManager ya
-                // soporta cualquier userId).
-                const assistantResponse = await processMessage(messageBody, sender);
-                console.log('Respuesta del asistente para WhatsApp:', assistantResponse.response);
-
-                if (assistantResponse.success) {
-                    await sendWhatsAppMessage(sender, assistantResponse.response);
-
-                    // Envía las fotos de los productos encontrados (si tienen
-                    // imagen), además del texto de la respuesta.
-                    const productsWithImage = (assistantResponse.products || [])
-                        .filter((p) => p.imagen_url)
-                        .slice(0, MAX_WHATSAPP_IMAGES);
-
-                    for (const product of productsWithImage) {
-                        const caption = `${product.nombre} - ${formatPrecio(product.precio)}`;
-                        await sendWhatsAppImage(sender, product.imagen_url, caption);
-                    }
-                }
-            } catch (err) {
-                // No se detiene el servidor ni se deja de responder 200 a
-                // Meta: solo se registra el error para revisarlo después.
-                console.error('Error procesando mensaje de WhatsApp:', err);
-            }
-        }
-
-        // Siempre 200, incluso si algo falló arriba, para que Meta no reintente.
-        return res.status(200).send('EVENT_RECEIVED');
-    }
-
-    return res.sendStatus(404);
 });
 
 const PORT = process.env.PORT || 3000;
