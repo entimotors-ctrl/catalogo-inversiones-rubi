@@ -1,19 +1,30 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import api from '../services/api'
 
 function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [cargando, setCargando] = useState(false)
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (password === 'admin123') {
-      localStorage.setItem('auth', 'true')
-      setError('')
-      navigate('/admin')
-    } else {
-      setError('Contraseña incorrecta')
+    setCargando(true)
+    setError('')
+    try {
+      const { data } = await api.post('/admin/login', { password })
+      if (data.success) {
+        localStorage.setItem('auth', 'true')
+        localStorage.setItem('adminKey', data.adminKey)
+        navigate('/admin')
+      } else {
+        setError('Contraseña incorrecta')
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Contraseña incorrecta')
+    } finally {
+      setCargando(false)
     }
   }
 
@@ -37,8 +48,8 @@ function Login() {
 
           {error && <div className="text-red-600 text-sm">{error}</div>}
 
-          <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded">
-            Entrar
+          <button type="submit" disabled={cargando} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded disabled:opacity-50">
+            {cargando ? 'Verificando...' : 'Entrar'}
           </button>
         </form>
       </div>
