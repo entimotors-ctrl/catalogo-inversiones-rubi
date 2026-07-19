@@ -233,7 +233,11 @@ function PanelAdmin() {
     let fallos = 0;
 
     // Se sube de a una para no saturar la base de datos (pool limitado) ni Supabase Storage.
+    // Si ya se publicó (estado 'hecho'), se salta: así este mismo botón sirve para
+    // reintentar solo las filas pendientes o que fallaron, sin duplicar las que sí subieron.
     for (const fila of filasMasivas) {
+      if (fila.estado === 'hecho') continue;
+
       if (!fila.nombre.trim() || !fila.precio || !fila.categoriaId) {
         setFilasMasivas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'error', errorMsg: 'Faltan datos (nombre, precio o categoría)' } : f));
         fallos++;
@@ -252,7 +256,8 @@ function PanelAdmin() {
         setFilasMasivas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'hecho' } : f));
         exitos++;
       } catch (error) {
-        setFilasMasivas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'error', errorMsg: 'Error al subir' } : f));
+        const detalle = error.response?.data?.error || error.message || 'Error desconocido';
+        setFilasMasivas(prev => prev.map(f => f.id === fila.id ? { ...f, estado: 'error', errorMsg: detalle } : f));
         fallos++;
       }
     }
@@ -842,6 +847,30 @@ function PanelAdmin() {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <div className="flex w-full h-3 rounded-full overflow-hidden bg-zinc-800 gap-0.5 p-0.5">
+                      {filasMasivas.map((fila) => (
+                        <div
+                          key={fila.id}
+                          title={fila.nombre || 'Sin nombre'}
+                          className={`flex-1 h-full rounded-sm transition-colors duration-300 ${
+                            fila.estado === 'hecho' ? 'bg-green-500'
+                              : fila.estado === 'error' ? 'bg-rose-500'
+                              : fila.estado === 'subiendo' ? 'bg-amber-500 animate-pulse'
+                              : 'bg-zinc-700'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-gray-500">
+                      ✅ {filasMasivas.filter(f => f.estado === 'hecho').length} publicados
+                      {filasMasivas.some(f => f.estado === 'error') && (
+                        <span className="text-rose-500"> · ❌ {filasMasivas.filter(f => f.estado === 'error').length} con error</span>
+                      )}
+                      {' '}· {filasMasivas.length} en total
+                    </p>
+                  </div>
+
                   <div className="space-y-3">
                     {filasMasivas.map((fila) => (
                       <div key={fila.id} className={`flex flex-col sm:flex-row gap-3 p-3 rounded-xl border ${fila.estado === 'hecho' ? 'border-green-600/40 bg-green-900/10' : fila.estado === 'error' ? 'border-rose-600/40 bg-rose-900/10' : 'border-white/5 bg-black/30'}`}>
@@ -866,7 +895,12 @@ function PanelAdmin() {
                           {fila.estado === 'pendiente' && <button type="button" onClick={() => quitarFilaMasiva(fila.id)} className="text-rose-500 hover:text-rose-400 text-xs font-bold">✕ Quitar</button>}
                           {fila.estado === 'subiendo' && <span className="text-[9px] font-black text-amber-500 uppercase">Subiendo...</span>}
                           {fila.estado === 'hecho' && <span className="text-[9px] font-black text-green-500 uppercase">✅ Listo</span>}
-                          {fila.estado === 'error' && <span className="text-[9px] font-black text-rose-500 uppercase" title={fila.errorMsg}>❌ Error</span>}
+                          {fila.estado === 'error' && (
+                            <div className="text-center">
+                              <span className="text-[9px] font-black text-rose-500 uppercase">❌ Error</span>
+                              <p className="text-[8px] text-rose-400 normal-case leading-tight mt-0.5">{fila.errorMsg}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -876,7 +910,11 @@ function PanelAdmin() {
                     <input type="file" id="carga-masiva-agregar-mas" accept="image/*" multiple onChange={(e) => agregarFotosMasivas(e.target.files)} className="hidden" />
                     <label htmlFor="carga-masiva-agregar-mas" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700 cursor-pointer`}>📸 Agregar más fotos</label>
                     <button type="button" disabled={publicandoMasivo} onClick={publicarTodoMasivo} className={`${btnVerde} disabled:opacity-50`}>
-                      {publicandoMasivo ? 'Publicando...' : `🚀 Publicar Todos (${filasMasivas.length})`}
+                      {publicandoMasivo
+                        ? 'Publicando...'
+                        : filasMasivas.some(f => f.estado === 'hecho')
+                          ? `🔁 Reintentar pendientes (${filasMasivas.filter(f => f.estado !== 'hecho').length})`
+                          : `🚀 Publicar Todos (${filasMasivas.length})`}
                     </button>
                   </div>
                 </div>
