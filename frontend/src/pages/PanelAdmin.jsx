@@ -168,10 +168,19 @@ function PanelAdmin() {
     setCargaMasivaAbierta(false);
   }
 
+  const MAX_FOTOS_MASIVAS = 100;
+
   const agregarFotosMasivas = (fileList) => {
-    const nuevas = Array.from(fileList)
-      .filter(f => f.type.startsWith('image/'))
-      .map(file => ({
+    setFilasMasivas(prev => {
+      const espacioDisponible = MAX_FOTOS_MASIVAS - prev.length;
+      const candidatas = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+      const aceptadas = candidatas.slice(0, Math.max(espacioDisponible, 0));
+
+      if (candidatas.length > aceptadas.length) {
+        mostrarMensaje(`Solo se agregaron ${aceptadas.length} fotos: el máximo por carga masiva es ${MAX_FOTOS_MASIVAS}.`, "error");
+      }
+
+      const nuevas = aceptadas.map(file => ({
         id: crypto.randomUUID(),
         file,
         previewUrl: URL.createObjectURL(file),
@@ -182,7 +191,8 @@ function PanelAdmin() {
         estado: 'pendiente', // pendiente | subiendo | hecho | error
         errorMsg: '',
       }));
-    setFilasMasivas(prev => [...prev, ...nuevas]);
+      return [...prev, ...nuevas];
+    });
   }
 
   const handleDragOverMasivo = (e) => {
@@ -835,7 +845,7 @@ function PanelAdmin() {
               )}
               <button onClick={cerrarCargaMasiva} className="absolute top-4 right-4 p-2 bg-zinc-800 hover:bg-rose-600 text-white rounded-full transition-colors">✕</button>
               <h2 className="text-[9px] md:text-[10px] font-black uppercase text-amber-500 mb-2 tracking-[0.3em]">📦 Carga Masiva</h2>
-              <p className="text-[10px] text-gray-400 mb-6">Cada foto se convierte en un producto distinto. Completá nombre y precio de cada uno — la categoría se sugiere sola cuando se puede. Podés arrastrar y soltar las fotos directamente acá.</p>
+              <p className="text-[10px] text-gray-400 mb-6">Cada foto se convierte en un producto distinto. Completá nombre y precio de cada uno — la categoría se sugiere sola cuando se puede. Podés arrastrar y soltar las fotos directamente acá. Máximo {MAX_FOTOS_MASIVAS} fotos por carga.</p>
 
               {filasMasivas.length === 0 ? (
                 <div>
