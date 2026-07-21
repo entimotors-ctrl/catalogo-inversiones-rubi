@@ -44,6 +44,11 @@ app.post('/api/admin/login', async (req, res) => {
             return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
         }
 
+        if (!process.env.ADMIN_API_KEY) {
+            console.error("ADMIN_API_KEY no está configurada en el entorno del backend");
+            return res.status(500).json({ success: false, error: 'El servidor no tiene configurada ADMIN_API_KEY' });
+        }
+
         res.json({ success: true, adminKey: process.env.ADMIN_API_KEY });
     } catch (err) {
         console.error("Error en POST /admin/login:", err);
