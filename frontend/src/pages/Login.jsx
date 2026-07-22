@@ -14,10 +14,12 @@ function Login() {
     setError('')
     try {
       const { data } = await api.post('/admin/login', { password })
-      if (data.success) {
+      if (data.success && data.adminKey) {
         localStorage.setItem('auth', 'true')
         localStorage.setItem('adminKey', data.adminKey)
         navigate('/admin')
+      } else if (data.success) {
+        setError('El servidor no tiene configurada ADMIN_API_KEY. Contactá al administrador.')
       } else {
         setError('Contraseña incorrecta')
       }

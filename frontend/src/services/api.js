@@ -22,4 +22,21 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Si el backend responde 401 es porque la llave guardada en este navegador
+// quedó vieja o inválida (por ejemplo, después de rotar ADMIN_API_KEY en el
+// servidor). En vez de dejar que cada pantalla falle en silencio con
+// "No autorizado", se limpia la sesión y se manda a /login a buscar una
+// llave nueva automáticamente.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && window.location.pathname !== '/login') {
+      localStorage.removeItem('auth');
+      localStorage.removeItem('adminKey');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
