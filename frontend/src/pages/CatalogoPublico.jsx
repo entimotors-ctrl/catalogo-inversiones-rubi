@@ -3,7 +3,7 @@ import api from '../services/api'
 import logo1 from '../assets/logo1.png'
 import logo2 from '../assets/logo2.png'
 import logowas from '../assets/logowas.png'
-import { FaWhatsapp, FaChevronDown, FaThLarge, FaTimes } from 'react-icons/fa'
+import { FaWhatsapp, FaChevronDown, FaThLarge, FaTimes, FaShoppingCart } from 'react-icons/fa'
 
 // LIBRERÍAS PARA EL CARRUSEL
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -26,6 +26,14 @@ function CatalogoPublico() {
   const [loading, setLoading] = useState(true)
   const [productoSeleccionado, setProductoSeleccionado] = useState(null)
   const [imagenActivaModal, setImagenActivaModal] = useState(null)
+  const [shuffleTick, setShuffleTick] = useState(0)
+
+  // Refresca la mezcla de "Destacados" cada rato solo, para que la portada
+  // no se vea siempre igual aunque el visitante se quede un buen rato.
+  useEffect(() => {
+    const id = setInterval(() => setShuffleTick(t => t + 1), 25000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -52,16 +60,57 @@ function CatalogoPublico() {
     fetchDatos();
   }, []);
 
-  const productosParaCarrusel = useMemo(() => {
+  // Mezcla productos recientes con algunos viejos al azar, en vez de puro
+  // azar uniforme: así lo nuevo tiene más chance de aparecer sin que la
+  // portada deje de mostrar cosas del catálogo viejo de vez en cuando.
+  const mezclarNuevosYViejos = (lista, cantidad, proporcionNuevos = 0.7) => {
+    const ordenados = [...lista].sort((a, b) => b.id - a.id);
+    const cantidadNuevos = Math.round(cantidad * proporcionNuevos);
+    const recientes = ordenados.slice(0, Math.max(cantidadNuevos, cantidad - (ordenados.length - cantidadNuevos)));
+    const resto = ordenados.slice(recientes.length).sort(() => 0.5 - Math.random());
+    const combinados = [...recientes, ...resto.slice(0, cantidad - recientes.length)];
+    return combinados.sort(() => 0.5 - Math.random());
+  };
+
+  const productosDisponibles = useMemo(() => {
     if (productos.length === 0) return [];
-    let filtrados = productos;
-    if (config.categoria_excluida) {
-      filtrados = productos.filter(p => Number(p.categoria_id) !== Number(config.categoria_excluida));
-    }
-    return [...filtrados].sort(() => 0.5 - Math.random()).slice(0, 20);
+    if (!config.categoria_excluida) return productos;
+    return productos.filter(p => Number(p.categoria_id) !== Number(config.categoria_excluida));
   }, [productos, config.categoria_excluida]);
 
-  const productosPorCategoria = null;
+  const productosParaCarrusel = useMemo(() => {
+    if (productosDisponibles.length === 0) return [];
+    return mezclarNuevosYViejos(productosDisponibles, 20, 0.7);
+  }, [productosDisponibles]);
+
+  // "Destacados": mezcla de nuevos y viejos que se reordena sola cada rato
+  // (shuffleTick) para que la portada se sienta viva sin recargar la página.
+  const productosDestacados = useMemo(() => {
+    if (productosDisponibles.length === 0) return [];
+    return mezclarNuevosYViejos(productosDisponibles, 10, 0.5);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productosDisponibles, shuffleTick]);
+
+  // Vista de "inicio": sin búsqueda activa y sin categoría específica seleccionada.
+  const esVistaInicio = !searchTerm && (!categoriaActiva || categoriaActiva.id === 'todos')
+
+  // Productos agregados más recientemente (mayor id primero), para la franja "Recién Llegados".
+  const productosRecientes = useMemo(() => {
+    return [...productosDisponibles].sort((a, b) => b.id - a.id).slice(0, 10);
+  }, [productosDisponibles]);
+
+  // Productos agrupados por categoría, solo para la vista de inicio (secciones tipo tienda).
+  const productosPorCategoria = useMemo(() => {
+    if (!esVistaInicio || categorias.length === 0 || productosDisponibles.length === 0) return null;
+    return categorias
+      .map(cat => ({
+        id: cat.id,
+        nombre: cat.nombre,
+        items: productosDisponibles.filter(p => Number(p.categoria_id) === Number(cat.id)),
+      }))
+      .filter(cat => cat.items.length > 0);
+  }, [esVistaInicio, categorias, productosDisponibles]);
+
   const PRODUCTOS_POR_PAGINA = 35
 
   useEffect(() => {
@@ -159,8 +208,11 @@ function CatalogoPublico() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex flex-col items-center justify-center ${darkMode ? 'bg-zinc-950' : 'bg-white'}`}>
-        <div className="w-16 h-16 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <div className={`min-h-screen flex flex-col items-center justify-center gap-5 ${darkMode ? 'bg-zinc-950' : 'bg-white'}`}>
+        <FaShoppingCart className="text-rose-600 animate-bounce" size={48} />
+        <div className="w-48 h-1.5 rounded-full overflow-hidden bg-rose-600/10">
+          <div className="h-full w-1/3 bg-rose-600 rounded-full animate-[cart-loading-bar_1.3s_ease-in-out_infinite]"></div>
+        </div>
         <p className="text-rose-600 font-black tracking-widest animate-pulse uppercase italic text-xs">Inversiones Rubi</p>
       </div>
     );
@@ -171,10 +223,10 @@ function CatalogoPublico() {
     : "bg-white/70 backdrop-blur-md border border-zinc-200 shadow-lg";
 
   const ProductoCard = ({ p }) => (
-    <div className={`group flex flex-col rounded-2xl md:rounded-[2.5rem] overflow-hidden border transition-all duration-300 h-full ${darkMode ? 'bg-zinc-900 border-white/5 hover:border-rose-600/30' : 'bg-white border-zinc-200 shadow-md'}`}>
+    <div className={`group flex flex-col rounded-2xl md:rounded-[2.5rem] overflow-hidden border transition-all duration-300 h-full ${darkglassStyle} ${darkMode ? 'hover:border-rose-600/30' : ''}`}>
       <div className="cursor-pointer" onClick={() => { setProductoSeleccionado(p); setImagenActivaModal(p.imagen_url); }}>
-        <div className="aspect-square relative overflow-hidden bg-white p-1 md:p-4 flex items-center justify-center">
-          <img src={p.imagen_url} alt={p.nombre} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500" />
+        <div className="aspect-square relative overflow-hidden bg-white p-0 md:p-1.5 flex items-center justify-center">
+          <img src={p.imagen_url} alt={p.nombre} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain scale-110 md:scale-100 md:group-hover:scale-110 transition-transform duration-500" />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
              <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-[10px] px-3 py-1 rounded-full backdrop-blur-sm font-bold uppercase tracking-widest">Ver Detalles</span>
           </div>
@@ -264,6 +316,44 @@ function CatalogoPublico() {
               ))}
             </Swiper>
           </div>
+        )}
+
+        {esVistaInicio && productosRecientes.length > 0 && (
+          <section className="mb-10">
+            <div className="flex items-center gap-4 mb-6 px-2">
+              <h2 className="text-lg md:text-3xl font-black uppercase tracking-tighter italic border-l-8 border-rose-600 pl-4">
+                🆕 Recién Llegados
+              </h2>
+            </div>
+            <div className="flex md:grid md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10 overflow-x-auto no-scrollbar pb-4 px-2 snap-x">
+              {productosRecientes.map(p => (
+                <div key={`reciente-${p.id}`} className="snap-start min-w-[180px] md:min-w-0">
+                  <ProductoCard p={p} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {esVistaInicio && productosDestacados.length > 0 && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between gap-4 mb-6 px-2">
+              <h2 className="text-lg md:text-3xl font-black uppercase tracking-tighter italic border-l-8 border-rose-600 pl-4">
+                ✨ Destacados para vos
+              </h2>
+              <button
+                onClick={() => setShuffleTick(t => t + 1)}
+                className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest border transition-all active:scale-90 ${darkMode ? 'border-white/10 bg-zinc-900 hover:bg-rose-600 hover:border-rose-600' : 'border-zinc-200 bg-white hover:bg-rose-600 hover:text-white'}`}
+              >
+                🔄 Ver otros
+              </button>
+            </div>
+            <div key={shuffleTick} className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10 px-2 animate-in fade-in duration-500">
+              {productosDestacados.map(p => (
+                <ProductoCard key={`destacado-${p.id}`} p={p} />
+              ))}
+            </div>
+          </section>
         )}
 
         <div className="mb-8 flex justify-center md:justify-start">
