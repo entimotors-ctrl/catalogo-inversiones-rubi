@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import api from '../services/api'
 import logo1 from '../assets/logo1.png'
 import logo2 from '../assets/logo2.png'
@@ -27,6 +27,10 @@ function CatalogoPublico() {
   const [productoSeleccionado, setProductoSeleccionado] = useState(null)
   const [imagenActivaModal, setImagenActivaModal] = useState(null)
   const [shuffleTick, setShuffleTick] = useState(0)
+  const categoriasScrollRef = useRef(null)
+  const desplazarCategorias = (direccion) => {
+    categoriasScrollRef.current?.scrollBy({ left: direccion * 320, behavior: 'smooth' })
+  }
 
   // Refresca la mezcla de "Destacados" cada rato solo, para que la portada
   // no se vea siempre igual aunque el visitante se quede un buen rato.
@@ -284,8 +288,17 @@ function CatalogoPublico() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-4 relative z-10">
-        <div className="mb-8 -mx-4 px-4 md:mx-0 md:px-0">
-           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 snap-x md:flex-wrap md:overflow-visible">
+        <div className="mb-8 -mx-4 px-4 md:mx-0 md:px-0 relative flex items-center gap-2">
+           <button
+             type="button"
+             onClick={() => desplazarCategorias(-1)}
+             aria-label="Categorías anteriores"
+             className={`hidden md:flex shrink-0 items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-90 ${darkMode ? 'bg-zinc-900 border-white/10 text-white hover:border-rose-600/50' : 'bg-white border-zinc-200 text-zinc-900 hover:border-rose-300'}`}
+           >
+             ‹
+           </button>
+
+           <div ref={categoriasScrollRef} className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 snap-x scroll-smooth">
               <button
                 type="button"
                 onClick={() => { setCategoriaActiva({ id: 'todos', nombre: 'Todos los productos' }); setSearchTerm(''); }}
@@ -312,6 +325,15 @@ function CatalogoPublico() {
                 </button>
               ))}
            </div>
+
+           <button
+             type="button"
+             onClick={() => desplazarCategorias(1)}
+             aria-label="Más categorías"
+             className={`hidden md:flex shrink-0 items-center justify-center w-9 h-9 rounded-full border transition-all active:scale-90 ${darkMode ? 'bg-zinc-900 border-white/10 text-white hover:border-rose-600/50' : 'bg-white border-zinc-200 text-zinc-900 hover:border-rose-300'}`}
+           >
+             ›
+           </button>
         </div>
 
         {!searchTerm && (!categoriaActiva || categoriaActiva.id === 'todos') && productosParaCarrusel.length > 0 && (
