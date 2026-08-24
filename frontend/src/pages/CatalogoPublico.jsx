@@ -284,6 +284,36 @@ function CatalogoPublico() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-4 relative z-10">
+        <div className="mb-8 -mx-4 px-4 md:mx-0 md:px-0">
+           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 snap-x md:flex-wrap md:overflow-visible">
+              <button
+                type="button"
+                onClick={() => { setCategoriaActiva({ id: 'todos', nombre: 'Todos los productos' }); setSearchTerm(''); }}
+                className={`shrink-0 snap-start px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
+                  (categoriaActiva?.id === 'todos')
+                    ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/30'
+                    : darkMode ? 'bg-zinc-900 border-white/10 text-white hover:border-rose-600/50' : 'bg-white border-zinc-200 text-zinc-900 hover:border-rose-300'
+                }`}
+              >
+                📦 Todos
+              </button>
+              {categorias.map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => { setCategoriaActiva(cat); setSearchTerm(''); }}
+                  className={`shrink-0 snap-start px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
+                    Number(categoriaActiva?.id) === Number(cat.id)
+                      ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/30'
+                      : darkMode ? 'bg-zinc-900 border-white/10 text-white hover:border-rose-600/50' : 'bg-white border-zinc-200 text-zinc-900 hover:border-rose-300'
+                  }`}
+                >
+                  {cat.nombre}
+                </button>
+              ))}
+           </div>
+        </div>
+
         {!searchTerm && (!categoriaActiva || categoriaActiva.id === 'todos') && productosParaCarrusel.length > 0 && (
           /* MEJORA: Altura de franja reducida en PC */
           <div className="mb-8 rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-white/5 bg-black">
@@ -355,36 +385,6 @@ function CatalogoPublico() {
             </div>
           </section>
         )}
-
-        <div className="mb-8 -mx-4 px-4 md:mx-0 md:px-0">
-           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 snap-x">
-              <button
-                type="button"
-                onClick={() => { setCategoriaActiva({ id: 'todos', nombre: 'Todos los productos' }); setSearchTerm(''); }}
-                className={`shrink-0 snap-start px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
-                  (categoriaActiva?.id === 'todos')
-                    ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/30'
-                    : darkMode ? 'bg-zinc-900 border-white/10 text-white hover:border-rose-600/50' : 'bg-white border-zinc-200 text-zinc-900 hover:border-rose-300'
-                }`}
-              >
-                📦 Todos
-              </button>
-              {categorias.map(cat => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => { setCategoriaActiva(cat); setSearchTerm(''); }}
-                  className={`shrink-0 snap-start px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
-                    Number(categoriaActiva?.id) === Number(cat.id)
-                      ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/30'
-                      : darkMode ? 'bg-zinc-900 border-white/10 text-white hover:border-rose-600/50' : 'bg-white border-zinc-200 text-zinc-900 hover:border-rose-300'
-                  }`}
-                >
-                  {cat.nombre}
-                </button>
-              ))}
-           </div>
-        </div>
 
         {productosPorCategoria ? (
           <div className="space-y-16 md:space-y-24">
