@@ -3,7 +3,7 @@ import api from '../services/api'
 import logo1 from '../assets/logo1.png'
 import logo2 from '../assets/logo2.png'
 import logowas from '../assets/logowas.png'
-import { FaWhatsapp, FaChevronDown, FaThLarge, FaTimes, FaShoppingCart } from 'react-icons/fa'
+import { FaWhatsapp, FaThLarge, FaTimes, FaShoppingCart } from 'react-icons/fa'
 
 // LIBRERÍAS PARA EL CARRUSEL
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -348,7 +348,7 @@ function CatalogoPublico() {
                 🔄 Ver otros
               </button>
             </div>
-            <div key={shuffleTick} className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10 px-2 animate-in fade-in duration-500">
+            <div key={shuffleTick} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10 px-2 animate-in fade-in duration-500">
               {productosDestacados.map(p => (
                 <ProductoCard key={`destacado-${p.id}`} p={p} />
               ))}
@@ -356,28 +356,33 @@ function CatalogoPublico() {
           </section>
         )}
 
-        <div className="mb-8 flex justify-center md:justify-start">
-           <div className="relative group w-full md:w-72">
-              <select 
-                value={categoriaActiva?.id || ""}
-                onChange={(e) => {
-                  if (e.target.value === 'todos') {
-                    setCategoriaActiva({ id: 'todos', nombre: 'Todos los productos' });
-                  } else {
-                    const cat = categorias.find(c => Number(c.id) === Number(e.target.value));
-                    setCategoriaActiva(cat || null);
-                  }
-                  setSearchTerm('');
-                }}
-                className={`w-full appearance-none px-6 py-4 rounded-2xl outline-none text-[11px] font-black uppercase tracking-widest border transition-all cursor-pointer shadow-xl ${darkMode ? 'bg-zinc-900 border-white/10 focus:border-rose-600 text-white' : 'bg-white border-zinc-200 text-zinc-900'}`}
+        <div className="mb-8 -mx-4 px-4 md:mx-0 md:px-0">
+           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 snap-x">
+              <button
+                type="button"
+                onClick={() => { setCategoriaActiva({ id: 'todos', nombre: 'Todos los productos' }); setSearchTerm(''); }}
+                className={`shrink-0 snap-start px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
+                  (categoriaActiva?.id === 'todos')
+                    ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/30'
+                    : darkMode ? 'bg-zinc-900 border-white/10 text-white hover:border-rose-600/50' : 'bg-white border-zinc-200 text-zinc-900 hover:border-rose-300'
+                }`}
               >
-                <option value="">📂 Todas las categorías</option>
-                <option value="todos">📦 Todos los productos</option>
-                {categorias.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.nombre}</option>
-                ))}
-              </select>
-              <FaChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none opacity-40 text-rose-600" />
+                📦 Todos
+              </button>
+              {categorias.map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => { setCategoriaActiva(cat); setSearchTerm(''); }}
+                  className={`shrink-0 snap-start px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
+                    Number(categoriaActiva?.id) === Number(cat.id)
+                      ? 'bg-rose-600 border-rose-600 text-white shadow-lg shadow-rose-600/30'
+                      : darkMode ? 'bg-zinc-900 border-white/10 text-white hover:border-rose-600/50' : 'bg-white border-zinc-200 text-zinc-900 hover:border-rose-300'
+                  }`}
+                >
+                  {cat.nombre}
+                </button>
+              ))}
            </div>
         </div>
 
@@ -459,7 +464,7 @@ function CatalogoPublico() {
                          <span className={`text-4xl md:text-6xl font-black italic leading-none ${darkMode ? 'text-white/10' : 'text-zinc-200'}`}>{letra}</span>
                          <div className={`flex-1 h-px ${darkMode ? 'bg-white/5' : 'bg-zinc-200'}`}></div>
                        </div>
-                       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10">
+                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10">
                          {items.map((p) => (
                            <ProductoCard key={p._extra_key || p.id} p={p} />
                          ))}
@@ -470,7 +475,7 @@ function CatalogoPublico() {
                </div>
              ) : (
                // Vista sin separadores (búsqueda o categoría específica)
-               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10 px-2">
+               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-10 px-2">
                  {productosPaginados.map((p) => (
                    <ProductoCard key={p._extra_key || p.id} p={p} />
                  ))}
