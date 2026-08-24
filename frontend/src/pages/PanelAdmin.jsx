@@ -92,7 +92,7 @@ function PanelAdmin() {
       setProductos(Array.isArray(prodRes.data) ? prodRes.data : [])
       const configRes = await api.get('/configuracion').catch(() => null)
       if (configRes && configRes.data) { setConfig({ ...configRes.data, password_admin: '' }) }
-    } catch (error) { mostrarMensaje('Error al conectar con el servidor.', 'error') }
+    } catch { mostrarMensaje('Error al conectar con el servidor.', 'error') }
     finally { setLoading(false) }
   }
 
@@ -122,7 +122,7 @@ function PanelAdmin() {
       setFotosExistentes(fotosExistentes.filter(f => f.id !== fotoId));
       mostrarMensaje("Foto eliminada", "exito");
       cargarDatos();
-    } catch (error) { mostrarMensaje("Error al eliminar foto", "error"); }
+    } catch { mostrarMensaje("Error al eliminar foto", "error"); }
   }
 
   // Mueve una foto de la galería un puesto antes o después, y guarda
@@ -139,7 +139,7 @@ function PanelAdmin() {
       await api.put(`/productos/${editandoProdId}/imagenes/orden`, {
         orden: nuevasFotos.map(f => f.id),
       });
-    } catch (error) {
+    } catch {
       mostrarMensaje("Error al guardar el nuevo orden", "error");
     }
   }
@@ -155,7 +155,7 @@ function PanelAdmin() {
       setPortadaActualUrl(foto.imagen_url);
       mostrarMensaje("Portada actualizada", "exito");
       cargarDatos();
-    } catch (error) {
+    } catch {
       mostrarMensaje("Error al cambiar la portada", "error");
     }
   }
@@ -362,7 +362,7 @@ function PanelAdmin() {
       }
       cancelarEdicion();
       cargarDatos();
-    } catch (error) { mostrarMensaje('Error al guardar.', 'error'); }
+    } catch { mostrarMensaje('Error al guardar.', 'error'); }
   }
 
   const prepararEdicionProd = (p) => {
@@ -473,7 +473,7 @@ function PanelAdmin() {
       setNombreCategoria('')
       setEditandoCatId(null)
       cargarDatos()
-    } catch (error) { mostrarMensaje('Error al procesar categoría.', 'error') }
+    } catch { mostrarMensaje('Error al procesar categoría.', 'error') }
   }
 
   // NUEVA FUNCIÓN: Preparar edición de categoría
@@ -487,12 +487,12 @@ function PanelAdmin() {
 
   const handleEliminarCategoria = async (id) => {
     if (!window.confirm("¿Eliminar categoría? Los productos podrían quedar sin grupo.")) return;
-    try { await api.delete(`/categorias/${id}`); cargarDatos(); } catch (error) { mostrarMensaje('Error.', 'error'); }
+    try { await api.delete(`/categorias/${id}`); cargarDatos(); } catch { mostrarMensaje('Error.', 'error'); }
   }
 
   const handleEliminarProducto = async (id) => {
     if (!window.confirm("¿Eliminar este producto?")) return;
-    try { await api.delete(`/productos/${id}`); cargarDatos(); } catch (error) { mostrarMensaje('Error.', 'error'); }
+    try { await api.delete(`/productos/${id}`); cargarDatos(); } catch { mostrarMensaje('Error.', 'error'); }
   }
 
   const handleUpdateConfig = async (e) => {
@@ -509,7 +509,7 @@ function PanelAdmin() {
       mostrarMensaje('Configuración actualizada', 'exito')
       setConfig(prev => ({ ...prev, password_admin: '' }))
       cargarDatos()
-    } catch (error) { mostrarMensaje('Error al actualizar.', 'error') }
+    } catch { mostrarMensaje('Error al actualizar.', 'error') }
   }
 
   const handleLogout = () => {

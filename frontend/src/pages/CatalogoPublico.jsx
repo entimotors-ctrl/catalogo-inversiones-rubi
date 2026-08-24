@@ -48,8 +48,8 @@ function CatalogoPublico() {
         try {
           const configRes = await api.get('/configuracion');
           if (configRes.data) setConfig(configRes.data);
-        } catch (configErr) { 
-          console.warn("Cargando configuración..."); 
+        } catch {
+          console.warn("Cargando configuración...");
         }
       } catch (err) { 
         console.error("Error crítico:", err); 

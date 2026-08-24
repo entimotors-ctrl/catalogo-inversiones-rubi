@@ -2,14 +2,9 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const pool = new Pool({
-  host: 'aws-1-us-east-2.pooler.supabase.com',
-  port: 6543,
-  database: 'postgres',
-  user: 'postgres.mrnoglxbkzcrxqracpon',
-  // OJO: Es mejor que pases esta contraseña al .env más adelante por seguridad ;)
-  password: 'Inversionesrubi', 
+  connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  
+
   // --- OPTIMIZACIONES PARA RENDER Y SUPABASE ---
   
   // 1. Reducimos el máximo de conexiones. Node es rápido, 5 es más que suficiente 

@@ -12,7 +12,7 @@ const RedesFlotantes = () => {
       try {
         const res = await api.get('/configuracion');
         if (res.data) setConfig(res.data);
-      } catch (err) {
+      } catch {
         console.warn("Usando configuración por defecto");
       }
     };
