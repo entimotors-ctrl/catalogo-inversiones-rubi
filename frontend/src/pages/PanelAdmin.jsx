@@ -74,6 +74,11 @@ function PanelAdmin() {
   const [filasMasivas, setFilasMasivas] = useState([])
   const [publicandoMasivo, setPublicandoMasivo] = useState(false)
   const [isDragOverMasivo, setIsDragOverMasivo] = useState(false)
+  const [procesandoFotos, setProcesandoFotos] = useState(false)
+  const [progresoProcesando, setProgresoProcesando] = useState({ actual: 0, total: 0 })
+  const [filaCreandoCategoria, setFilaCreandoCategoria] = useState(null)
+  const [nombreNuevaCategoria, setNombreNuevaCategoria] = useState('')
+  const [creandoCategoria, setCreandoCategoria] = useState(false)
 
   const BASE_URL = 'https://catalogo-inversiones-rubi.onrender.com';
 
@@ -165,34 +170,67 @@ function PanelAdmin() {
   const cerrarCargaMasiva = () => {
     filasMasivas.forEach(f => URL.revokeObjectURL(f.previewUrl));
     setFilasMasivas([]);
+    setFilaCreandoCategoria(null);
+    setNombreNuevaCategoria('');
     setCargaMasivaAbierta(false);
   }
 
-  const MAX_FOTOS_MASIVAS = 100;
-
-  const agregarFotosMasivas = (fileList) => {
-    setFilasMasivas(prev => {
-      const espacioDisponible = MAX_FOTOS_MASIVAS - prev.length;
-      const candidatas = Array.from(fileList).filter(f => f.type.startsWith('image/'));
-      const aceptadas = candidatas.slice(0, Math.max(espacioDisponible, 0));
-
-      if (candidatas.length > aceptadas.length) {
-        mostrarMensaje(`Solo se agregaron ${aceptadas.length} fotos: el máximo por carga masiva es ${MAX_FOTOS_MASIVAS}.`, "error");
+  // Reduce cada foto a un tamaño razonable para web ANTES de guardarla en
+  // memoria. Sin esto, elegir 80-100 fotos de cámara de celular (varios MB
+  // cada una, a veces HEIC) satura la memoria del navegador móvil y la
+  // carga masiva se cae a mitad de camino sin avisar bien por qué — por
+  // eso "no se pudo" desde el celular aunque desde la PC sí funcionaba.
+  const comprimirImagen = (file, maxDim = 1400, calidad = 0.82) => new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const escala = maxDim / Math.max(width, height);
+        width = Math.round(width * escala);
+        height = Math.round(height * escala);
       }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }) : file);
+      }, 'image/jpeg', calidad);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); }; // si no se puede leer (formato raro), se sube tal cual
+    img.src = url;
+  });
 
-      const nuevas = aceptadas.map(file => ({
+  const agregarFotosMasivas = async (fileList) => {
+    const aceptadas = Array.from(fileList).filter(f => f.type.startsWith('image/'));
+    if (aceptadas.length === 0) return;
+
+    setProcesandoFotos(true);
+    setProgresoProcesando({ actual: 0, total: aceptadas.length });
+
+    // Se procesa de a una (no en paralelo): así nunca hay más de una foto
+    // grande decodificándose en memoria a la vez, clave para que no se
+    // trabe en celulares con poca RAM.
+    for (const file of aceptadas) {
+      const comprimido = await comprimirImagen(file);
+      const nuevaFila = {
         id: crypto.randomUUID(),
-        file,
-        previewUrl: URL.createObjectURL(file),
+        file: comprimido,
+        previewUrl: URL.createObjectURL(comprimido),
         nombre: '',
         precio: '',
         categoriaId: '',
         categoriaSugerida: false,
         estado: 'pendiente', // pendiente | subiendo | hecho | error
         errorMsg: '',
-      }));
-      return [...prev, ...nuevas];
-    });
+      };
+      setFilasMasivas(prev => [...prev, nuevaFila]);
+      setProgresoProcesando(prev => ({ ...prev, actual: prev.actual + 1 }));
+    }
+
+    setProcesandoFotos(false);
   }
 
   const handleDragOverMasivo = (e) => {
@@ -227,6 +265,26 @@ function PanelAdmin() {
       }
       return actualizada;
     }));
+  }
+
+  // Crea una categoría nueva sin salir de la Carga Masiva (evita tener que
+  // abrir la pestaña de Categorías aparte) y la deja elegida en esa fila.
+  const crearCategoriaDesdeFila = async (filaId) => {
+    const nombre = nombreNuevaCategoria.trim();
+    if (!nombre) return;
+    setCreandoCategoria(true);
+    try {
+      const { data } = await api.post('/categorias', { nombre });
+      setCategorias(prev => [...prev, data].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')));
+      actualizarFilaMasiva(filaId, { categoriaId: String(data.id) });
+      setFilaCreandoCategoria(null);
+      setNombreNuevaCategoria('');
+      mostrarMensaje('Categoría creada', 'exito');
+    } catch (err) {
+      mostrarMensaje(err.response?.data?.error || 'Error al crear categoría', 'error');
+    } finally {
+      setCreandoCategoria(false);
+    }
   }
 
   const quitarFilaMasiva = (id) => {
@@ -845,15 +903,27 @@ function PanelAdmin() {
               )}
               <button onClick={cerrarCargaMasiva} className="absolute top-4 right-4 p-2 bg-zinc-800 hover:bg-rose-600 text-white rounded-full transition-colors">✕</button>
               <h2 className="text-[9px] md:text-[10px] font-black uppercase text-amber-500 mb-2 tracking-[0.3em]">📦 Carga Masiva</h2>
-              <p className="text-[10px] text-gray-400 mb-6">Cada foto se convierte en un producto distinto. Completá nombre y precio de cada uno — la categoría se sugiere sola cuando se puede. Podés arrastrar y soltar las fotos directamente acá. Máximo {MAX_FOTOS_MASIVAS} fotos por carga.</p>
+              <p className="text-[10px] text-gray-400 mb-6">Cada foto se convierte en un producto distinto. Completá nombre y precio de cada uno — la categoría se sugiere sola cuando se puede. Podés arrastrar y soltar las fotos directamente acá.</p>
 
               {filasMasivas.length === 0 ? (
                 <div>
-                  <input type="file" id="carga-masiva-input" accept="image/*" multiple onChange={(e) => agregarFotosMasivas(e.target.files)} className="hidden" />
-                  <label htmlFor="carga-masiva-input" className="flex flex-col items-center justify-center gap-3 py-16 border-2 border-dashed border-white/20 hover:border-amber-500 rounded-2xl cursor-pointer text-white/40 hover:text-amber-500 transition-all">
-                    <span className="text-4xl">📸</span>
-                    <span className="font-black uppercase tracking-widest text-xs">Elegí o arrastrá todas las fotos</span>
-                  </label>
+                  {procesandoFotos ? (
+                    <div className="flex flex-col items-center justify-center gap-3 py-16 border-2 border-dashed border-amber-500/40 rounded-2xl text-amber-500">
+                      <span className="text-4xl animate-pulse">⏳</span>
+                      <span className="font-black uppercase tracking-widest text-xs">Optimizando foto {progresoProcesando.actual} de {progresoProcesando.total}...</span>
+                      <div className="w-48 h-1.5 rounded-full overflow-hidden bg-amber-500/10">
+                        <div className="h-full bg-amber-500 rounded-full transition-all duration-200" style={{ width: `${(progresoProcesando.actual / Math.max(progresoProcesando.total, 1)) * 100}%` }}></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <input type="file" id="carga-masiva-input" accept="image/*" multiple onChange={(e) => agregarFotosMasivas(e.target.files)} className="hidden" />
+                      <label htmlFor="carga-masiva-input" className="flex flex-col items-center justify-center gap-3 py-16 border-2 border-dashed border-white/20 hover:border-amber-500 rounded-2xl cursor-pointer text-white/40 hover:text-amber-500 transition-all">
+                        <span className="text-4xl">📸</span>
+                        <span className="font-black uppercase tracking-widest text-xs">Elegí o arrastrá todas las fotos</span>
+                      </label>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -893,11 +963,34 @@ function PanelAdmin() {
                           <input type="number" step="0.01" min="0" placeholder="Precio" value={fila.precio} disabled={fila.estado === 'subiendo' || fila.estado === 'hecho'}
                             onChange={(e) => actualizarFilaMasiva(fila.id, { precio: e.target.value })} className={`${inputStyle} !py-2`} />
                           <div className="space-y-0.5">
-                            <select value={fila.categoriaId} disabled={fila.estado === 'subiendo' || fila.estado === 'hecho'}
-                              onChange={(e) => actualizarFilaMasiva(fila.id, { categoriaId: e.target.value })} className={`${inputStyle} !py-2`}>
-                              <option value="">Categoría...</option>
-                              {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
-                            </select>
+                            {filaCreandoCategoria === fila.id ? (
+                              <div className="flex gap-1">
+                                <input
+                                  type="text" autoFocus placeholder="Nombre de la categoría" value={nombreNuevaCategoria}
+                                  onChange={(e) => setNombreNuevaCategoria(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); crearCategoriaDesdeFila(fila.id); } if (e.key === 'Escape') { setFilaCreandoCategoria(null); setNombreNuevaCategoria(''); } }}
+                                  className={`${inputStyle} !py-2 !text-[10px] flex-1`}
+                                />
+                                <button type="button" disabled={creandoCategoria || !nombreNuevaCategoria.trim()} onClick={() => crearCategoriaDesdeFila(fila.id)}
+                                  className="px-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-black disabled:opacity-50">✓</button>
+                                <button type="button" onClick={() => { setFilaCreandoCategoria(null); setNombreNuevaCategoria(''); }}
+                                  className="px-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-black">✕</button>
+                              </div>
+                            ) : (
+                              <select value={fila.categoriaId} disabled={fila.estado === 'subiendo' || fila.estado === 'hecho'}
+                                onChange={(e) => {
+                                  if (e.target.value === '__nueva__') {
+                                    setFilaCreandoCategoria(fila.id);
+                                    setNombreNuevaCategoria('');
+                                  } else {
+                                    actualizarFilaMasiva(fila.id, { categoriaId: e.target.value });
+                                  }
+                                }} className={`${inputStyle} !py-2`}>
+                                <option value="">Categoría...</option>
+                                {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+                                <option value="__nueva__">➕ Nueva categoría...</option>
+                              </select>
+                            )}
                             {fila.categoriaSugerida && <p className="text-[7px] font-black text-amber-500 uppercase ml-1">💡 sugerida</p>}
                           </div>
                         </div>
@@ -916,10 +1009,16 @@ function PanelAdmin() {
                     ))}
                   </div>
 
+                  {procesandoFotos && (
+                    <p className="text-[9px] font-black uppercase tracking-widest text-amber-500 text-center animate-pulse">
+                      ⏳ Optimizando foto {progresoProcesando.actual} de {progresoProcesando.total}...
+                    </p>
+                  )}
+
                   <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                    <input type="file" id="carga-masiva-agregar-mas" accept="image/*" multiple onChange={(e) => agregarFotosMasivas(e.target.files)} className="hidden" />
-                    <label htmlFor="carga-masiva-agregar-mas" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700 cursor-pointer`}>📸 Agregar más fotos</label>
-                    <button type="button" disabled={publicandoMasivo} onClick={publicarTodoMasivo} className={`${btnVerde} disabled:opacity-50`}>
+                    <input type="file" id="carga-masiva-agregar-mas" accept="image/*" multiple disabled={procesandoFotos} onChange={(e) => agregarFotosMasivas(e.target.files)} className="hidden" />
+                    <label htmlFor="carga-masiva-agregar-mas" className={`${btnVerde} !bg-zinc-800 hover:!bg-zinc-700 cursor-pointer ${procesandoFotos ? 'opacity-50 pointer-events-none' : ''}`}>📸 Agregar más fotos</label>
+                    <button type="button" disabled={publicandoMasivo || procesandoFotos} onClick={publicarTodoMasivo} className={`${btnVerde} disabled:opacity-50`}>
                       {publicandoMasivo
                         ? 'Publicando...'
                         : filasMasivas.some(f => f.estado === 'hecho')
